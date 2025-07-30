@@ -111,45 +111,38 @@ def render_sidebar():
 
             st.markdown("---")
 
-        if st.session_state.conversations:
-            if "delete_candidate" not in st.session_state:
-                for i, convo in enumerate(st.session_state.conversations):
-                    is_active = i == st.session_state.active_conversation
+            if st.session_state.conversations:
+                if "delete_candidate" not in st.session_state:
+                    for i, convo in enumerate(st.session_state.conversations):
+                        is_active = i == st.session_state.active_conversation
                     button_style_icon = "🟢" if is_active else "📝"
 
+                    title = convo.get("title", "Untitled")
+                    short_title = title if len(title) <= 22 else f"{title[:22]}..."
+                    label = f"{button_style_icon} {short_title}"
+
                     col1, col2 = st.columns([5, 1])
+
                     with col1:
-                        if st.button(
-                            f"{button_style_icon} {convo['title'][:22]}...",
-                            key=f"convo_{i}",
-                            help=f"Started: {convo['date']}",
-                            use_container_width=True
-                        ):
+                        if st.button(label, key=f"convo_{i}", help=f"Started: {convo['date']}", use_container_width=True):
                             st.session_state.active_conversation = i
                             st.rerun()
+
                     with col2:
-                        if convo["messages"]:
-                            if st.button("🗑️", key=f"delete_{i}", type="primary", use_container_width=True):
+                        delete_key = f"delete_{i}"
+                        if convo.get("messages"):
+                            if st.button("🗑️", key=delete_key, type="primary", use_container_width=True):
                                 st.session_state.delete_candidate = i
                                 st.rerun()
                         else:
-                                st.button(
-                                "🗑️",
-                                key=f"delete_{i}",
-                                type="primary",
-                                use_container_width=True,
-                                disabled=not convo["messages"]  # Disable if it's a new/empty conversation
-                            )
-
+                            st.button("🗑️", key=delete_key, type="primary", use_container_width=True, disabled=True)
 
             else:
-                st.warning(
-                    "⚠️ Are you sure you want to delete this conversation?")
+                st.warning("⚠️ Are you sure you want to delete this conversation?")
                 col_confirm, col_cancel = st.columns(2)
 
                 if col_confirm.button("Yes, delete", key="confirm_delete"):
                     del st.session_state.conversations[st.session_state.delete_candidate]
-
                     from core.utils import save_conversations
                     save_conversations(st.session_state.conversations)
 
@@ -167,7 +160,6 @@ def render_sidebar():
                         st.rerun()
                 else:
                     st.session_state.cancel_clicked = False
-
         else:
             st.info("No conversations yet. Start a new chat!")
 

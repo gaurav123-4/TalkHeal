@@ -1,4 +1,36 @@
+from googletrans import Translator
 import streamlit as st
+from googletrans import Translator
+from core.utils import configure_gemini, Translator
+model = configure_gemini()
+import sys
+sys.path.append('/path/to/utils_folder')
+
+
+
+# 🌐 Language selection section
+st.sidebar.title("🌐 Choose Language")
+
+# Mapping of language name to Googletrans code
+languages = {
+    "Hindi": "hi",
+    "Marathi": "mr",
+    "Gujarati": "gu",
+    "Bengali": "bn",
+    "Tamil": "ta",
+    "Telugu": "te",
+    "Kannada": "kn",
+    "Malayalam": "ml",
+    "Punjabi": "pa",
+    "Urdu": "ur",
+    "English": "en"
+}
+
+selected_lang_name = st.sidebar.selectbox("Select your language", list(languages.keys()))
+selected_lang_code = languages[selected_lang_name]
+
+translator = Translator()
+
 
 # ✅ MUST be the first Streamlit command
 st.set_page_config(

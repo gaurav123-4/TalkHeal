@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta, timezone
+from googletrans import Translator
+translator = Translator()
 import streamlit as st
 import re
 import json
 import os
 import requests
 import google.generativeai
+import google.generativeai as genai
 
 def get_current_time():
     """Returns the user's local time formatted as HH:MM AM/PM."""
@@ -147,9 +150,27 @@ def save_conversations(conversations):
     with open(memory_file, 'w', encoding="utf-8") as f:
         json.dump(conversations, f, indent=4)
 
+import os
+
 def load_conversations():
-    memory_file = get_memory_file()
-    if not os.path.exists(memory_file):
-        return []
-    with open(memory_file, 'r', encoding="utf-8") as f:
-        return json.load(f)
+    if not os.path.exists("conversations.json"):
+        # Create empty file if it doesn't exist
+        with open("conversations.json", "w") as f:
+            json.dump({"conversations": []}, f)
+        return {"conversations": []}
+    else:
+        with open("conversations.json", "r") as f:
+            return json.load(f)
+
+
+def configure_gemini():
+    try:
+        genai.configure(api_key="your_actual_gemini_api_key")
+        model = genai.GenerativeModel("gemini-pro")
+        return model
+    except Exception as e:
+        print(f"Gemini configuration failed: {e}")
+        return None
+
+ 
+
