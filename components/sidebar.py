@@ -76,10 +76,17 @@ mental_health_resources_full = {
 
 def render_sidebar():
     """Renders the left and right sidebars."""
-     
+    
     with st.sidebar:
         render_profile_section()
+
+        st.markdown("### 📂 Explore")
+        st.page_link("pages/Journaling.py", label="📝 Journaling", use_container_width=True)
+        st.page_link("pages/Yoga.py", label="🧘 Yoga", use_container_width=True)
+        st.markdown("---")
+
         st.markdown("### 💬 Conversations")
+
         if "show_quick_start_prompts" not in st.session_state:
             st.session_state.show_quick_start_prompts = False
         if "pre_filled_chat_input" not in st.session_state:
@@ -91,6 +98,7 @@ def render_sidebar():
             create_new_conversation()
             st.session_state.show_quick_start_prompts = True
             st.rerun()
+
         if st.session_state.show_quick_start_prompts:
             st.markdown("---")
             st.markdown("**Start with a common topic:**")
@@ -111,10 +119,18 @@ def render_sidebar():
 
             st.markdown("---")
 
+
             if st.session_state.conversations:
                 if "delete_candidate" not in st.session_state:
                     for i, convo in enumerate(st.session_state.conversations):
                         is_active = i == st.session_state.active_conversation
+
+
+        if st.session_state.conversations:
+            if "delete_candidate" not in st.session_state:
+                for i, convo in enumerate(st.session_state.conversations):
+                    is_active = i == st.session_state.active_conversation
+
                     button_style_icon = "🟢" if is_active else "📝"
 
                     title = convo.get("title", "Untitled")
