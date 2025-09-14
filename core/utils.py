@@ -5,6 +5,7 @@ import json
 import os
 import requests
 import google.generativeai
+import sqlite3
 
 def get_current_time():
     """Returns the user's local time formatted as HH:MM AM/PM."""
@@ -153,3 +154,23 @@ def load_conversations():
         return []
     with open(memory_file, 'r', encoding="utf-8") as f:
         return json.load(f)
+
+def save_feedback(convo_id, message, feedback, comment=None):
+    # Debug print to verify the function is called correctly
+    print(f"Saving feedback: convo_id={convo_id}, message={message}, feedback={feedback}, comment={comment}")
+
+    conn = sqlite3.connect("feedback.db")
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS feedback
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  convo_id INTEGER,
+                  message TEXT,
+                  feedback TEXT,
+                  comment TEXT,
+                  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    c.execute(
+        "INSERT INTO feedback (convo_id, message, feedback, comment) VALUES (?, ?, ?, ?)",
+        (convo_id, message, feedback, comment)
+    )
+    conn.commit()
+    conn.close()
