@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
-from core.utils import get_current_time, get_ai_response, save_conversations, save_feedback
+from core.utils import get_current_time, get_ai_response, save_conversations, save_feedback, get_feedback
 import requests
 import textwrap
 
@@ -566,6 +566,13 @@ def render_chat_interface():
                     fb_key = f"fb_{st.session_state.active_conversation}_{i}"
                     if fb_key not in st.session_state:
                         st.session_state[fb_key] = None
+                        
+                    # Load feedback from DB on refresh
+                    existing_feedback = get_feedback(st.session_state.active_conversation, msg["message"])
+                    if existing_feedback == "up":
+                        st.session_state[fb_key] = "up"
+                    elif existing_feedback == "down":
+                        st.session_state[fb_key] = "submitted"
 
                     state = st.session_state[fb_key]
 

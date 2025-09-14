@@ -174,3 +174,11 @@ def save_feedback(convo_id, message, feedback, comment=None):
     )
     conn.commit()
     conn.close()
+
+def get_feedback(convo_id, message):
+    conn = sqlite3.connect("feedback.db")
+    c = conn.cursor()
+    c.execute("SELECT feedback FROM feedback WHERE convo_id=? AND message=?", (convo_id, message))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else None
