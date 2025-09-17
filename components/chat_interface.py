@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
-from core.utils import get_current_time, get_ai_response, save_conversations
+from core.utils import get_current_time, get_ai_response, save_conversations, save_feedback, get_feedback
 import requests
 import textwrap
 
@@ -209,6 +209,40 @@ def inject_custom_css():
 
     </style>
     """, unsafe_allow_html=True)
+
+def inject_feedback_css():
+    """Small, local CSS to keep reaction buttons tiny and inline."""
+    st.markdown(
+        """
+        <style>
+        /* Target only our feedback buttons (keys start with feedback_small_ -> Streamlit data-testid prefixed with baseButton-) */
+        .stButton > button[data-testid^="baseButton-feedback_small_"] {
+            background: transparent !important;
+            border: none !important;
+            color: #6b7280 !important;       /* muted grey */
+            font-size: 18px !important;     /* emoji size */
+            padding: 4px 6px !important;
+            min-width: 38px !important;
+            height: 36px !important;
+            box-shadow: none !important;
+            line-height: 1 !important;
+        }
+        .stButton > button[data-testid^="baseButton-feedback_small_"]:hover {
+            background: #f3f4f6 !important;
+            color: #111827 !important;
+            transform: none !important;
+        }
+
+        /* Small submit button for the optional comment */
+        .stButton > button[data-testid^="baseButton-feedback_submit_"] {
+            font-size: 14px !important;
+            padding: 6px 10px !important;
+            height: 34px !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # Note: Removed unused set_user_time_in_session (dead code)
@@ -440,6 +474,7 @@ def toggle_pin_message(msg, convo_id):
 # Displays chat messages with styled bubbles and pin/unpin functionality
 def render_chat_interface():
     inject_custom_css()
+    inject_feedback_css()
 
     if st.session_state.active_conversation >= 0:
         active_convo = st.session_state.conversations[st.session_state.active_conversation]
@@ -457,7 +492,6 @@ def render_chat_interface():
         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
         for i, msg in enumerate(active_convo["messages"]):
-            # Check if this message is pinned
             pinned = any(
                 m["message"] == msg["message"]
                 and m.get("convo_id") == st.session_state.active_conversation
@@ -470,26 +504,26 @@ def render_chat_interface():
                 col1, col2, col3 = st.columns([2, 7, 1])
                 with col2:
                     st.markdown(f"""
-<div class="user-message" style="
-    background: linear-gradient(130deg, #6366f1 70%, #818cf8 100%);
-    color: white;
-    padding: 12px 16px;
-    border-radius: 16px;
-    margin: 8px 0;
-    border: 1.5px solid rgba(129,140,248,0.21);
-    border-bottom-right-radius: 4px;
-    word-wrap: break-word;
-    font-size: 15px;
-    line-height: 1.5;
-    position: relative;
-    margin-left: auto;
-    max-width: 85%;
-">
-    {msg['message']}
-    <div class="message-time" style="font-size:12px; color: #c4d0e0; opacity: 0.76; margin-top: 4px; text-align: right;">
-        {msg['time']}
-    </div>
-</div>
+        <div class="user-message" style="
+            background: linear-gradient(130deg, #6366f1 70%, #818cf8 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin: 8px 0;
+            border: 1.5px solid rgba(129,140,248,0.21);
+            border-bottom-right-radius: 4px;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.5;
+            position: relative;
+            margin-left: auto;
+            max-width: 85%;
+        ">
+            {msg['message']}
+            <div class="message-time" style="font-size:12px; color: #c4d0e0; opacity: 0.76; margin-top: 4px; text-align: right;">
+                {msg['time']}
+            </div>
+        </div>
                     """, unsafe_allow_html=True)
                 with col3:
                     st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
@@ -506,30 +540,79 @@ def render_chat_interface():
                         st.rerun()
                 with col2:
                     st.markdown(f"""
-<div class="bot-message" style="
-    background: rgba(255,255,255,0.9);
-    color: #333;
-    padding: 12px 16px;
-    border-radius: 16px;
-    margin: 8px 0;
-    border: 1px solid rgba(0,0,0,0.1);
-    border-bottom-left-radius: 4px;
-    word-wrap: break-word;
-    font-size: 15px;
-    line-height: 1.5;
-    position: relative;
-    margin-right: auto;
-    max-width: 85%;
-">
-    {msg['message']}
-    <div class="message-time" style="font-size:12px; color: #666; opacity: 0.76; margin-top: 4px; text-align: right;">
-        {msg['time']}
-    </div>
-</div>
+        <div class="bot-message" style="
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin: 8px 0;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-bottom-left-radius: 4px;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.5;
+            position: relative;
+            margin-right: auto;
+            max-width: 85%;
+        ">
+            {msg['message']}
+            <div class="message-time" style="font-size:12px; color: #666; opacity: 0.76; margin-top: 4px; text-align: right;">
+                {msg['time']}
+            </div>
+        </div>
                     """, unsafe_allow_html=True)
 
-        # Close chat container
-        st.markdown('</div>', unsafe_allow_html=True)
+                    # --- Feedback system (embedded under bot messages) ---
+                    fb_key = f"fb_{st.session_state.active_conversation}_{i}"
+                    if fb_key not in st.session_state:
+                        st.session_state[fb_key] = None
+                        
+                    # Load feedback from DB on refresh
+                    existing_feedback = get_feedback(st.session_state.active_conversation, msg["message"])
+                    if existing_feedback == "up":
+                        st.session_state[fb_key] = "up"
+                    elif existing_feedback == "down":
+                        st.session_state[fb_key] = "submitted"
+
+                    state = st.session_state[fb_key]
+
+                    if state is None:
+                        c1, c2 = st.columns([0.1, 0.1])
+                        with c1:
+                            if st.button("👍", key=f"{fb_key}_up", help="Good response"):
+                                save_feedback(st.session_state.active_conversation, msg["message"], "up")
+                                st.session_state[fb_key] = "up"
+                                st.rerun()
+                        with c2:
+                            if st.button("👎", key=f"{fb_key}_down", help="Needs improvement"):
+                                st.session_state[fb_key] = "down"
+                                st.rerun()
+
+                    elif state == "up":
+                        st.caption("✅ Thanks for the feedback!")
+
+                    elif state == "down":
+                        reason = st.text_area(
+                            "👎 What could be improved?",
+                            key=f"{fb_key}_reason",
+                            placeholder="Type your feedback..."
+                        )
+                        if st.button("Submit", key=f"{fb_key}_submit"):
+                            save_feedback(
+                                st.session_state.active_conversation,
+                                msg["message"],
+                                "down",
+                                reason.strip() or None
+                            )
+                            st.session_state[fb_key] = "submitted"
+                            st.rerun()
+
+                    elif state == "submitted":
+                        st.caption("🙏 Thank you — your feedback was recorded.")
+
+# Close chat container
+st.markdown('</div>', unsafe_allow_html=True)
+
         
 # Quickly lists all pinned messages for reference
 def render_pinned_messages():
@@ -689,6 +772,55 @@ def handle_chat_input(model, system_prompt):
 
             save_conversations(st.session_state.conversations)
             st.rerun()
-            
+
+def render_bot_message(message: str, key: str, convo_id: int):
+    
+    """Render a bot-style message with thumbs + feedback workflow"""
+
+    # --- Render the bot message bubble ---
+    st.markdown(f"""
+    <div style="background:#f9fafb; padding:10px 14px; border-radius:10px; 
+                margin:6px 0; border:1px solid #e5e7eb;">
+        {message}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- Track feedback state ---
+    if f"{key}_feedback" not in st.session_state:
+        st.session_state[f"{key}_feedback"] = None  # None / "up" / "down"
+    if f"{key}_comment" not in st.session_state:
+        st.session_state[f"{key}_comment"] = ""      # user text if 👎
+
+    feedback_state = st.session_state[f"{key}_feedback"]
+
+    # --- Feedback buttons ---
+    if feedback_state is None:
+        col1, col2 = st.columns([0.1, 0.9])
+        with col1:
+            if st.button("👍", key=f"{key}_up"):
+                st.session_state[f"{key}_feedback"] = "up"
+                save_feedback(convo_id, message, "up", None)
+                st.success("✅ Thanks for the feedback!")
+        with col2:
+            if st.button("👎", key=f"{key}_down"):
+                st.session_state[f"{key}_feedback"] = "down"
+
+    # --- If thumbs down, ask for comment ---
+    elif feedback_state == "down":
+        st.warning("👎 Sorry this wasn’t helpful. Could you tell us why?")
+        user_comment = st.text_area(
+            "Your feedback:",
+            key=f"{key}_textarea",
+            placeholder="Type your thoughts here and press Enter..."
+        )
+        if st.button("Submit Feedback", key=f"{key}_submit"):
+            save_feedback(convo_id, message, "down", user_comment)
+            st.session_state[f"{key}_comment"] = user_comment
+            st.success("🙏 Thank you for your detailed feedback!")
+
+    # --- If thumbs up already given ---
+    elif feedback_state == "up":
+        st.caption("✅ You marked this reply as helpful.")
+           
 # This file contains component functions that are imported and used by the main TalkHeal.py
 # The main() function and standalone execution code has been removed since this is a component module
