@@ -4,9 +4,6 @@ Database Setup Script for TalkHeal
 
 This script initializes the required databases for the TalkHeal application.
 Run this script once to set up the database schema.
-
-Usage:
-    python setup_database.py
 """
 
 import sqlite3
@@ -28,7 +25,39 @@ def setup_journals_db():
     """)
     conn.commit()
     conn.close()
-    print("✅ Journals database initialized successfully")
+    print("Journals database initialized successfully")
+
+def setup_feedback_db():
+    """Initialize the feedback database"""
+    conn = sqlite3.connect("feedback.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_email TEXT,
+        convo_id INTEGER,
+        message TEXT,
+        feedback TEXT,
+        comment TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    conn.commit()
+    conn.close()
+    print("Feedback database initialized successfully")
+
+def update_feedback_table():
+    """Add user_email column if it doesn't exist (for old DBs)"""
+    conn = sqlite3.connect("feedback.db")
+    c = conn.cursor()
+    try:
+        c.execute("ALTER TABLE feedback ADD COLUMN user_email TEXT")
+        print("✅ user_email column added to feedback table")
+    except sqlite3.OperationalError:
+        # Column already exists
+        print("ℹ️ user_email column already exists in feedback table")
+    conn.commit()
+    conn.close()
 
 def main():
     """Main setup function"""
@@ -37,19 +66,24 @@ def main():
     # Initialize users database
     try:
         init_db()
-        print("✅ Users database initialized successfully")
+        print("Users database initialized successfully")
     except Exception as e:
-        print(f"❌ Error initializing users database: {e}")
+        print(f"Error initializing users database: {e}")
     
     # Initialize journals database
     try:
         setup_journals_db()
     except Exception as e:
-        print(f"❌ Error initializing journals database: {e}")
+        print(f"Error initializing journals database: {e}")
+        
+    # Initialize feedback database
+    try:
+        setup_feedback_db()
+        update_feedback_table()  # ensure old DBs have user_email
+    except Exception as e:
+        print(f"Error initializing feedback database: {e}")
     
     print("\n🎉 Database setup complete!")
-    print("📝 Note: These .db files are automatically created when the app runs.")
-    print("🔒 They are ignored by git to prevent conflicts and protect user data.")
 
 if __name__ == "__main__":
     main()
