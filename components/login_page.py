@@ -4,7 +4,18 @@ from auth.auth_utils import register_user, authenticate_user , check_user
 from auth.mail_utils import send_reset_email
 from auth.jwt_utils import create_reset_token
 
+def inject_text_visibility_css():
+    st.markdown("""
+    <style>
+    .block-container, .block-container * {
+        color: #bf4f70 !important;  /* dark pink */
+        font-weight: 600;
+        font-size: 16px;}
+    </style>
+    """, unsafe_allow_html=True)
+
 def show_login_page():
+    inject_text_visibility_css()
     """Renders the login/signup page with the modern dark theme."""
     st.markdown(
         """
