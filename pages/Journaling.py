@@ -1,8 +1,17 @@
 import streamlit as st
 import sqlite3
-import datetime
 import base64
 from uuid import uuid4
+from datetime import date
+from core.utils import require_authentication
+
+# Centralized Authentication Check
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "user_profile" not in st.session_state:
+    st.session_state.user_profile = {}
+    
+require_authentication()
 
 def get_base64_of_bin_file(bin_file_path):
     with open(bin_file_path, 'rb') as f:
@@ -12,7 +21,6 @@ def get_base64_of_bin_file(bin_file_path):
 def set_background(main_bg_path, sidebar_bg_path=None):
     main_bg = get_base64_of_bin_file(main_bg_path)
     sidebar_bg = get_base64_of_bin_file(sidebar_bg_path) if sidebar_bg_path else main_bg
-
     st.markdown(
         f"""
         <style>
@@ -22,7 +30,6 @@ def set_background(main_bg_path, sidebar_bg_path=None):
             background-attachment: fixed;
             background-repeat: no-repeat;
         }}
-
         [data-testid="stSidebar"] {{
             background-color: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -30,7 +37,6 @@ def set_background(main_bg_path, sidebar_bg_path=None):
             border-right: 2px solid rgba(245, 167, 208, 0.6);
             box-shadow: 4px 0 24px rgba(0,0,0,0.15);
         }}
-
         [data-testid="stSidebar"] > div:first-child {{
             background-image: url("data:image/png;base64,{sidebar_bg}");
             background-size: cover;
@@ -72,73 +78,48 @@ def save_entry(email, entry, sentiment):
     cursor.execute("""
     INSERT INTO journal_entries (id, email, entry, sentiment, date)
     VALUES (?, ?, ?, ?, ?)
-    """, (str(uuid4()), email, entry, sentiment, str(datetime.date.today())))
+    """, (str(uuid4()), email, entry, sentiment, str(date.today()))) # Use date.today()
     conn.commit()
     conn.close()
 
 def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-
     query = """
         SELECT entry, sentiment, date FROM journal_entries
         WHERE email = ?
     """
     params = [email]
-
     if sentiment_filter and sentiment_filter != "All":
         query += " AND sentiment = ?"
         params.append(sentiment_filter)
-
     if start_date and end_date:
         query += " AND date BETWEEN ? AND ?"
-        params.extend([start_date, end_date])
-
+        params.extend([start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")])
+    query += " ORDER BY date DESC"
     rows = cursor.execute(query, params).fetchall()
     conn.close()
     return rows
 
 def journaling_app():
-    set_background("static_files/mint.png")  # Use your background image path or comment this line
+    set_background("static_files/mint.png")
     st.markdown(
         """
         <style>
-        /* Text area input text */
-        textarea.stTextArea > div > textarea {
-            color: white !important;
-            background-color: #222222 !important;
-        }
-
-        /* Text inside expander header */
-        button[aria-expanded] {
-            color: white !important;
-        }
-
-        /* Text inside expander content */
-        .streamlit-expanderContent p, .streamlit-expanderContent div {
-            color: white !important;
-        }
-
-        /* General Streamlit text */
-        .stTextArea, .css-1d391kg, .stMarkdown, .css-1v0mbdj {
-            color: white !important;
-        }
-
-        /* Placeholder text in textarea */
-        textarea::placeholder {
-            color: #ccc !important;
-        }
+        /* CSS styles for the app */
+        textarea.stTextArea > div > textarea { color: white !important; background-color: #222222 !important; }
+        button[aria-expanded] { color: white !important; }
+        .streamlit-expanderContent p, .streamlit-expanderContent div { color: white !important; }
+        .stTextArea, .css-1d391kg, .stMarkdown, .css-1v0mbdj { color: white !important; }
+        textarea::placeholder { color: #ccc !important; }
         </style>
         """,
         unsafe_allow_html=True
     )
-    email = st.session_state.get("user_email")
-    if not email:
-        st.warning("⚠️ Please login from the main page to access your journal.")
-        st.stop()
 
     st.title("📝 My Journal")
     st.markdown("Write about your day, thoughts, or anything you'd like to reflect on.")
+    email = st.session_state.user_profile.get("email")
 
     with st.form("journal_form"):
         journal_text = st.text_area("How are you feeling today?", height=200)
@@ -148,25 +129,24 @@ def journaling_app():
         sentiment = analyze_sentiment(journal_text)
         save_entry(email, journal_text, sentiment)
         st.success(f"Entry saved! Sentiment: **{sentiment}**")
+        st.rerun() 
 
     st.markdown("---")
     st.subheader("📖 Your Journal Entries")
 
     filter_sentiment = st.selectbox("Filter by Sentiment", ["All", "Positive", "Neutral", "Negative"])
-
     col1, col2 = st.columns(2)
     with col1:
-        start_date = st.date_input("Start Date", value=datetime.date.today().replace(day=1))
+        start_date = st.date_input("Start Date", value=date.today().replace(day=1))
     with col2:
-        end_date = st.date_input("End Date", value=datetime.date.today())
-
+        end_date = st.date_input("End Date", value=date.today())
     entries = fetch_entries(email, sentiment_filter=filter_sentiment, start_date=start_date, end_date=end_date)
-
+        
     if not entries:
         st.info("No entries found for selected filters.")
     else:
-        for entry, sentiment, date in entries:
-            with st.expander(f"{date} - Mood: {sentiment}"):
+        for entry, sentiment, entry_date in entries:
+            with st.expander(f"{entry_date} - Mood: {sentiment}"):
                 st.write(entry)
 
 init_journal_db()

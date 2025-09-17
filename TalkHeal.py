@@ -1,47 +1,23 @@
 import streamlit as st
 from auth.auth_utils import init_db
 from components.login_page import show_login_page
-from core.utils import save_conversations, load_conversations
+from core.utils import save_conversations, load_conversations,set_authenticated_user
 from components.mood_dashboard import MoodTracker, render_mood_dashboard
 import plotly.express as px
 
-
-# HANDLES ALL SESSION STATE VALUES
-def init_session_state(): 
-    defaults = { "chat_history": [],
-                "conversations": load_conversations(), 
-                "active_conversation": 0, 
-                "selected_tone": "Compassionate Listener",
-                "show_emergency_page": False,
-                "show_focus_session": False,
-                "show_mood_dashboard": False } 
-    for key, value in defaults.items(): 
-        if key not in st.session_state: 
-            st.session_state[key] = value 
-init_session_state()
-
 st.set_page_config(page_title="TalkHeal", page_icon="💬", layout="wide")
-
-
 
 # --- DB Initialization ---
 if "db_initialized" not in st.session_state:
     init_db()
     st.session_state["db_initialized"] = True
-
-# --- Auth State Initialization ---
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "show_signup" not in st.session_state:
-    st.session_state.show_signup = False
-
+    
 # --- LOGIN PAGE ---
-if not st.session_state.authenticated:
+if not st.session_state.get("authenticated", False):
     show_login_page()
     st.stop()
 
-# --- TOP RIGHT BUTTONS: THEME TOGGLE & LOGOUT ---
-if st.session_state.get("authenticated", False):
+
     col_spacer, col_theme, col_emergency, col_about, col_logout = st.columns([0.7, 0.1, 0.35, 0.2, 0.2])
     with col_spacer:
         pass
@@ -60,7 +36,7 @@ if st.session_state.get("authenticated", False):
             st.switch_page("pages/About.py")
     with col_logout:
         if st.button("Logout", key="logout_btn", help="Sign out", use_container_width=True):
-            for key in ["authenticated", "user_email", "user_name", "show_signup"]:
+            for key in ["authenticated", "user_profile"]:
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()

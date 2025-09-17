@@ -3,7 +3,7 @@ from datetime import datetime
 from auth.auth_utils import register_user, authenticate_user , check_user
 from auth.mail_utils import send_reset_email
 from auth.jwt_utils import create_reset_token
-
+from core.utils import set_authenticated_user
 def inject_text_visibility_css():
     st.markdown("""
     <style>
@@ -299,7 +299,7 @@ def show_login_page():
                     "join_date": datetime.now().strftime("%B %Y"),
                     "font_size": "Medium"
                 }
-                
+                st.session_state.user_name = user.get("name", email)
                 # Rerun the app to enter the main dashboard
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
