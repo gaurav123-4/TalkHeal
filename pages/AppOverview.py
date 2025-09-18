@@ -1,6 +1,47 @@
 import streamlit as st
 
 def show_app_overview():
+
+    # --- Community Toggle Button CSS and HTML ---
+    community_toggle_css = '''
+        <style>
+        .community-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem auto 1.5rem auto;
+        }
+        .community-btn {
+            background: linear-gradient(90deg, #ffb6d5 0%, #d14a7a 100%);
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 2rem;
+            padding: 0.9rem 2.2rem;
+            box-shadow: 0 4px 18px 0 rgba(209,74,122,0.13);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            outline: none;
+        }
+        .community-btn:hover {
+            background: linear-gradient(90deg, #d14a7a 0%, #ffb6d5 100%);
+            transform: translateY(-2px) scale(1.04);
+        }
+        </style>
+    '''
+    community_toggle_html = '''
+        <div class="community-toggle">
+            <a href="/app" target="_self" style="text-decoration: none;">
+                <button class="community-btn">
+                    💬 Join the Community Forum
+                </button>
+            </a>
+        </div>
+    '''
+    st.markdown(community_toggle_css, unsafe_allow_html=True)
+    st.markdown(community_toggle_html, unsafe_allow_html=True)
+
     st.markdown("""
         <div style='background-color: #ffe4ef; border-radius: 15px; padding: 2rem; margin-bottom: 2rem;'>
             <h2 style='color: #d6336c; text-align: center;'>App Overview</h2>

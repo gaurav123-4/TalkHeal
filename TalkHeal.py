@@ -261,6 +261,10 @@ elif st.session_state.active_page == "PinnedMessages":
 
         render_pinned_messages_page()
 
+elif st.session_state.active_page == "CommunityForum":
+    with main_area:
+        import pages.CommunityForum as community_forum
+        # The CommunityForum page will render itself
 else:
     with main_area:
         # Render the beautiful feature cards layout
