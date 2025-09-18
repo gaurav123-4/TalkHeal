@@ -333,7 +333,8 @@ def render_sidebar():
         </div>
         """, unsafe_allow_html=True)
         if st.button("Visit Forum", key="visit_forum", use_container_width=True, type="secondary"):
-            st.info("Community Forum feature coming soon! 🚧")
+            st.session_state.active_page = "CommunityForum"
+            st.rerun()
 
         # Chat Management Section
         st.markdown("""
