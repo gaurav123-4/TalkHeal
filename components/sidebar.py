@@ -324,6 +324,17 @@ def render_sidebar():
         
         st.markdown("---")
         
+
+        # Community Forum Section
+        st.markdown("""
+        <div class="sidebar-section-header" style="margin-bottom: 10px;">
+            <h3>🌐 Community Forum</h3>
+            <p>Connect, share, and support each other</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Visit Forum", key="visit_forum", use_container_width=True, type="secondary"):
+            st.info("Community Forum feature coming soon! 🚧")
+
         # Chat Management Section
         st.markdown("""
         <div class="sidebar-section-header">
