@@ -1,9 +1,23 @@
 import streamlit as st
 from datetime import datetime
+import re
 from auth.auth_utils import register_user, authenticate_user , check_user
 from auth.mail_utils import send_reset_email
 from auth.jwt_utils import create_reset_token
 from core.utils import set_authenticated_user
+def validate_email(email):
+    """Validate email format"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def validate_password(password):
+    """Validate password strength"""
+    if len(password) < 6:
+        return False, "Password must be at least 6 characters long"
+    if not re.search(r'[A-Za-z]', password):
+        return False, "Password must contain at least one letter"
+    return True, "Valid password"
+
 def inject_text_visibility_css():
     st.markdown("""
     <style>
@@ -209,14 +223,24 @@ def show_login_page():
             if st.button("Sign Up", key="signup_submit"):
                 if not name or not email or not password:
                     st.error("**Please fill out all fields.**")
+                elif not validate_email(email):
+                    st.error("**Please enter a valid email address.**")
                 else:
-                    success, message = register_user(name, email, password)
-                    if success:
-                        st.success("Account created! You can now login.")
-                        st.session_state.show_signup = False
-                        st.rerun()
+                    # Validate password
+                    is_valid_password, password_message = validate_password(password)
+                    if not is_valid_password:
+                        st.error(f"**{password_message}**")
                     else:
-                        st.error(message)
+                        try:
+                            success, message = register_user(name, email, password)
+                            if success:
+                                st.success("Account created! You can now login.")
+                                st.session_state.show_signup = False
+                                st.rerun()
+                            else:
+                                st.error(f"**{message}**")
+                        except Exception as e:
+                            st.error("**An error occurred during registration. Please try again.**")
             st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('<div class="switch-link">', unsafe_allow_html=True)
@@ -231,25 +255,32 @@ def show_login_page():
             if st.button("Send Reset Link", key="forget_submit"):
                 if not email :
                     st.error("**Please fill out email id**")
+                elif not validate_email(email):
+                    st.error("**Please enter a valid email address.**")
                 else:
-                    success, updated_at = check_user(email)
-                    if success:
-                        mail_status = send_reset_email(email,create_reset_token(email,updated_at))
-                        if mail_status: 
-                            st.success("Password Email sent!")
-                            st.session_state.show_forget_page = False
-                            st.session_state.notify_page=True
-                            st.rerun()
+                    try:
+                        success, updated_at = check_user(email)
+                        if success:
+                            mail_status = send_reset_email(email,create_reset_token(email,updated_at))
+                            if mail_status: 
+                                st.success("Password Email sent!")
+                                st.session_state.show_forget_page = False
+                                st.session_state.notify_page=True
+                                st.rerun()
+                            else:
+                                st.error("**Error while Sending Email!**")
                         else:
-                            st.error("**Error while Sending Email!**")
-                    else:
-                        st.error("**User does not exist ! Please Sign Up First**")
+                            st.error("**User does not exist ! Please Sign Up First**")
+                    except Exception as e:
+                        st.error("**An error occurred while processing your request. Please try again.**")
             st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('<div class="switch-link">', unsafe_allow_html=True)
             if st.button("Already have an account? Login", key="switch_to_login"):
                 st.session_state.show_forget_page = False
-                st.session_state.show_login_page=True
+                # Reset all states to go back to login
+                st.session_state.show_signup = False
+                st.session_state.notify_page = False
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
     elif notify_page:
@@ -265,21 +296,28 @@ def show_login_page():
             if st.button("Login", key="login_submit"):
                 if not email or not password:
                     st.error("**Please enter your email and password.**")
+                elif not validate_email(email):
+                    st.error("**Please enter a valid email address.**")
                 else:
-                    success, user = authenticate_user(email, password)
-                    if success:
-                        st.session_state.authenticated = True
-                        st.session_state.user_profile = {
-                            "name": user.get("name", ""),
-                            "email": user.get("email", email),
-                            "profile_picture": user.get("photo", None),
-                            "join_date": user.get("join_date", datetime.now().strftime("%B %Y")),
-                            "font_size": user.get("font_size", "Medium")
-                        }
-                        st.rerun()
-                                        
-                    else:
-                        st.error("**Invalid email or password.**")
+                    try:
+                        success, user = authenticate_user(email, password)
+                        if success:
+                            st.session_state.authenticated = True
+                            st.session_state.user_profile = {
+                                "name": user.get("name", ""),
+                                "email": user.get("email", email),
+                                "profile_picture": user.get("photo", None),
+                                "join_date": user.get("join_date", datetime.now().strftime("%B %Y")),
+                                "font_size": user.get("font_size", "Medium")
+                            }
+                            # Set user_name for display purposes
+                            st.session_state.user_name = user.get("name", email)
+                            st.rerun()
+                                            
+                        else:
+                            st.error("**Invalid email or password.**")
+                    except Exception as e:
+                        st.error("**An error occurred during login. Please try again.**")
             st.markdown('</div>', unsafe_allow_html=True)
 
             # --- YOUR NEW CODE STARTS HERE ---
@@ -299,7 +337,8 @@ def show_login_page():
                     "join_date": datetime.now().strftime("%B %Y"),
                     "font_size": "Medium"
                 }
-                st.session_state.user_name = user.get("name", email)
+                # Fix: Use the user_profile instead of undefined 'user' variable
+                st.session_state.user_name = st.session_state.user_profile["name"]
                 # Rerun the app to enter the main dashboard
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
