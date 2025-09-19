@@ -149,7 +149,7 @@ def render_feature_cards():
     st.markdown('<div class="features-grid-container">', unsafe_allow_html=True)
     
     # Row 1: Primary Features
-    col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1])
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.markdown("""
@@ -190,6 +190,9 @@ def render_feature_cards():
         """, unsafe_allow_html=True)
         if st.button("👨‍⚕️ Find Specialists", key="doctor_btn", use_container_width=True):
             st.switch_page("pages/doctor_spec.py")
+
+    # Row 2
+    col5, col6, col7, col8 = st.columns(4)
     
     with col5:
         st.markdown("""
@@ -210,6 +213,19 @@ def render_feature_cards():
         """, unsafe_allow_html=True)
         if st.button("🌿 Open Wellness Hub", key="wellness_btn", use_container_width=True):
             st.switch_page("pages/WellnessResourceHub.py")
+
+    with col7:
+        st.markdown("""
+        <div class="feature-card secondary-card tools-card">
+            <div class="card-icon">🎯</div>
+            <h3>Habit Builder</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🎯 Build Habits", key="habit_builder_btn", use_container_width=True):
+            st.switch_page("pages/Habit_Builder.py")
+
+    with col8:
+        pass
     
     st.markdown('</div>', unsafe_allow_html=True)
 
