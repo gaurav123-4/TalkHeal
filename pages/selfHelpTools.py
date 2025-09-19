@@ -15,44 +15,54 @@ def set_background(image_path):
     with open(image_path, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode()
 
-    st.markdown(
-        f"""
-        <style>
-        /* Entire app background */
-        html, body, [data-testid="stApp"] {{
-            background-image: url("data:image/png;base64,{encoded_string}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
+    css = """
+    <style>
+    /* Entire app background */
+    html, body, [data-testid="stApp"] {
+        background-image: url("data:image/png;base64,{BASE64}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
 
-        /* Main content transparency */
-        .block-container {{
-            background-color: rgba(255, 255, 255, 0);
-        }}
+    /* Main content transparency */
+    .block-container {
+        background-color: rgba(255, 255, 255, 0);
+    }
 
-        /* Sidebar: brighter translucent background */
-        [data-testid="stSidebar"] {{
-            background-color: rgba(255, 255, 255, 0.6);  /* Brighter and translucent */
-            color: black;  /* Adjusted for light background */
-        }}
+    /* Sidebar: brighter translucent background */
+    [data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.6);
+        color: black;
+    }
 
-        /* Header bar: fully transparent */
-        [data-testid="stHeader"] {{
-            background-color: rgba(0, 0, 0, 0);
-        }}
+    /* Header bar: fully transparent */
+    [data-testid="stHeader"] {
+        background-color: rgba(0, 0, 0, 0);
+    }
 
-        
-        /* Hide left/right arrow at sidebar bottom */
-        button[title="Close sidebar"],
-        button[title="Open sidebar"] {{
-            display: none !important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    /* Hide left/right arrow at sidebar bottom */
+    button[title="Close sidebar"],
+    button[title="Open sidebar"] {
+        display: none !important;
+    }
+
+    /* 🌟 Custom link styling */
+    a {
+        color: #ffffff !important;   /* White links */
+        font-weight: 500;
+        text-decoration: none;
+    }
+    a:hover {
+        color: #FFD700 !important;   /* Gold hover */
+        text-decoration: underline;
+    }
+    </style>
+    """
+
+    st.markdown(css.replace("{BASE64}", encoded_string), unsafe_allow_html=True)
+
 
 # ✅ Set your background image
 set_background("static_files/lavender.png")
