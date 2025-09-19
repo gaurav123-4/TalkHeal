@@ -265,3 +265,26 @@ def get_feedback_per_message(convo_id=None):
         }
         for r in rows
     ]
+    
+#Centralize Authentication
+def is_authenticated():
+    return st.session_state.get("authenticated", False)
+
+def set_authenticated_user(user):
+    st.session_state["authenticated"] = True
+    st.session_state["user_profile"] = {
+        "name": user.get("name", ""),
+        "email": user.get("email", ""),
+        "join_date": user.get("join_date", datetime.now().strftime("%B %Y"))
+    }
+
+def require_authentication():
+    if "authenticated" not in st.session_state or not st.session_state.authenticated:
+        st.warning("⚠️ Please login from the main page to access this section.")
+        st.stop()
+
+def logout_user():
+    keys_to_remove = ["authenticated", "user_email", "user_name", "profile_picture", "join_date", "font_size"]
+    for key in keys_to_remove:
+        if key in st.session_state:
+            del st.session_state[key]
