@@ -1,321 +1,438 @@
 import streamlit as st
 import random
 import time
+from datetime import datetime
+import json
 
 def show_games_page():
-    """Games page with Memory Challenge Game only"""
+    """Main games page with various mental health focused mini-games"""
     
-    # Header and navigation
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col1:
-        if st.button("← Back to Home", key="back_to_home"):
-            st.session_state.active_page = "TalkHeal"
-            st.rerun()
-    
-    with col2:
-        st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #ff69b4; font-family: 'Baloo 2', cursive;">🎮 Mental Wellness Games</h1>
-            <p style="color: #ffb6d5; font-size: 1.2rem;">Interactive games for mental health support</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Show only Memory Challenge Game
     st.markdown("""
     <style>
-    .game-card {
-        background: linear-gradient(135deg, #fff0f6 0%, #ffe0f0 100%);
+    .game-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 2rem;
         border-radius: 15px;
-        border: 2px solid #ffb6d5;
-        margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(255, 182, 213, 0.3);
         text-align: center;
-    }
-    .game-title {
-        color: #ff69b4;
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-    }
-    .game-description {
-        color: #bf4f70;
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-    }
-    .benefit-text {
-        color: #ff8fa3;
-        font-size: 1rem;
-        font-style: italic;
+        color: white;
         margin-bottom: 2rem;
+    }
+    .game-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin: 1rem 0;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .game-button {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .game-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    }
+    .score-display {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        font-weight: bold;
+        margin: 1rem 0;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Memory Challenge Game Card
     st.markdown("""
-    <div class="game-card">
-        <div class="game-title">🧠 Memory Challenge</div>
-        <div class="game-description">Simon Says style memory game to improve cognitive function and concentration.</div>
-        <div class="benefit-text">✨ Benefits: Enhanced memory, improved focus, cognitive training</div>
+    <div class="game-header">
+        <h1>🎮 Mental Wellness Games</h1>
+        <p>Interactive games designed to boost your mental health and well-being</p>
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("🎯 Play Memory Challenge", key="play_memory", use_container_width=True, type="primary"):
-        memory_challenge_game()
+    # Game selection
+    games = {
+        "🧠 Memory Challenge": "memory_game",
+        "🎨 Mood Color Match": "color_mood_game", 
+        "😌 Stress Relief Clicker": "stress_clicker_game",
+        "💭 Positive Word Association": "word_association_game",
+        "🫁 Breathing Pattern Game": "breathing_game"
+    }
+    
+    st.subheader("Choose Your Wellness Game:")
+    
+    cols = st.columns(len(games))
+    for i, (game_name, game_key) in enumerate(games.items()):
+        with cols[i]:
+            if st.button(game_name, key=f"select_{game_key}"):
+                st.session_state.current_game = game_key
+    
+    # Display selected game
+    if 'current_game' in st.session_state:
+        st.markdown("---")
+        
+        if st.session_state.current_game == "memory_game":
+            memory_challenge_game()
+        elif st.session_state.current_game == "color_mood_game":
+            mood_color_matching_game()
+        elif st.session_state.current_game == "stress_clicker_game":
+            stress_relief_clicker()
+        elif st.session_state.current_game == "word_association_game":
+            positive_word_association()
+        elif st.session_state.current_game == "breathing_game":
+            breathing_pattern_game()
 
 def memory_challenge_game():
     """Simon Says style memory game for cognitive improvement"""
-    
-    st.markdown("### 🧠 Memory Challenge Game")
-    st.markdown("**Improve your memory and concentration with this Simon Says style game!**")
-    
-    # Back button
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col1:
-        if st.button("← Back to Games", key="back_memory"):
-            st.rerun()
+    st.markdown("""
+    <div class="game-card">
+        <h3>🧠 Memory Challenge Game</h3>
+        <p>Improve your memory and concentration by following the pattern!</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Initialize game state
-    if "memory_sequence" not in st.session_state:
+    if 'memory_sequence' not in st.session_state:
         st.session_state.memory_sequence = []
-    if "memory_user_sequence" not in st.session_state:
-        st.session_state.memory_user_sequence = []
-    if "memory_score" not in st.session_state:
-        st.session_state.memory_score = 0
-    if "memory_game_active" not in st.session_state:
-        st.session_state.memory_game_active = False
-    if "memory_show_sequence" not in st.session_state:
-        st.session_state.memory_show_sequence = False
-    if "memory_level" not in st.session_state:
+        st.session_state.user_sequence = []
         st.session_state.memory_level = 1
+        st.session_state.memory_score = 0
+        st.session_state.show_sequence = False
+        st.session_state.game_over = False
     
-    # Game colors and styling
-    colors = ["🔴", "🔵", "🟢", "🟡"]
-    color_names = ["Red", "Blue", "Green", "Yellow"]
-    color_codes = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A"]
+    colors = ["🔴", "🟡", "🟢", "🔵"]
     
-    # Display game stats
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns([1, 1])
+    
     with col1:
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    padding: 1rem; border-radius: 10px; text-align: center; color: white;">
-            <h3>Score: {st.session_state.memory_score}</h3>
+        <div class="score-display">
+            Level: {st.session_state.memory_level}<br>
+            Score: {st.session_state.memory_score}
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-                    padding: 1rem; border-radius: 10px; text-align: center; color: white;">
-            <h3>Level: {st.session_state.memory_level}</h3>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        sequence_length = len(st.session_state.memory_sequence)
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                    padding: 1rem; border-radius: 10px; text-align: center; color: white;">
-            <h3>Sequence: {sequence_length}</h3>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # Game instructions
-    if not st.session_state.memory_game_active:
-        st.markdown("""
-        ### 📖 How to Play:
-        1. **Click "Start New Game"** to begin
-        2. **Watch the sequence** of colors carefully
-        3. **Click "I'm Ready!"** when you've memorized it
-        4. **Repeat the sequence** by clicking the colors in order
-        5. **Each correct sequence** increases your score and level!
-        
-        ### 🎯 Mental Health Benefits:
-        - **Improves working memory** and concentration
-        - **Enhances cognitive flexibility** and processing speed
-        - **Builds confidence** through progressive difficulty
-        - **Reduces stress** through focused attention training
-        """)
-    
-    # Control buttons
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🎮 Start New Game", key="start_memory", type="primary"):
-            st.session_state.memory_sequence = [random.randint(0, 3)]
-            st.session_state.memory_user_sequence = []
-            st.session_state.memory_score = 0
+        if st.button("🚀 Start New Game", key="start_memory"):
+            st.session_state.memory_sequence = [random.choice(colors)]
+            st.session_state.user_sequence = []
             st.session_state.memory_level = 1
-            st.session_state.memory_game_active = True
-            st.session_state.memory_show_sequence = True
-            st.success("New game started! Watch the sequence...")
+            st.session_state.memory_score = 0
+            st.session_state.show_sequence = True
+            st.session_state.game_over = False
+            st.rerun()
+    
+    if st.session_state.show_sequence and not st.session_state.game_over:
+        st.write("🔍 **Watch the sequence carefully!**")
+        sequence_container = st.empty()
+        
+        # Show sequence with delay
+        for i, color in enumerate(st.session_state.memory_sequence):
+            sequence_container.markdown(f"### Sequence: {' '.join(st.session_state.memory_sequence[:i+1])}")
+            time.sleep(0.8)
+        
+        st.session_state.show_sequence = False
+        st.write("🎯 **Now repeat the sequence:**")
+    
+    if not st.session_state.show_sequence and not st.session_state.game_over:
+        st.write("Click the colors in the correct order:")
+        
+        cols = st.columns(4)
+        for i, color in enumerate(colors):
+            with cols[i]:
+                if st.button(color, key=f"memory_{color}_{len(st.session_state.user_sequence)}"):
+                    st.session_state.user_sequence.append(color)
+                    
+                    # Check if sequence matches
+                    if len(st.session_state.user_sequence) == len(st.session_state.memory_sequence):
+                        if st.session_state.user_sequence == st.session_state.memory_sequence:
+                            st.session_state.memory_score += 10 * st.session_state.memory_level
+                            st.session_state.memory_level += 1
+                            st.session_state.memory_sequence.append(random.choice(colors))
+                            st.session_state.user_sequence = []
+                            st.session_state.show_sequence = True
+                            st.success(f"🎉 Correct! Level {st.session_state.memory_level}")
+                            st.rerun()
+                        else:
+                            st.session_state.game_over = True
+                            st.error("❌ Wrong sequence! Game Over!")
+                    
+                    elif st.session_state.user_sequence[len(st.session_state.user_sequence)-1] != st.session_state.memory_sequence[len(st.session_state.user_sequence)-1]:
+                        st.session_state.game_over = True
+                        st.error("❌ Wrong color! Game Over!")
+        
+        if st.session_state.user_sequence:
+            st.write(f"Your sequence: {' '.join(st.session_state.user_sequence)}")
+
+def mood_color_matching_game():
+    """Color matching game for mood expression"""
+    st.markdown("""
+    <div class="game-card">
+        <h3>🎨 Mood Color Matching Game</h3>
+        <p>Express your emotions through colors and learn about color psychology!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    mood_colors = {
+        "😊 Happy": "🟡",
+        "😢 Sad": "🔵", 
+        "😠 Angry": "🔴",
+        "😌 Calm": "🟢",
+        "💜 Loving": "🟣",
+        "🧡 Energetic": "🟠"
+    }
+    
+    if 'color_score' not in st.session_state:
+        st.session_state.color_score = 0
+    
+    st.write("**Match the emotion with the color that represents it:**")
+    
+    # Randomize the mood for the question
+    current_mood = random.choice(list(mood_colors.keys()))
+    correct_color = mood_colors[current_mood]
+    
+    st.write(f"### Current Emotion: {current_mood}")
+    
+    # Create color options (correct + 3 random wrong ones)
+    all_colors = list(set(mood_colors.values()))
+    wrong_colors = [c for c in all_colors if c != correct_color]
+    options = [correct_color] + random.sample(wrong_colors, min(3, len(wrong_colors)))
+    random.shuffle(options)
+    
+    cols = st.columns(len(options))
+    for i, color in enumerate(options):
+        with cols[i]:
+            if st.button(color, key=f"color_choice_{i}"):
+                if color == correct_color:
+                    st.session_state.color_score += 10
+                    st.success("🎉 Perfect match! Colors can really reflect our emotions!")
+                    
+                    # Show color psychology fact
+                    facts = {
+                        "🟡": "Yellow is associated with happiness, optimism, and mental clarity!",
+                        "🔵": "Blue represents calmness and can help reduce anxiety and stress.",
+                        "🔴": "Red is linked to strong emotions like passion, energy, and sometimes anger.",
+                        "🟢": "Green promotes balance, harmony, and has a calming effect on the mind.",
+                        "🟣": "Purple is often associated with creativity, spirituality, and compassion.",
+                        "🟠": "Orange represents enthusiasm, creativity, and positive energy!"
+                    }
+                    st.info(f"💡 **Did you know?** {facts.get(correct_color, 'Colors have powerful psychological effects!')}")
+                else:
+                    st.error("Try again! Think about what this emotion feels like.")
+                
+                st.rerun()
+    
+    st.markdown(f"""
+    <div class="score-display">
+        Color Wisdom Score: {st.session_state.color_score} 🎨
+    </div>
+    """, unsafe_allow_html=True)
+
+def stress_relief_clicker():
+    """Simple clicking game for stress relief"""
+    st.markdown("""
+    <div class="game-card">
+        <h3>😌 Stress Relief Clicker</h3>
+        <p>Click to release stress and tension. Each click helps you feel calmer!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if 'stress_clicks' not in st.session_state:
+        st.session_state.stress_clicks = 0
+        st.session_state.stress_level = 100
+    
+    # Visual stress ball
+    stress_ball_size = max(50, 150 - (st.session_state.stress_clicks // 10))
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button(f"🔴", key="stress_ball", help="Click me to release stress!"):
+            st.session_state.stress_clicks += 1
+            st.session_state.stress_level = max(0, st.session_state.stress_level - 2)
+            
+            # Encouraging messages
+            messages = [
+                "Deep breath... you're doing great! 🌟",
+                "Feel the tension melting away... 😌", 
+                "Each click brings more peace... ✨",
+                "You're stronger than your stress! 💪",
+                "Breathe in calm, breathe out tension... 🫁"
+            ]
+            
+            if st.session_state.stress_clicks % 5 == 0:
+                st.success(random.choice(messages))
+    
+    # Progress bars
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Clicks for Calm", st.session_state.stress_clicks)
+    with col2:
+        st.metric("Stress Level", f"{st.session_state.stress_level}%")
+    
+    # Stress level progress bar
+    st.progress((100 - st.session_state.stress_level) / 100)
+    
+    if st.session_state.stress_level == 0:
+        st.balloons()
+        st.success("🎉 Congratulations! You've achieved complete calm! Your mind is now at peace. 🧘‍♀️")
+
+def positive_word_association():
+    """Word association game to promote positive thinking"""
+    st.markdown("""
+    <div class="game-card">
+        <h3>💭 Positive Word Association</h3>
+        <p>Build positive thinking patterns by connecting uplifting words!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    positive_words = [
+        "Joy", "Peace", "Love", "Hope", "Courage", "Strength", "Gratitude",
+        "Kindness", "Compassion", "Success", "Growth", "Healing", "Bright",
+        "Beautiful", "Wonderful", "Amazing", "Brilliant", "Fantastic", "Excellent"
+    ]
+    
+    if 'word_chain' not in st.session_state:
+        st.session_state.word_chain = []
+        st.session_state.word_score = 0
+    
+    if not st.session_state.word_chain:
+        starter_word = random.choice(positive_words)
+        st.session_state.word_chain.append(starter_word)
+    
+    st.write("**Build a chain of positive words! Each word should relate to the previous one:**")
+    st.write(f"### Current chain: {' → '.join(st.session_state.word_chain)}")
+    
+    # Input for next word
+    next_word = st.text_input("Add the next positive word:", key="word_input")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Add Word", key="add_word") and next_word:
+            st.session_state.word_chain.append(next_word.title())
+            st.session_state.word_score += 5
+            
+            encouragements = [
+                f"Beautiful connection! '{next_word}' adds wonderful energy! ✨",
+                f"Perfect! '{next_word}' brings such positive vibes! 🌟", 
+                f"Excellent! Your mind is creating beautiful associations! 💫",
+                f"Amazing! '{next_word}' flows perfectly with positive energy! 🌈"
+            ]
+            st.success(random.choice(encouragements))
             st.rerun()
     
     with col2:
-        if st.button("👀 Show Sequence", key="show_sequence", disabled=not st.session_state.memory_game_active):
-            st.session_state.memory_show_sequence = True
+        if st.button("🔄 New Chain", key="new_chain"):
+            st.session_state.word_chain = [random.choice(positive_words)]
             st.rerun()
     
-    with col3:
-        if st.button("🔄 Reset Game", key="reset_memory"):
-            for key in ["memory_sequence", "memory_user_sequence", "memory_score", 
-                       "memory_game_active", "memory_show_sequence", "memory_level"]:
-                if key in st.session_state:
-                    del st.session_state[key]
-            st.success("Game reset!")
-            st.rerun()
+    st.markdown(f"""
+    <div class="score-display">
+        Positivity Score: {st.session_state.word_score} ✨<br>
+        Chain Length: {len(st.session_state.word_chain)} words
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Display sequence (when showing)
-    if st.session_state.memory_show_sequence and st.session_state.memory_sequence:
-        st.markdown("### 👁️ **Memorize this sequence:**")
-        
-        # Create animated sequence display
-        sequence_cols = st.columns(len(st.session_state.memory_sequence))
-        for i, color_idx in enumerate(st.session_state.memory_sequence):
-            with sequence_cols[i]:
-                st.markdown(f"""
-                <div style="
-                    background-color: {color_codes[color_idx]};
-                    color: white;
-                    padding: 2rem;
-                    border-radius: 50%;
-                    text-align: center;
-                    font-size: 2rem;
-                    margin: 0.5rem;
-                    animation: pulse 1.5s ease-in-out infinite;
-                ">
-                    {colors[color_idx]}
-                </div>
-                <style>
-                @keyframes pulse {{
-                    0% {{ transform: scale(1); opacity: 1; }}
-                    50% {{ transform: scale(1.1); opacity: 0.8; }}
-                    100% {{ transform: scale(1); opacity: 1; }}
-                }}
-                </style>
-                """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        if st.button("✅ I'm Ready to Play!", key="ready_memory", type="primary"):
-            st.session_state.memory_show_sequence = False
-            st.success("Great! Now click the sequence in the correct order!")
-            st.rerun()
+    if len(st.session_state.word_chain) >= 10:
+        st.success("🎉 Amazing! You've created a beautiful chain of positivity! Your mind is becoming more attuned to positive thoughts! 🌟")
+
+def breathing_pattern_game():
+    """Interactive breathing exercise game"""
+    st.markdown("""
+    <div class="game-card">
+        <h3>🫁 Breathing Pattern Game</h3>
+        <p>Follow the breathing patterns for relaxation and mindfulness!</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Game playing interface
-    elif st.session_state.memory_game_active and not st.session_state.memory_show_sequence:
-        st.markdown("### 🎯 **Click the sequence in order:**")
-        
-        # Color buttons for playing
-        col1, col2, col3, col4 = st.columns(4)
-        cols = [col1, col2, col3, col4]
-        
-        for i, (col, color, name, color_code) in enumerate(zip(cols, colors, color_names, color_codes)):
-            with col:
-                button_style = f"""
-                <style>
-                div.stButton > button:first-child {{
-                    background-color: {color_code};
-                    color: white;
-                    border: 3px solid #fff;
-                    border-radius: 20px;
-                    font-size: 1.5rem;
-                    font-weight: bold;
-                    padding: 1rem;
-                    width: 100%;
-                    height: 120px;
-                    transition: all 0.3s ease;
-                }}
-                div.stButton > button:hover {{
-                    transform: scale(1.05);
-                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                }}
-                </style>
-                """
-                st.markdown(button_style, unsafe_allow_html=True)
-                
-                if st.button(f"{color}\n{name}", key=f"color_{i}"):
-                    st.session_state.memory_user_sequence.append(i)
-                    
-                    # Check if sequence is correct so far
-                    user_len = len(st.session_state.memory_user_sequence)
-                    sequence_len = len(st.session_state.memory_sequence)
-                    
-                    if user_len <= sequence_len:
-                        if st.session_state.memory_user_sequence[-1] != st.session_state.memory_sequence[user_len-1]:
-                            # Wrong sequence - Game Over
-                            st.error("❌ **Wrong sequence! Game Over!**")
-                            st.markdown(f"**Final Score: {st.session_state.memory_score}**")
-                            st.balloons()
-                            
-                            # Show correct sequence
-                            correct_sequence = " → ".join([f"{colors[j]} {color_names[j]}" for j in st.session_state.memory_sequence])
-                            st.info(f"**Correct sequence was:** {correct_sequence}")
-                            
-                            st.session_state.memory_game_active = False
-                            
-                        elif user_len == sequence_len:
-                            # Completed sequence correctly!
-                            st.success("✅ **Perfect! Sequence completed correctly!**")
-                            st.session_state.memory_score += 10
-                            st.session_state.memory_level += 1
-                            
-                            # Add new color to sequence
-                            st.session_state.memory_sequence.append(random.randint(0, 3))
-                            st.session_state.memory_user_sequence = []
-                            st.session_state.memory_show_sequence = True
-                            
-                            # Celebration
-                            if st.session_state.memory_level % 5 == 0:
-                                st.balloons()
-                                st.success(f"🎉 **Amazing! You reached Level {st.session_state.memory_level}!**")
-                            
-                            time.sleep(1)
-                        else:
-                            # Continue sequence
-                            st.info(f"Good! {user_len}/{sequence_len} colors correct. Keep going!")
-                    
-                    st.rerun()
-        
-        # Show current user input
-        if st.session_state.memory_user_sequence:
-            st.markdown("### 📝 **Your current input:**")
-            user_display = " → ".join([f"{colors[i]} {color_names[i]}" for i in st.session_state.memory_user_sequence])
-            st.markdown(f"**{user_display}**")
-        
-        # Progress indicator
-        if st.session_state.memory_user_sequence:
-            progress = len(st.session_state.memory_user_sequence) / len(st.session_state.memory_sequence)
-            st.progress(progress, f"Progress: {len(st.session_state.memory_user_sequence)}/{len(st.session_state.memory_sequence)}")
+    breathing_patterns = {
+        "4-7-8 Relaxation": {"inhale": 4, "hold": 7, "exhale": 8, "description": "Perfect for reducing anxiety and promoting sleep"},
+        "Box Breathing": {"inhale": 4, "hold": 4, "exhale": 4, "description": "Used by Navy SEALs for focus and stress management"},
+        "Energizing Breath": {"inhale": 6, "hold": 2, "exhale": 4, "description": "Boosts energy and mental clarity"}
+    }
     
-    # Game completed message
-    elif not st.session_state.memory_game_active and st.session_state.memory_score > 0:
-        st.markdown("### 🎉 **Game Over!**")
+    selected_pattern = st.selectbox("Choose a breathing pattern:", list(breathing_patterns.keys()))
+    pattern = breathing_patterns[selected_pattern]
+    
+    st.info(f"**{selected_pattern}:** {pattern['description']}")
+    
+    if 'breathing_active' not in st.session_state:
+        st.session_state.breathing_active = False
+        st.session_state.breathing_cycles = 0
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🌬️ Start Breathing Exercise", key="start_breathing"):
+            st.session_state.breathing_active = True
+            st.session_state.breathing_cycles = 0
+    
+    with col2:
+        if st.button("⏹️ Stop", key="stop_breathing"):
+            st.session_state.breathing_active = False
+    
+    if st.session_state.breathing_active:
+        progress_bar = st.progress(0)
+        status_text = st.empty()
         
-        # Performance feedback
-        if st.session_state.memory_score >= 50:
-            st.success("🌟 **Excellent memory skills! Your cognitive training is paying off!**")
-        elif st.session_state.memory_score >= 30:
-            st.success("🎯 **Great job! Your memory and focus are improving!**")
-        elif st.session_state.memory_score >= 10:
-            st.info("👍 **Good effort! Keep practicing to strengthen your memory!**")
-        else:
-            st.info("💪 **Every attempt helps! Memory games get easier with practice!**")
+        # Breathing cycle simulation
+        cycle_phases = [
+            ("Inhale slowly...", pattern["inhale"], "🌬️➡️"),
+            ("Hold your breath...", pattern["hold"], "⏸️"),
+            ("Exhale gently...", pattern["exhale"], "🌬️⬅️")
+        ]
         
+        for phase_name, duration, emoji in cycle_phases:
+            for i in range(duration):
+                progress = (i + 1) / duration
+                progress_bar.progress(progress)
+                status_text.markdown(f"### {emoji} {phase_name} ({i+1}/{duration})")
+                time.sleep(1)
+        
+        st.session_state.breathing_cycles += 1
+        
+        if st.session_state.breathing_cycles >= 3:
+            st.session_state.breathing_active = False
+            st.success(f"🎉 Excellent! You completed 3 breathing cycles. Feel the calm energy flowing through you! 🧘‍♀️")
+            st.balloons()
+    
+    if st.session_state.breathing_cycles > 0:
         st.markdown(f"""
-        ### 📊 **Your Performance:**
-        - **Final Score:** {st.session_state.memory_score} points
-        - **Highest Level Reached:** {st.session_state.memory_level}
-        - **Sequences Completed:** {st.session_state.memory_score // 10}
-        
-        ### 🧠 **Memory Training Benefits:**
-        - You exercised your **working memory** - the mental workspace for processing information
-        - You practiced **sustained attention** - crucial for daily tasks and learning
-        - You built **cognitive resilience** - the ability to bounce back from mistakes
-        - You enhanced **pattern recognition** - helpful for problem-solving
-        """)
+        <div class="score-display">
+            Breathing Cycles Completed: {st.session_state.breathing_cycles} 🫁<br>
+            Mindfulness Level: {"🧘‍♀️" * min(5, st.session_state.breathing_cycles)}
+        </div>
+        """, unsafe_allow_html=True)
+
+# Additional utility functions for games
+def reset_all_games():
+    """Reset all game states"""
+    game_keys = [
+        'memory_sequence', 'user_sequence', 'memory_level', 'memory_score', 'show_sequence', 'game_over',
+        'color_score', 'stress_clicks', 'stress_level', 'word_chain', 'word_score',
+        'breathing_active', 'breathing_cycles', 'current_game'
+    ]
+    
+    for key in game_keys:
+        if key in st.session_state:
+            del st.session_state[key]
+
+def get_games_statistics():
+    """Get user's gaming statistics"""
+    stats = {
+        'memory_high_score': st.session_state.get('memory_score', 0),
+        'color_wisdom_score': st.session_state.get('color_score', 0),
+        'stress_relief_clicks': st.session_state.get('stress_clicks', 0),
+        'positive_word_score': st.session_state.get('word_score', 0),
+        'breathing_cycles': st.session_state.get('breathing_cycles', 0)
+    }
+    return stats
 
 if __name__ == "__main__":
     show_games_page()
