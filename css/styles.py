@@ -930,7 +930,33 @@ def apply_custom_css():
             font-size: 1.07em !important;
         }}
 
-        /* Responsive design for mobile */
+        /* Responsive utilities for mobile-friendly layouts */
+        .mobile-stack {{
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }}
+        
+        .mobile-row {{
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+        }}
+        
+        .mobile-button {{
+            min-width: 120px !important;
+            flex: 1 1 auto !important;
+            margin: 0.25rem 0 !important;
+        }}
+        
+        .mobile-nav-button {{
+            min-width: 80px !important;
+            font-size: 0.9rem !important;
+            padding: 0.4rem 0.6rem !important;
+        }}
+
+        /* Enhanced responsive design for mobile */
         @media (max-width: 768px) {{
             .main .block-container {{ 
                 padding: 1rem; 
@@ -987,6 +1013,50 @@ def apply_custom_css():
             
             .features-grid-container {{
                 margin: 20px 0;
+            }}
+            
+            /* Mobile button improvements */
+            .stButton > button {{
+                min-width: 100px !important;
+                font-size: 0.9rem !important;
+                padding: 0.5rem 0.8rem !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }}
+            
+            /* Mobile column stack for narrow screens */
+            [data-testid="column"] {{
+                min-width: 120px !important;
+            }}
+            
+            /* Force vertical stacking on very narrow screens */
+            @media (max-width: 480px) {{
+                .stColumns {{
+                    flex-direction: column !important;
+                }}
+                
+                .stColumns > div {{
+                    width: 100% !important;
+                    margin-bottom: 0.5rem !important;
+                }}
+                
+                .stButton > button {{
+                    width: 100% !important;
+                    min-width: unset !important;
+                }}
+            }}
+        }}
+        
+        /* Tablet responsive design */
+        @media (min-width: 769px) and (max-width: 1024px) {{
+            .main .block-container {{
+                max-width: 90%;
+            }}
+            
+            .stButton > button {{
+                min-width: 110px !important;
+                font-size: 0.95rem !important;
             }}
         }}
 

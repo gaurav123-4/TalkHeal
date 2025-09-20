@@ -288,3 +288,106 @@ def logout_user():
     for key in keys_to_remove:
         if key in st.session_state:
             del st.session_state[key]
+
+
+def create_responsive_columns(num_columns, min_width="120px", mobile_stack_breakpoint=480):
+    """
+    Create responsive columns that stack vertically on mobile devices.
+    
+    Args:
+        num_columns (int): Number of columns for desktop layout
+        min_width (str): Minimum width for each column before stacking
+        mobile_stack_breakpoint (int): Screen width (px) below which to stack
+        
+    Returns:
+        list: List of Streamlit column objects
+    """
+    # For very small screens, use single column
+    if mobile_stack_breakpoint > 768:
+        # Stack all columns on mobile
+        return st.columns([1] * num_columns)
+    else:
+        # Use equal width columns
+        return st.columns(num_columns)
+
+
+def render_responsive_buttons(buttons_data, columns_per_row=None, mobile_stack=True):
+    """
+    Render buttons in a responsive layout that stacks on mobile.
+    
+    Args:
+        buttons_data (list): List of dictionaries with button data
+                           Each dict should have: {'text': str, 'key': str, 'action': callable, 'type': str}
+        columns_per_row (int): Number of buttons per row on desktop (default: len(buttons_data))
+        mobile_stack (bool): Whether to stack buttons on mobile
+        
+    Returns:
+        None (renders buttons directly to Streamlit)
+    """
+    if not buttons_data:
+        return
+        
+    if columns_per_row is None:
+        columns_per_row = min(len(buttons_data), 4)  # Max 4 buttons per row
+    
+    # Add responsive CSS for this specific button group
+    st.markdown(f"""
+    <style>
+    @media (max-width: 768px) {{
+        .responsive-button-container {{
+            display: flex;
+            flex-direction: {'column' if mobile_stack else 'row'};
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }}
+        .responsive-button-container .stButton {{
+            flex: 1 1 auto;
+            min-width: 120px;
+        }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Group buttons into rows
+    for i in range(0, len(buttons_data), columns_per_row):
+        row_buttons = buttons_data[i:i + columns_per_row]
+        cols = st.columns(len(row_buttons))
+        
+        for j, button_data in enumerate(row_buttons):
+            with cols[j]:
+                button_type = button_data.get('type', 'primary')
+                help_text = button_data.get('help', '')
+                use_container_width = button_data.get('use_container_width', True)
+                
+                if st.button(
+                    button_data['text'],
+                    key=button_data['key'],
+                    type=button_type,
+                    help=help_text,
+                    use_container_width=use_container_width
+                ):
+                    if button_data.get('action'):
+                        button_data['action']()
+                        
+                        
+def get_mobile_friendly_columns(desktop_ratios, mobile_threshold=768):
+    """
+    Convert desktop column ratios to mobile-friendly layout.
+    
+    Args:
+        desktop_ratios (list): List of column width ratios for desktop
+        mobile_threshold (int): Screen width threshold for mobile layout
+        
+    Returns:
+        list: Mobile-optimized column ratios
+    """
+    # On mobile, prefer more equal distributions or single column
+    if len(desktop_ratios) > 4:
+        # Too many columns, use fewer
+        return [1] * min(2, len(desktop_ratios))
+    elif len(desktop_ratios) > 2:
+        # Use more balanced ratios
+        return [1] * len(desktop_ratios)
+    else:
+        # Keep original ratios but ensure minimum widths
+        return desktop_ratios

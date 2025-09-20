@@ -18,28 +18,72 @@ if not st.session_state.get("authenticated", False):
     st.stop()
 
 
-col_spacer, col_theme, col_emergency, col_about, col_logout = st.columns([0.7, 0.1, 0.35, 0.2, 0.2])
+# Add responsive navigation CSS
+st.markdown("""
+<style>
+@media (max-width: 768px) {
+    .nav-button-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .nav-button-container .stButton {
+        flex: 1 1 auto;
+        min-width: 100px;
+        max-width: 140px;
+    }
+    .nav-button-container .stButton > button {
+        font-size: 0.85rem !important;
+        padding: 0.4rem 0.6rem !important;
+    }
+}
+@media (max-width: 480px) {
+    .nav-button-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .nav-button-container .stButton {
+        max-width: none;
+        margin-bottom: 0.25rem;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Responsive navigation layout - use smaller ratios and better mobile handling
+col_spacer, col_buttons = st.columns([1, 4])
 with col_spacer:
     pass
-with col_theme:
-    is_dark = st.session_state.get('dark_mode', False)
-    if st.button("🌙" if is_dark else "☀️", key="top_theme_toggle", help="Toggle Light/Dark Mode", use_container_width=True):
-            st.session_state.dark_mode = not is_dark
-            st.session_state.theme_changed = True
-            st.rerun()
-with col_emergency:
-    if st.button("🚨 Emergency Help", key="emergency_main_btn", help="Open crisis resources", use_container_width=True, type="secondary"):
-        st.session_state.show_emergency_page = True
-        st.rerun()
-with col_about:
-    if st.button("ℹ️ About", key="about_btn", help="About TalkHeal", use_container_width=True):
-        st.switch_page("pages/About.py")
-with col_logout:
-    if st.button("Logout", key="logout_btn", help="Sign out", use_container_width=True):
-        for key in ["authenticated", "user_profile"]:
-            if key in st.session_state:
-                del st.session_state[key]
+with col_buttons:
+    # Create a container with responsive class
+    st.markdown('<div class="nav-button-container">', unsafe_allow_html=True)
+    
+    # Use smaller column ratios for better mobile handling
+    nav_cols = st.columns([1, 1.5, 1, 1])
+    
+    with nav_cols[0]:
+        is_dark = st.session_state.get('dark_mode', False)
+        if st.button("🌙" if is_dark else "☀️", key="top_theme_toggle", help="Toggle Light/Dark Mode", use_container_width=True):
+                st.session_state.dark_mode = not is_dark
+                st.session_state.theme_changed = True
                 st.rerun()
+    with nav_cols[1]:
+        if st.button("🚨 Emergency Help", key="emergency_main_btn", help="Open crisis resources", use_container_width=True, type="secondary"):
+            st.session_state.show_emergency_page = True
+            st.rerun()
+    with nav_cols[2]:
+        if st.button("ℹ️ About", key="about_btn", help="About TalkHeal", use_container_width=True):
+            st.switch_page("pages/About.py")
+    with nav_cols[3]:
+        if st.button("Logout", key="logout_btn", help="Sign out", use_container_width=True):
+            for key in ["authenticated", "user_profile"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+                    st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 from core.config import configure_gemini, PAGE_CONFIG
 from core.utils import get_current_time, create_new_conversation
@@ -149,9 +193,42 @@ def render_feature_cards():
     # Main Feature Cards Grid
     st.markdown('<div class="features-grid-container">', unsafe_allow_html=True)
     
-    # Row 1: Primary Features
-    col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1])
+    # Responsive feature cards CSS
+    st.markdown("""
+    <style>
+    @media (max-width: 768px) {
+        .features-mobile-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .features-mobile-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .features-mobile-row .stButton {
+            flex: 1 1 50%;
+        }
+        .feature-card {
+            margin-bottom: 0.5rem;
+        }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .features-tablet-grid .stColumn {
+            flex: 1 1 33% !important;
+            margin-bottom: 1rem;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
+    # Responsive layout - 2 columns per row on mobile, 3 on tablet, 6 on desktop
+    st.markdown('<div class="features-mobile-grid">', unsafe_allow_html=True)
+    
+    # Row 1: Primary Features (2 columns for mobile compatibility)
+    col1, col2 = st.columns([1, 1])
+    
+    # Feature Cards Row 1
     with col1:
         st.markdown("""
         <div class="feature-card primary-card yoga-card">
@@ -172,6 +249,9 @@ def render_feature_cards():
         if st.button("🌬️ Start Breathing", key="breathing_btn", use_container_width=True):
             st.switch_page("pages/Breathing_Exercise.py")
     
+    # Feature Cards Row 2
+    col3, col4 = st.columns([1, 1])
+    
     with col3:
         st.markdown("""
         <div class="feature-card primary-card journal-card">
@@ -191,6 +271,9 @@ def render_feature_cards():
         """, unsafe_allow_html=True)
         if st.button("👨‍⚕️ Find Specialists", key="doctor_btn", use_container_width=True):
             st.switch_page("pages/doctor_spec.py")
+    
+    # Feature Cards Row 3
+    col5, col6 = st.columns([1, 1])
     
     with col5:
         st.markdown("""
@@ -412,7 +495,28 @@ else:
             recent_df = tracker.get_mood_dataframe(days=7)
             
             if not recent_df.empty:
-                col1, col2, col3 = st.columns(3)
+                # Add responsive CSS for mood metrics
+                st.markdown("""
+                <style>
+                @media (max-width: 768px) {
+                    .mood-metrics-container {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                    }
+                    .mood-metrics-row {
+                        display: flex;
+                        gap: 0.5rem;
+                    }
+                    .mood-metrics-row > div {
+                        flex: 1;
+                    }
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
+                # Responsive layout - 2 rows of 2 columns on mobile, 3 columns on desktop
+                col1, col2 = st.columns(2)
                 
                 with col1:
                     avg_mood = recent_df['mood_level'].apply(tracker.get_mood_numeric).mean()
@@ -422,7 +526,9 @@ else:
                     total_entries = len(recent_df)
                     st.metric("Entries This Week", total_entries)
                 
-                with col3:
+                # Third metric in a centered column
+                col3_container = st.columns([1, 2, 1])
+                with col3_container[1]:
                     most_common = recent_df['mood_level'].mode().iloc[0] if not recent_df.empty else "N/A"
                     st.metric("Most Common Mood", tracker.get_mood_label(most_common))
                 
