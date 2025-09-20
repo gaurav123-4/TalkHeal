@@ -2,70 +2,8 @@ import streamlit as st
 import random
 import time
 
-def show_games_page():
-    """Games page with Memory Challenge Game only"""
-    
-    # Header and navigation
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col1:
-        if st.button("← Back to Home", key="back_to_home"):
-            st.session_state.active_page = "TalkHeal"
-            st.rerun()
-    
-    with col2:
-        st.markdown("""
-        <div style="text-align: center;">
-            <h1 style="color: #ff69b4; font-family: 'Baloo 2', cursive;">🎮 Mental Wellness Games</h1>
-            <p style="color: #ffb6d5; font-size: 1.2rem;">Interactive games for mental health support</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Show only Memory Challenge Game
-    st.markdown("""
-    <style>
-    .game-card {
-        background: linear-gradient(135deg, #fff0f6 0%, #ffe0f0 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        border: 2px solid #ffb6d5;
-        margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(255, 182, 213, 0.3);
-        text-align: center;
-    }
-    .game-title {
-        color: #ff69b4;
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-    }
-    .game-description {
-        color: #bf4f70;
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-    }
-    .benefit-text {
-        color: #ff8fa3;
-        font-size: 1rem;
-        font-style: italic;
-        margin-bottom: 2rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Memory Challenge Game Card
-    st.markdown("""
-    <div class="game-card">
-        <div class="game-title">🧠 Memory Challenge</div>
-        <div class="game-description">Simon Says style memory game to improve cognitive function and concentration.</div>
-        <div class="benefit-text">✨ Benefits: Enhanced memory, improved focus, cognitive training</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if st.button("🎯 Play Memory Challenge", key="play_memory", use_container_width=True, type="primary"):
-        memory_challenge_game()
-
 def memory_challenge_game():
-    """Simon Says style memory game for cognitive improvement"""
+    """Complete Memory Challenge Game - Simon Says style for cognitive improvement"""
     
     st.markdown("### 🧠 Memory Challenge Game")
     st.markdown("**Improve your memory and concentration with this Simon Says style game!**")
@@ -316,6 +254,21 @@ def memory_challenge_game():
         - You built **cognitive resilience** - the ability to bounce back from mistakes
         - You enhanced **pattern recognition** - helpful for problem-solving
         """)
+
+# Simple wrapper to show just the game
+def show_games_page():
+    """Show Memory Challenge Game only"""
+    
+    # Header
+    st.markdown("""
+    <div style="text-align: center;">
+        <h1 style="color: #ff69b4; font-family: 'Baloo 2', cursive;">🧠 Memory Challenge</h1>
+        <p style="color: #ffb6d5; font-size: 1.2rem;">Simon Says style game for cognitive improvement</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Show the memory game directly
+    memory_challenge_game()
 
 if __name__ == "__main__":
     show_games_page()
