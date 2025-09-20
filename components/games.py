@@ -69,11 +69,56 @@ def show_games_page():
     
     st.subheader("Choose Your Wellness Game:")
     
-    cols = st.columns(len(games))
-    for i, (game_name, game_key) in enumerate(games.items()):
-        with cols[i]:
-            if st.button(game_name, key=f"select_{game_key}"):
-                st.session_state.current_game = game_key
+    # Add responsive game selection CSS
+    st.markdown("""
+    <style>
+    @media (max-width: 768px) {
+        .game-selection-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .game-selection-container .stButton {
+            width: 100%;
+        }
+        .game-selection-container .stButton > button {
+            width: 100% !important;
+            min-height: 50px !important;
+            font-size: 0.9rem !important;
+            text-align: center !important;
+        }
+    }
+    @media (min-width: 769px) {
+        .game-selection-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .game-selection-row .stButton {
+            flex: 1 1 200px;
+            max-width: 250px;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Responsive layout for game buttons - max 2 per row on desktop, stack on mobile
+    games_list = list(games.items())
+    
+    st.markdown('<div class="game-selection-container">', unsafe_allow_html=True)
+    
+    # Group games into rows of 2 for better mobile compatibility
+    for i in range(0, len(games_list), 2):
+        row_games = games_list[i:i+2]
+        cols = st.columns(len(row_games))
+        
+        for j, (game_name, game_key) in enumerate(row_games):
+            with cols[j]:
+                if st.button(game_name, key=f"select_{game_key}", use_container_width=True):
+                    st.session_state.current_game = game_key
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Display selected game
     if 'current_game' in st.session_state:
@@ -145,29 +190,63 @@ def memory_challenge_game():
     if not st.session_state.show_sequence and not st.session_state.game_over:
         st.write("Click the colors in the correct order:")
         
-        cols = st.columns(4)
-        for i, color in enumerate(colors):
-            with cols[i]:
-                if st.button(color, key=f"memory_{color}_{len(st.session_state.user_sequence)}"):
-                    st.session_state.user_sequence.append(color)
+        # Add responsive CSS for memory game colors
+        st.markdown("""
+        <style>
+        @media (max-width: 768px) {
+            .memory-colors-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                justify-content: center;
+                margin: 1rem 0;
+            }
+            .memory-colors-container .stButton {
+                flex: 1 1 45%;
+                min-width: 80px;
+                max-width: 120px;
+            }
+            .memory-colors-container .stButton > button {
+                font-size: 2rem !important;
+                min-height: 60px !important;
+                width: 100% !important;
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<div class="memory-colors-container">', unsafe_allow_html=True)
+        
+        # Use 2x2 grid for mobile compatibility
+        for row in range(2):
+            cols = st.columns(2)
+            for col in range(2):
+                color_index = row * 2 + col
+                if color_index < len(colors):
+                    color = colors[color_index]
+                    with cols[col]:
+                        if st.button(color, key=f"memory_{color}_{len(st.session_state.user_sequence)}", use_container_width=True):
+                            st.session_state.user_sequence.append(color)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
                     
-                    # Check if sequence matches
-                    if len(st.session_state.user_sequence) == len(st.session_state.memory_sequence):
-                        if st.session_state.user_sequence == st.session_state.memory_sequence:
-                            st.session_state.memory_score += 10 * st.session_state.memory_level
-                            st.session_state.memory_level += 1
-                            st.session_state.memory_sequence.append(random.choice(colors))
-                            st.session_state.user_sequence = []
-                            st.session_state.show_sequence = True
-                            st.success(f"🎉 Correct! Level {st.session_state.memory_level}")
-                            st.rerun()
-                        else:
-                            st.session_state.game_over = True
-                            st.error("❌ Wrong sequence! Game Over!")
-                    
-                    elif st.session_state.user_sequence[len(st.session_state.user_sequence)-1] != st.session_state.memory_sequence[len(st.session_state.user_sequence)-1]:
-                        st.session_state.game_over = True
-                        st.error("❌ Wrong color! Game Over!")
+        # Check if sequence matches
+        if len(st.session_state.user_sequence) == len(st.session_state.memory_sequence):
+            if st.session_state.user_sequence == st.session_state.memory_sequence:
+                st.session_state.memory_score += 10 * st.session_state.memory_level
+                st.session_state.memory_level += 1
+                st.session_state.memory_sequence.append(random.choice(colors))
+                st.session_state.user_sequence = []
+                st.session_state.show_sequence = True
+                st.success(f"🎉 Correct! Level {st.session_state.memory_level}")
+                st.rerun()
+            else:
+                st.session_state.game_over = True
+                st.error("❌ Wrong sequence! Game Over!")
+        
+        elif st.session_state.user_sequence[len(st.session_state.user_sequence)-1] != st.session_state.memory_sequence[len(st.session_state.user_sequence)-1]:
+            st.session_state.game_over = True
+            st.error("❌ Wrong color! Game Over!")
         
         if st.session_state.user_sequence:
             st.write(f"Your sequence: {' '.join(st.session_state.user_sequence)}")
@@ -207,28 +286,61 @@ def mood_color_matching_game():
     options = [correct_color] + random.sample(wrong_colors, min(3, len(wrong_colors)))
     random.shuffle(options)
     
-    cols = st.columns(len(options))
-    for i, color in enumerate(options):
-        with cols[i]:
-            if st.button(color, key=f"color_choice_{i}"):
-                if color == correct_color:
-                    st.session_state.color_score += 10
-                    st.success("🎉 Perfect match! Colors can really reflect our emotions!")
-                    
-                    # Show color psychology fact
-                    facts = {
-                        "🟡": "Yellow is associated with happiness, optimism, and mental clarity!",
-                        "🔵": "Blue represents calmness and can help reduce anxiety and stress.",
-                        "🔴": "Red is linked to strong emotions like passion, energy, and sometimes anger.",
-                        "🟢": "Green promotes balance, harmony, and has a calming effect on the mind.",
-                        "🟣": "Purple is often associated with creativity, spirituality, and compassion.",
-                        "🟠": "Orange represents enthusiasm, creativity, and positive energy!"
-                    }
-                    st.info(f"💡 **Did you know?** {facts.get(correct_color, 'Colors have powerful psychological effects!')}")
-                else:
-                    st.error("Try again! Think about what this emotion feels like.")
-                
-                st.rerun()
+    # Add responsive CSS for mood color selection  
+    st.markdown("""
+    <style>
+    @media (max-width: 768px) {
+        .mood-color-selection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        .mood-color-selection .stButton {
+            flex: 1 1 45%;
+            min-width: 70px;
+            max-width: 100px;
+        }
+        .mood-color-selection .stButton > button {
+            font-size: 2rem !important;
+            min-height: 60px !important;
+            width: 100% !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="mood-color-selection">', unsafe_allow_html=True)
+    
+    # Use 2 columns per row for better mobile layout
+    for row in range(0, len(options), 2):
+        row_options = options[row:row+2]
+        cols = st.columns(len(row_options))
+        
+        for j, color in enumerate(row_options):
+            with cols[j]:
+                button_index = row + j
+                if st.button(color, key=f"color_choice_{button_index}", use_container_width=True):
+                    if color == correct_color:
+                        st.session_state.color_score += 10
+                        st.success("🎉 Perfect match! Colors can really reflect our emotions!")
+                        
+                        # Show color psychology fact
+                        facts = {
+                            "🟡": "Yellow is associated with happiness, optimism, and mental clarity!",
+                            "🔵": "Blue represents calmness and can help reduce anxiety and stress.",
+                            "🔴": "Red is linked to strong emotions like passion, energy, and sometimes anger.",
+                            "🟢": "Green promotes balance, harmony, and has a calming effect on the mind.",
+                            "🟣": "Purple is often associated with creativity, spirituality, and compassion.",
+                            "🟠": "Orange represents enthusiasm, creativity, and positive energy!"
+                        }
+                        st.info(f"💡 **Did you know?** {facts.get(correct_color, 'Colors have powerful psychological effects!')}")
+                    else:
+                        st.error("Try again! Think about what this emotion feels like.")
+                        st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown(f"""
     <div class="score-display">
