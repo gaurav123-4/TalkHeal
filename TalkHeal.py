@@ -52,6 +52,7 @@ from components.emergency_page import render_emergency_page
 from components.focus_session import render_focus_session
 from components.profile import apply_global_font_size
 from components.games import show_games_page
+from components.games import show_games_page
 
 # --- 1. INITIALIZE SESSION STATE ---
 if "chat_history" not in st.session_state:
