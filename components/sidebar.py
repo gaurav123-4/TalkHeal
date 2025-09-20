@@ -324,6 +324,41 @@ def render_sidebar():
         
         st.markdown("---")
         
+        # Mental Wellness Games Section
+        st.markdown("""
+        <div class="sidebar-section-header" style="margin-bottom: 10px;">
+            <h3>🎮 Mental Wellness Games</h3>
+            <p>Interactive games for mental health & relaxation</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Main Games Page Button
+        if st.button("🚀 Play Wellness Games", key="main_games_page", use_container_width=True, type="primary"):
+            st.session_state.active_page = "Games"
+            st.rerun()
+        
+        with st.expander("🎯 Game Preview", expanded=False):
+            st.markdown("*Available therapeutic games:*")
+            
+            # Quick Game Previews
+            st.markdown("""
+            🧠 **Memory Challenge** - Simon Says style game for cognitive improvement
+            
+            🎨 **Mood Color Match** - Express emotions through color psychology
+            
+            😌 **Stress Relief Clicker** - Simple clicking for anxiety management
+            
+            💭 **Positive Words** - Build positive thinking patterns
+            
+            🫁 **Breathing Patterns** - Interactive breathing exercises with visual feedback
+            """)
+            
+            st.markdown("---")
+            st.markdown("*Benefits of mindful gaming:*")
+            st.markdown("• Improves focus and concentration")
+            st.markdown("• Reduces stress and anxiety")
+            st.markdown("• Enhances cognitive function")
+            st.markdown("• Promotes mindful awareness")
 
         # Community Forum Section
         st.markdown("""
