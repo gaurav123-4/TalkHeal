@@ -51,6 +51,7 @@ from components.mood_dashboard import MoodTracker
 from components.emergency_page import render_emergency_page
 from components.focus_session import render_focus_session
 from components.profile import apply_global_font_size
+from components.games import show_games_page
 
 # --- 1. INITIALIZE SESSION STATE ---
 if "chat_history" not in st.session_state:
@@ -149,7 +150,7 @@ def render_feature_cards():
     st.markdown('<div class="features-grid-container">', unsafe_allow_html=True)
     
     # Row 1: Primary Features
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1])
     
     with col1:
         st.markdown("""
@@ -190,11 +191,19 @@ def render_feature_cards():
         """, unsafe_allow_html=True)
         if st.button("👨‍⚕️ Find Specialists", key="doctor_btn", use_container_width=True):
             st.switch_page("pages/doctor_spec.py")
-
-    # Row 2
-    col5, col6, col7, col8 = st.columns(4)
     
     with col5:
+        st.markdown("""
+        <div class="feature-card primary-card games-card">
+            <div class="card-icon">🎮</div>
+            <h3>Mental Wellness Games</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🎮 Play Games", key="games_btn", use_container_width=True):
+            st.session_state.active_page = "Games"
+            st.rerun()
+    
+    with col6:
         st.markdown("""
         <div class="feature-card secondary-card tools-card">
             <div class="card-icon">🛠️</div>
@@ -203,29 +212,6 @@ def render_feature_cards():
         """, unsafe_allow_html=True)
         if st.button("🛠️ Explore Tools", key="tools_btn", use_container_width=True):
             st.switch_page("pages/selfHelpTools.py")
-    
-    with col6:
-        st.markdown("""
-        <div class="feature-card secondary-card wellness-card">
-            <div class="card-icon">🌿</div>
-            <h3>Wellness Hub</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🌿 Open Wellness Hub", key="wellness_btn", use_container_width=True):
-            st.switch_page("pages/WellnessResourceHub.py")
-
-    with col7:
-        st.markdown("""
-        <div class="feature-card secondary-card tools-card">
-            <div class="card-icon">🎯</div>
-            <h3>Habit Builder</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🎯 Build Habits", key="habit_builder_btn", use_container_width=True):
-            st.switch_page("pages/Habit_Builder.py")
-
-    with col8:
-        pass
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -257,6 +243,16 @@ elif st.session_state.active_page == "CommunityForum":
     with main_area:
         import pages.CommunityForum as community_forum
         # The CommunityForum page will render itself
+
+elif st.session_state.active_page == "Games":
+    with main_area:
+        # Back to Home Button
+        if st.button("⬅ Back to Home", key="back_to_home_from_games"):
+            st.session_state.active_page = "TalkHeal"
+            st.rerun()
+        
+        # Show Games Page
+        show_games_page()
 else:
     with main_area:
         # Render the beautiful feature cards layout
