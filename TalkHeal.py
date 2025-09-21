@@ -189,8 +189,7 @@ def render_feature_cards():
         </div>
     """, unsafe_allow_html=True)
     
-    # Simple column layout - original 6 + 2 new cards
-    col1, col2, col3, col4 = st.columns(4)
+    # Card layout: 10 cards total in 2 rows of 5 cards each
     
     # Define all feature cards data
     cards_data = [
@@ -250,11 +249,25 @@ def render_feature_cards():
             "action": lambda: st.switch_page("pages/WellnessResourceHub.py"), 
             "key": "wellness_btn",
             "button_text": "🌟 Wellness Hub"
+        },
+        {
+            "icon": "💬",
+            "title": "Community Forum",
+            "action": lambda: st.switch_page("pages/CommunityForum.py"),
+            "key": "forum_btn",
+            "button_text": "💬 Join Community"
+        },
+        {
+            "icon": "❓",
+            "title": "Q&A Support",
+            "action": lambda: st.switch_page("pages/QnA.py"),
+            "key": "qna_btn",
+            "button_text": "❓ Ask Questions"
         }
     ]
     
-    # Render cards in rows of 4 for desktop, but maintain fixed width
-    cards_per_row = 4
+    # Render cards in rows of 5 for desktop, 2 rows total
+    cards_per_row = 5
     
     for i in range(0, len(cards_data), cards_per_row):
         row_cards = cards_data[i:i + cards_per_row]
