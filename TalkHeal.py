@@ -179,124 +179,103 @@ if not st.session_state.conversations:
 def render_feature_cards():
     """Render beautiful feature cards showcasing app capabilities"""
     
-    # Hero Welcome Section
+    # Hero Welcome Section  
     st.markdown(f"""
-    <div class="hero-welcome-section">
-        <div class="hero-content">
-            <h1 class="hero-title">Welcome to TalkHeal, 
-            {st.session_state.user_profile.get("name", "User")}! 💬</h1>
-            <p class="hero-subtitle">Your Mental Health Companion 💙</p>
+        <div class="hero-welcome-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Welcome to TalkHeal, {st.session_state.user_profile.get("name", "User")}! 💬</h1>
+                <p class="hero-subtitle">Your Mental Health Companion 💙</p>
+            </div>
         </div>
-    </div>
     """, unsafe_allow_html=True)
     
-    # Main Feature Cards Grid
-    st.markdown('<div class="features-grid-container">', unsafe_allow_html=True)
+    # Simple column layout - original 6 + 2 new cards
+    col1, col2, col3, col4 = st.columns(4)
     
-    # Responsive feature cards CSS
-    st.markdown("""
-    <style>
-    @media (max-width: 768px) {
-        .features-mobile-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+    # Define all feature cards data
+    cards_data = [
+        {
+            "icon": "🧘‍♀️",
+            "title": "Yoga & Meditation",
+            "action": lambda: st.switch_page("pages/Yoga.py"),
+            "key": "yoga_btn",
+            "button_text": "🧘‍♀️ Start Yoga"
+        },
+        {
+            "icon": "🌬️", 
+            "title": "Breathing Exercises",
+            "action": lambda: st.switch_page("pages/Breathing_Exercise.py"),
+            "key": "breathing_btn",
+            "button_text": "🌬️ Start Breathing"
+        },
+        {
+            "icon": "📝",
+            "title": "Personal Journaling", 
+            "action": lambda: st.switch_page("pages/Journaling.py"),
+            "key": "journal_btn",
+            "button_text": "📝 Open Journal"
+        },
+        {
+            "icon": "👨‍⚕️",
+            "title": "Doctor Specialist",
+            "action": lambda: st.switch_page("pages/doctor_spec.py"),
+            "key": "doctor_btn", 
+            "button_text": "👨‍⚕️ Find Specialists"
+        },
+        {
+            "icon": "🎮",
+            "title": "Mental Wellness Games",
+            "action": lambda: setattr(st.session_state, 'active_page', 'Games') or st.rerun(),
+            "key": "games_btn",
+            "button_text": "🎮 Play Games"
+        },
+        {
+            "icon": "🛠️",
+            "title": "Self-Help Tools", 
+            "action": lambda: st.switch_page("pages/selfHelpTools.py"),
+            "key": "tools_btn",
+            "button_text": "🛠️ Explore Tools"
+        },
+
+        {
+            "icon": "�",
+            "title": "Habit Builder",
+            "action": lambda: st.switch_page("pages/Habit_Builder.py"),
+            "key": "habits_btn",
+            "button_text": "� Build Habits"
+        },
+        {
+            "icon": "🌟",
+            "title": "Wellness Resource Hub",
+            "action": lambda: st.switch_page("pages/WellnessResourceHub.py"), 
+            "key": "wellness_btn",
+            "button_text": "🌟 Wellness Hub"
         }
-        .features-mobile-row {
-            display: flex;
-            gap: 0.5rem;
-        }
-        .features-mobile-row .stButton {
-            flex: 1 1 50%;
-        }
-        .feature-card {
-            margin-bottom: 0.5rem;
-        }
-    }
-    @media (min-width: 769px) and (max-width: 1024px) {
-        .features-tablet-grid .stColumn {
-            flex: 1 1 33% !important;
-            margin-bottom: 1rem;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    ]
     
-    # Responsive layout - 2 columns per row on mobile, 3 on tablet, 6 on desktop
-    st.markdown('<div class="features-mobile-grid">', unsafe_allow_html=True)
+    # Render cards in rows of 4 for desktop, but maintain fixed width
+    cards_per_row = 4
     
-    # Row 1: Primary Features (2 columns for mobile compatibility)
-    col1, col2 = st.columns([1, 1])
+    for i in range(0, len(cards_data), cards_per_row):
+        row_cards = cards_data[i:i + cards_per_row]
+        cols = st.columns(len(row_cards))
+        
+        for j, card in enumerate(row_cards):
+            with cols[j]:
+                st.markdown(f"""
+                <div class="feature-card primary-card" style="margin: 0 auto;">
+                    <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">{card['icon']}</div>
+                    <h3 style="margin-bottom: 1rem; color: white; font-size: 1.1rem;">{card['title']}</h3>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button(card['button_text'], key=card['key'], use_container_width=True):
+                    try:
+                        card['action']()
+                    except Exception as e:
+                        st.error(f"Error navigating to {card['title']}: {str(e)}")
     
-    # Feature Cards Row 1
-    with col1:
-        st.markdown("""
-        <div class="feature-card primary-card yoga-card">
-            <div class="card-icon">🧘‍♀️</div>
-            <h3>Yoga & Meditation</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🧘‍♀️ Start Yoga", key="yoga_btn", use_container_width=True):
-            st.switch_page("pages/Yoga.py")
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card primary-card breathing-card">
-            <div class="card-icon">🌬️</div>
-            <h3>Breathing Exercises</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🌬️ Start Breathing", key="breathing_btn", use_container_width=True):
-            st.switch_page("pages/Breathing_Exercise.py")
-    
-    # Feature Cards Row 2
-    col3, col4 = st.columns([1, 1])
-    
-    with col3:
-        st.markdown("""
-        <div class="feature-card primary-card journal-card">
-            <div class="card-icon">📝</div>
-            <h3>Personal Journaling</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("📝 Open Journal", key="journal_btn", use_container_width=True):
-            st.switch_page("pages/Journaling.py")
-    
-    with col4:
-        st.markdown("""
-        <div class="feature-card primary-card doctor-card">
-            <div class="card-icon">👨‍⚕️</div>
-            <h3>Doctor Specialist</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("👨‍⚕️ Find Specialists", key="doctor_btn", use_container_width=True):
-            st.switch_page("pages/doctor_spec.py")
-    
-    # Feature Cards Row 3
-    col5, col6 = st.columns([1, 1])
-    
-    with col5:
-        st.markdown("""
-        <div class="feature-card primary-card games-card">
-            <div class="card-icon">🎮</div>
-            <h3>Mental Wellness Games</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🎮 Play Games", key="games_btn", use_container_width=True):
-            st.session_state.active_page = "Games"
-            st.rerun()
-    
-    with col6:
-        st.markdown("""
-        <div class="feature-card secondary-card tools-card">
-            <div class="card-icon">🛠️</div>
-            <h3>Self-Help Tools</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🛠️ Explore Tools", key="tools_btn", use_container_width=True):
-            st.switch_page("pages/selfHelpTools.py")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div></div>', unsafe_allow_html=True)
 
 
 # --- 9. RENDER PAGE ---
