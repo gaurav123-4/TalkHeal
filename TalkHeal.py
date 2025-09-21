@@ -65,7 +65,7 @@ with col_buttons:
     
     with nav_cols[0]:
         is_dark = st.session_state.get('dark_mode', False)
-        if st.button("🌙" if is_dark else "☀️", key="top_theme_toggle", help="Toggle Light/Dark Mode", use_container_width=True):
+        if st.button("🌙" if is_dark else "☀", key="top_theme_toggle", help="Toggle Light/Dark Mode", use_container_width=True):
                 st.session_state.dark_mode = not is_dark
                 st.session_state.theme_changed = True
                 st.rerun()
@@ -74,7 +74,7 @@ with col_buttons:
             st.session_state.show_emergency_page = True
             st.rerun()
     with nav_cols[2]:
-        if st.button("ℹ️ About", key="about_btn", help="About TalkHeal", use_container_width=True):
+        if st.button("ℹ About", key="about_btn", help="About TalkHeal", use_container_width=True):
             st.switch_page("pages/About.py")
     with nav_cols[3]:
         if st.button("Logout", key="logout_btn", help="Sign out", use_container_width=True):
@@ -178,8 +178,8 @@ if not st.session_state.conversations:
 # --- 8. FEATURE CARDS FUNCTION ---
 def render_feature_cards():
     """Render beautiful feature cards showcasing app capabilities"""
-    
-    # Hero Welcome Section  
+
+    # Hero Welcome Section
     st.markdown(f"""
         <div class="hero-welcome-section">
             <div class="hero-content">
@@ -188,109 +188,117 @@ def render_feature_cards():
             </div>
         </div>
     """, unsafe_allow_html=True)
-    
-    # Card layout: 10 cards total in 2 rows of 5 cards each
-    
+
     # Define all feature cards data
     cards_data = [
         {
-            "icon": "🧘‍♀️",
+            "icon": "🧘‍♀",
             "title": "Yoga & Meditation",
             "action": lambda: st.switch_page("pages/Yoga.py"),
             "key": "yoga_btn",
-            "button_text": "🧘‍♀️ Start Yoga"
+            "button_text": "🧘‍♀ Start Yoga",
+            "css_class": "yoga-card"
         },
         {
-            "icon": "🌬️", 
+            "icon": "🌬",
             "title": "Breathing Exercises",
             "action": lambda: st.switch_page("pages/Breathing_Exercise.py"),
             "key": "breathing_btn",
-            "button_text": "🌬️ Start Breathing"
+            "button_text": "🌬 Start Breathing",
+            "css_class": "breathing-card"
         },
         {
             "icon": "📝",
-            "title": "Personal Journaling", 
+            "title": "Personal Journaling",
             "action": lambda: st.switch_page("pages/Journaling.py"),
             "key": "journal_btn",
-            "button_text": "📝 Open Journal"
+            "button_text": "📝 Open Journal",
+            "css_class": "journal-card"
         },
         {
-            "icon": "👨‍⚕️",
+            "icon": "👨‍⚕",
             "title": "Doctor Specialist",
             "action": lambda: st.switch_page("pages/doctor_spec.py"),
-            "key": "doctor_btn", 
-            "button_text": "👨‍⚕️ Find Specialists"
+            "key": "doctor_btn",
+            "button_text": "👨‍⚕ Find Specialists",
+            "css_class": "doctor-card"
         },
         {
             "icon": "🎮",
             "title": "Mental Wellness Games",
             "action": lambda: setattr(st.session_state, 'active_page', 'Games') or st.rerun(),
             "key": "games_btn",
-            "button_text": "🎮 Play Games"
+            "button_text": "🎮 Play Games",
+            "css_class": "mood-card"
         },
         {
-            "icon": "🛠️",
-            "title": "Self-Help Tools", 
+            "icon": "🛠",
+            "title": "Self-Help Tools",
             "action": lambda: st.switch_page("pages/selfHelpTools.py"),
             "key": "tools_btn",
-            "button_text": "🛠️ Explore Tools"
+            "button_text": "🛠 Explore Tools",
+            "css_class": "tools-card"
         },
-
         {
-            "icon": "�",
+            "icon": "🌿",
             "title": "Habit Builder",
             "action": lambda: st.switch_page("pages/Habit_Builder.py"),
             "key": "habits_btn",
-            "button_text": "� Build Habits"
+            "button_text": "🌿 Build Habits",
+            "css_class": "habits-card"
         },
         {
             "icon": "🌟",
             "title": "Wellness Resource Hub",
-            "action": lambda: st.switch_page("pages/WellnessResourceHub.py"), 
+            "action": lambda: st.switch_page("pages/WellnessResourceHub.py"),
             "key": "wellness_btn",
-            "button_text": "🌟 Wellness Hub"
+            "button_text": "🌟 Wellness Hub",
+            "css_class": "wellness-card"
         },
         {
             "icon": "💬",
             "title": "Community Forum",
             "action": lambda: st.switch_page("pages/CommunityForum.py"),
             "key": "forum_btn",
-            "button_text": "💬 Join Community"
+            "button_text": "💬 Join Community",
+            "css_class": "community-card"
         },
         {
             "icon": "❓",
             "title": "Q&A Support",
             "action": lambda: st.switch_page("pages/QnA.py"),
             "key": "qna_btn",
-            "button_text": "❓ Ask Questions"
+            "button_text": "❓ Ask Questions",
+            "css_class": "qna-card"
         }
     ]
-    
-    # Render cards in rows of 5 for desktop, 2 rows total
-    cards_per_row = 5
-    
-    for i in range(0, len(cards_data), cards_per_row):
-        row_cards = cards_data[i:i + cards_per_row]
-        cols = st.columns(len(row_cards))
-        
-        for j, card in enumerate(row_cards):
-            with cols[j]:
-                st.markdown(f"""
-                <div class="feature-card primary-card" style="margin: 0 auto;">
-                    <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">{card['icon']}</div>
-                    <h3 style="margin-bottom: 1rem; color: white; font-size: 1.1rem;">{card['title']}</h3>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button(card['button_text'], key=card['key'], use_container_width=True):
-                    try:
-                        card['action']()
-                    except Exception as e:
-                        st.error(f"Error navigating to {card['title']}: {str(e)}")
-    
-    st.markdown('</div></div>', unsafe_allow_html=True)
 
+    # Use Streamlit's native columns to create the grid layout
+    num_columns = 5 # You can change this to 6 for a more compact layout
+    
+    # Check if the number of cards is a multiple of the number of columns
+    # and adjust the number of columns if necessary
+    if len(cards_data) % num_columns != 0:
+        st.warning(f"Please use a number of cards that is a multiple of {num_columns} for a perfect grid.")
 
+    cols = st.columns(num_columns)
+    
+    for i, card in enumerate(cards_data):
+        with cols[i % num_columns]:
+            # Use the new CSS class from the cards_data dictionary
+            st.markdown(f"""
+            <div class="feature-card primary-card {card['css_class']}">
+                <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">{card['icon']}</div>
+                <h3 style="margin-bottom: 1rem; color: white; font-size: 1.1rem;">{card['title']}</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button(card['button_text'], key=card['key'], use_container_width=True):
+                try:
+                    card['action']()
+                except Exception as e:
+                    st.error(f"Error navigating to {card['title']}: {str(e)}")
+                                        
 # --- 9. RENDER PAGE ---
 if st.session_state.get("show_emergency_page"):
     with main_area:
@@ -335,7 +343,7 @@ else:
         
         # AI Tone Selection in main area
         with st.expander("🧠 Customize Your AI Companion", expanded=False):
-            st.markdown("**Choose how your AI companion should respond to you:**")
+            st.markdown("*Choose how your AI companion should respond to you:*")
             selected_tone = st.selectbox(
                 "Select AI personality:",
                 options=list(TONE_OPTIONS.keys()),
@@ -346,7 +354,7 @@ else:
                 st.session_state.selected_tone = selected_tone
                 st.rerun()
             
-            st.info(f"**Current Style**: {TONE_OPTIONS[selected_tone]}")
+            st.info(f"*Current Style*: {TONE_OPTIONS[selected_tone]}")
             
         # Current AI Tone Display
         st.markdown(f"""
@@ -374,15 +382,15 @@ else:
         
         # Mood Entry Form
         with st.form("mood_entry_form"):
-            st.markdown("### � Record Your Mood")
+            st.markdown("###   Record Your Mood")
             
             # Mood Level Selection
             mood_options = {
-                "very_low": "� Very Low",
+                "very_low": "  Very Low",
                 "low": "😔 Low", 
-                "okay": "� Okay",
+                "okay": "  Okay",
                 "good": "😊 Good",
-                "great": "�😄 Great"
+                "great": " 😄 Great"
             }
             
             selected_mood = st.selectbox(
@@ -468,7 +476,7 @@ else:
                     mood_responses = {
                         "very_low": "🤗 I'm here for you. Consider reaching out to a trusted friend or professional if you need support.",
                         "low": "📝 Journaling your thoughts might help process your feelings. Would you like to talk about what's bothering you?",
-                        "okay": "🚶‍♀️ A short walk or some light stretching might help you feel more balanced.",
+                        "okay": "🚶‍♀ A short walk or some light stretching might help you feel more balanced.",
                         "good": "✨ Great to hear you're feeling good! What positive things happened today?",
                         "great": "🌟 You're shining today! Keep spreading that positivity with a kind act."
                     }

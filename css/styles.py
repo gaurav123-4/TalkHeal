@@ -276,6 +276,22 @@ def apply_custom_css():
             border-left: 4px solid #06b6d4;
         }}
         
+        .habits-card {{
+            border-left: 4px solid #22c55e; /* Another green shade */
+        }}
+
+        .wellness-card {{
+            border-left: 4px solid #f97316; /* A bright orange */
+        }}
+
+        .community-card {{
+            border-left: 4px solid #ec4899; /* Secondary pink */
+        }}
+
+        .qna-card {{
+            border-left: 4px solid #eab308; /* A shade of yellow */
+        }}
+        
         /* Card Content Styling */
         .feature-card .card-icon {{
             font-size: 3em;
@@ -691,6 +707,54 @@ def apply_custom_css():
             color: #f5f7fb !important;
         }}
 
+        /* New responsive container for feature cards */
+        .responsive-cards-container {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem; /* Space between cards */
+            justify-content: center;
+        }}
+        
+        /* Styles for the individual card containers */
+        .st-emotion-cache-1g6x8q4 {{
+            display: inline-flex;
+            flex: 1 1 calc(20% - 1.5rem); /* Allows cards to grow and shrink */
+            max-width: calc(20% - 1.5rem); /* Limits the max width to ensure wrapping */
+        }}
+
+        /* Base feature card styling with a minimum width */
+        .feature-card {{
+            /* ... existing styles ... */
+            min-width: 180px; /* Set a minimum width to prevent shrinking */
+            flex: 1 1 auto; /* Allows the card to take up remaining space */
+            box-sizing: border-box; /* Ensures padding and border are included in the width */
+            width: 100%; /* Makes the card fill its container */
+        }}
+
+        /* Media query for tablets and smaller desktops */
+        @media (max-width: 1200px) {{
+            .st-emotion-cache-1g6x8q4 {{
+                flex: 1 1 calc(25% - 1.5rem); /* Show 4 cards per row */
+                max-width: calc(25% - 1.5rem);
+            }}
+        }}
+
+        /* Media query for mobile phones */
+        @media (max-width: 768px) {{
+            .st-emotion-cache-1g6x8q4 {{
+                flex: 1 1 calc(50% - 1.5rem); /* Show 2 cards per row */
+                max-width: calc(50% - 1.5rem);
+            }}
+        }}
+
+        /* Media query for very small mobile screens */
+        @media (max-width: 480px) {{
+            .st-emotion-cache-1g6x8q4 {{
+                flex: 1 1 100%; /* Stack cards vertically, one per row */
+                max-width: 100%;
+            }}
+        }}
+
         /* Sidebar toggle button styling */
         .stApp [data-testid="stSidebarToggleButton"] button,
         button[data-testid="stSidebarToggleButton"],
@@ -793,7 +857,7 @@ def apply_custom_css():
             font-weight: 600 !important;
             font-family: 'Poppins',sans-serif !important;
             box-shadow: 0 3px 12px rgba(0,0,0,0.08) !important;
-            transition: var(--transition,.21s cubic-bezier(.5,.08,.37,1.11)) !important;
+            transition: var(--transition,.21s cubic-bezier(.35,.72,.44,1.18)) !important;
         }}
         
         /* General button hover effects */
