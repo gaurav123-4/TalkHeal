@@ -62,29 +62,24 @@ if page == "🏠 Wellness Hub":
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("🧘 Mind"):
-            st.subheader("🧘 Mind Tips")
+        with st.expander("🧘 Mind"):
             for tip in categories["🧘 Mind"]:
                 st.write("- " + tip)
 
-        if st.button("🥗 Nutrition"):
-            st.subheader("🥗 Nutrition Tips")
+        with st.expander("🥗 Nutrition"):
             for tip in categories["🥗 Nutrition"]:
                 st.write("- " + tip)
 
-        if st.button("🌸 Stress Relief"):
-            st.subheader("🌸 Stress Relief Tips")
+        with st.expander("🌸 Stress Relief"):
             for tip in categories["🌸 Stress Relief"]:
                 st.write("- " + tip)
 
     with col2:
-        if st.button("💪 Body"):
-            st.subheader("💪 Body Tips")
+        with st.expander("💪 Body"):
             for tip in categories["💪 Body"]:
                 st.write("- " + tip)
 
-        if st.button("😴 Sleep"):
-            st.subheader("😴 Sleep Tips")
+        with st.expander("😴 Sleep"):
             for tip in categories["😴 Sleep"]:
                 st.write("- " + tip)
 
