@@ -296,7 +296,8 @@ def render_quick_coping_cards():
                 </div>
             </div>
             """
-            st_html(card_html, height=400)
+            # Adjusted height to prevent the card from being cut off, especially with the hover animation.
+            st_html(card_html, height=500)
     else:
         st.info("No coping cards available right now. Try 'Surprise me' or switch categories.")
 
