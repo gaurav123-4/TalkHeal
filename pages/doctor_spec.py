@@ -142,7 +142,15 @@ if st.sidebar.button("🔎 Predict Disease"):
                 result_df = result_df.merge(des_data, on='Disease', how='left')
 
                 st.markdown("### 📋 Prediction Results", unsafe_allow_html=True)
-                st.dataframe(result_df, use_container_width=True)
+
+                # Iterate through results and display in a more readable format
+                for index, row in result_df.iterrows():
+                    with st.expander(f"**{row['Disease']}** ({row['Chances (%)']:.2f}% chance)"):
+                        st.markdown(f"**⚕️ Recommended Specialist:** {row['Specialist']}")
+                        st.markdown("**📖 Description:**")
+                        st.write(row['Description'])
+
+                st.markdown("---")  # Add a separator
 
                 # Download button
                 csv = result_df.to_csv(index=False).encode('utf-8')
