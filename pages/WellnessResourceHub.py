@@ -180,10 +180,31 @@ elif page == "📊 Mood Tracker":
 # --- Page 6: Wellness Resources ---
 elif page == "📚 Wellness Resources":
     st.title("📚 Wellness Resources")
-    st.write("Here are some trusted resources to explore:")
+    st.write("A curated list of trusted resources to support your well-being journey.")
 
-    st.markdown("[🧘 Headspace – Meditation & Mindfulness](https://www.headspace.com/)")
-    st.markdown("[💪 Nike Training Club – Free Workout App](https://www.nike.com/ntc-app)")
-    st.markdown("[🥗 Nutrition.gov – Healthy Eating Guide](https://www.nutrition.gov/)")
-    st.markdown("[😴 Sleep Foundation – Sleep Health](https://www.sleepfoundation.org/)")
-    st.markdown("[🌸 Calm – Stress & Relaxation](https://www.calm.com/)")
+    st.subheader("🧘 Meditation & Mindfulness")
+    st.markdown("""
+        - **[Headspace](https://www.headspace.com/)**: Guided meditations, animations, articles, and videos to help with mindfulness.
+        - **[Calm](https://www.calm.com/)**: A popular app for sleep, meditation, and relaxation.
+    """)
+
+    st.subheader("💪 Fitness & Movement")
+    st.markdown("""
+        - **[Nike Training Club](https://www.nike.com/ntc-app)**: A wide range of free workouts and personalized training plans.
+    """)
+
+    st.subheader("🥗 Nutrition")
+    st.markdown("""
+        - **[Nutrition.gov](https://www.nutrition.gov/)**: Trustworthy information to help you make healthy eating choices.
+    """)
+
+    st.subheader("😴 Sleep Health")
+    st.markdown("""
+        - **[Sleep Foundation](https://www.sleepfoundation.org/)**: Evidence-based information and resources on sleep health.
+    """)
+
+    st.subheader("❤️ Crisis Support")
+    st.warning("If you are in immediate distress, please reach out. You are not alone.")
+    st.markdown("""
+        - **[Crisis Text Line](https://www.crisistextline.org/)**: Text HOME to 741741 from anywhere in the US, anytime, about any type of crisis.
+    """)
