@@ -17,13 +17,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+if 'selected_symptoms' not in st.session_state:
+    st.session_state.selected_symptoms = []
+
 # Custom light mode styles
 st.markdown("""
     <style>
-    body, .stApp {
+    /* Light mode */
+    [data-theme="light"] body, [data-theme="light"] .stApp {
         background-color: #f9f9f9 !important;
         color: black !important;
     }
+
+    /* Dark mode */
+    [data-theme="dark"] body, [data-theme="dark"] .stApp {
+        background-color: #0e1117 !important; /* Streamlit's dark background */
+        color: white !important;
+    }
+
+    /* Buttons */
     .stButton>button {
         background: #4CAF50 !important;
         color: white !important;
@@ -34,7 +46,7 @@ st.markdown("""
     }
     .stButton>button:hover { background: #45a049 !important; }
 
-    /* Download button light mode */
+    /* Download button */
     .stDownloadButton>button {
         background-color: #2196F3 !important;
         color: white !important;
@@ -43,7 +55,6 @@ st.markdown("""
     }
     .stDownloadButton>button:hover {
         background-color: #0b7dda !important;
-        color: white !important;
     }
 
     /* Dataframe container */
@@ -53,11 +64,23 @@ st.markdown("""
         padding: 8px !important;
     }
 
-    /* Chart container */
+    /* Dark mode DataFrame */
+    [data-theme="dark"] .stDataFrame {
+        background-color: #1e222b !important;
+        color: white !important;
+    }
+
+    /* Chart containers */
     .stPlotlyChart, .stAltairChart, .stVegaLiteChart {
         background-color: white !important;
         border-radius: 8px !important;
         padding: 10px !important;
+    }
+    [data-theme="dark"] .stPlotlyChart,
+    [data-theme="dark"] .stAltairChart,
+    [data-theme="dark"] .stVegaLiteChart {
+        background-color: #1e222b !important;
+        color: white !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -102,12 +125,115 @@ for model in algorithms.values():
 
 # Sidebar
 st.sidebar.header("🛠️ Input Options")
-selected_symptoms = st.sidebar.multiselect("🔍 Search & Select Symptoms", symptoms_list)
+
+# Symptom Grouping
+symptom_groups_definition = {
+    "Cardiovascular": [
+        'fast heart rate', 'palpitations', 'swollen legs', 'swollen blood vessels', 'prominent veins on calf', 'chest pain'
+    ],
+    "Eyes": [
+        'yellowing of eyes', 'blurred and distorted vision', 'redness of eyes', 'pain behind the eyes', 'sunken eyes', 'watering from eyes'
+    ],
+    "Gastrointestinal": [
+        'stomach pain', 'acidity', 'ulcers on tongue', 'vomiting', 'indigestion', 'nausea', 'loss of appetite',
+        'constipation', 'abdominal pain', 'diarrhoea', 'swelling of stomach', 'passage of gases', 'internal itching',
+        'belly pain', 'increased appetite', 'stomach bleeding', 'distention of abdomen', 'excessive hunger',
+        'pain during bowel movements', 'pain in anal region', 'bloody stool', 'irritation in anus'
+    ],
+    "Head, Throat, & Respiratory": [
+        'continuous sneezing', 'patches in throat', 'cough', 'breathlessness', 'headache', 'phlegm',
+        'throat irritation', 'sinus pressure', 'runny nose', 'congestion', 'loss of smell',
+        'mucoid sputum', 'rusty sputum', 'blood in sputum'
+    ],
+    "Musculoskeletal": [
+        'joint pain', 'muscle weakness', 'back pain', 'neck pain', 'knee pain', 'hip joint pain', 'swelling joints',
+        'movement stiffness', 'painful walking', 'muscle pain', 'cramps'
+    ],
+    "Neurological & Mental": [
+        'anxiety', 'mood swings', 'dizziness', 'slurred speech', 'loss of balance', 'unsteadiness',
+        'spinning movements', 'altered sensorium', 'depression', 'irritability', 'lack of concentration',
+        'visual disturbances', 'coma', 'restlessness'
+    ],
+    "Skin & General Appearance": [
+        'itching', 'skin rash', 'nodal skin eruptions', 'yellowish skin', 'bruising', 'puffy face and eyes',
+        'dischromic  patches', 'skin peeling', 'silver like dusting', 'small dents in nails',
+        'inflammatory nails', 'blister', 'red sore around nose', 'yellow crust ooze', 'pus filled pimples',
+        'blackheads', 'scurring', 'red spots over body', 'toxic look (typhos)'
+    ],
+    "Systemic & General": [
+        'shivering', 'chills', 'fatigue', 'weight gain', 'weight loss', 'lethargy', 'high fever',
+        'sweating', 'dehydration', 'mild fever', 'malaise', 'weakness in limbs', 'weakness of one body side',
+        'muscle wasting', 'obesity', 'cold hands and feets'
+    ],
+    "Urinary": [
+        'burning micturition', 'spotting  urination', 'dark urine', 'yellow urine', 'bladder discomfort',
+        'foul smell of urine', 'continuous feel of urine', 'polyuria'
+    ],
+    "Other/Miscellaneous": [
+        'irregular sugar level', 'acute liver failure', 'fluid overload', 'swelled lymph nodes',
+        'enlarged thyroid', 'brittle nails', 'swollen extremeties', 'extra marital contacts',
+        'drying and tingling lips', 'abnormal menstruation', 'family history', 'history of alcohol consumption',
+        'receiving blood transfusion', 'receiving unsterile injections'
+    ]
+}
+
+def clean_symptom_name(s):
+    return s.strip().replace('_', ' ').replace('.1', '').replace('  ', ' ')
+
+symptom_to_group_map = {}
+for group, symptoms in symptom_groups_definition.items():
+    for symptom in symptoms:
+        symptom_to_group_map[symptom] = group
+
+grouped_symptoms_in_data = {}
+for symptom in symptoms_list:
+    clean_symptom = clean_symptom_name(symptom)
+    group = symptom_to_group_map.get(clean_symptom, "Other/Miscellaneous")
+    if group not in grouped_symptoms_in_data:
+        grouped_symptoms_in_data[group] = []
+    grouped_symptoms_in_data[group].append(symptom)
+
+for group in grouped_symptoms_in_data:
+    grouped_symptoms_in_data[group].sort()
+grouped_symptoms_in_data = dict(sorted(grouped_symptoms_in_data.items()))
+
+search_query = st.sidebar.text_input("🔍 Search Symptoms", "", help="Type to search for symptoms across all categories.")
+
+# Collect current selections from checkboxes
+current_selection = []
+symptom_container = st.sidebar.container()
+with symptom_container:
+    for group, symptoms_in_group in grouped_symptoms_in_data.items():
+        symptoms_to_show = [s for s in symptoms_in_group if search_query.lower() in s.lower()] if search_query else symptoms_in_group
+        if symptoms_to_show:
+            with st.expander(group, expanded=bool(search_query)):
+                for symptom in symptoms_to_show:
+                    is_checked = st.checkbox(symptom, value=(symptom in st.session_state.selected_symptoms), key=symptom)
+                    if is_checked:
+                        current_selection.append(symptom)
+
+st.session_state.selected_symptoms = current_selection
+selected_symptoms = st.session_state.selected_symptoms
+
 threshold = st.sidebar.slider("📊 Confidence threshold (%)", 0, 100, 20)
 show_chart = st.sidebar.checkbox("📈 Show Probability Chart", value=True)
 
 # Title
-st.markdown("<h1 style='text-align: center; color: black;'>🩺 Disease Predictor & Doctor Specialist Recommender</h1>", unsafe_allow_html=True)
+st.markdown("""
+    <style>
+    [data-theme="light"] h1.app-title {
+        color: black !important;
+    }
+    [data-theme="dark"] h1.app-title {
+        color: white !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown(
+    "<h1 class='app-title' style='text-align: center;'>🩺 Disease Predictor & Doctor Specialist Recommender</h1>",
+    unsafe_allow_html=True
+)
 
 # Prediction
 if st.sidebar.button("🔎 Predict Disease"):
