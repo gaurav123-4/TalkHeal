@@ -114,19 +114,48 @@ elif page == "✅ Quick Self-Check":
 # --- Page 4: Daily Planner ---
 elif page == "📅 Daily Planner":
     st.title("📅 Daily Planner")
-    st.write("Plan your day with simple goals.")
+    st.write("Plan your day with simple goals. Mark tasks as complete or remove them.")
+
+    # Initialize or migrate session state for tasks
     if "tasks" not in st.session_state:
         st.session_state.tasks = []
+    # Simple migration from old format (list of strings) to new format (list of dicts)
+    elif st.session_state.tasks and isinstance(st.session_state.tasks[0], str):
+        st.session_state.tasks = [{"task": t, "completed": False} for t in st.session_state.tasks]
 
-    new_task = st.text_input("Add a new task:")
-    if st.button("➕ Add Task"):
-        if new_task:
-            st.session_state.tasks.append(new_task)
-            st.success(f"Task added: {new_task}")
+    # --- Task Input Form ---
+    with st.form("new_task_form", clear_on_submit=True):
+        new_task = st.text_input("Add a new task:")
+        submitted = st.form_submit_button("➕ Add Task")
+        if submitted and new_task:
+            st.session_state.tasks.append({"task": new_task, "completed": False})
+            st.rerun()
 
     st.subheader("✅ Your Tasks")
+
+    # --- Task Deletion and Completion Logic ---
+    indices_to_delete = []
     for i, task in enumerate(st.session_state.tasks):
-        st.write(f"- {task}")
+        col1, col2 = st.columns([0.9, 0.1])
+        with col1:
+            # The checkbox state directly modifies the session state dictionary value
+            st.session_state.tasks[i]["completed"] = st.checkbox(
+                task["task"],
+                value=task["completed"],
+                key=f"task_{i}"
+            )
+        with col2:
+            if st.button("🗑️", key=f"delete_{i}", help=f"Delete task: {task['task']}"):
+                indices_to_delete.append(i)
+
+    # Perform deletions after iterating through the list
+    if indices_to_delete:
+        for i in sorted(indices_to_delete, reverse=True):
+            del st.session_state.tasks[i]
+        st.rerun()
+
+    if not st.session_state.tasks:
+        st.info("No tasks yet. Add one above!")
 
 # --- Page 5: Mood Tracker ---
 elif page == "📊 Mood Tracker":
@@ -158,5 +187,3 @@ elif page == "📚 Wellness Resources":
     st.markdown("[🥗 Nutrition.gov – Healthy Eating Guide](https://www.nutrition.gov/)")
     st.markdown("[😴 Sleep Foundation – Sleep Health](https://www.sleepfoundation.org/)")
     st.markdown("[🌸 Calm – Stress & Relaxation](https://www.calm.com/)")
-
-
