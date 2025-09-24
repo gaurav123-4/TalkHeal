@@ -351,6 +351,18 @@ Thanks to these wonderful people for contributing 💖
 
 [![Contributors](https://contrib.rocks/image?repo=eccentriccoder01/TalkHeal)](https://github.com/eccentriccoder01/TalkHeal/graphs/contributors)
 
+<p>
+  <!-- Vaunt.dev (auto-updating SVG contributors graph) -->
+  <a href="https://github.com/eccentriccoder01/talkheal/graphs/contributors">
+    <img 
+      src="https://api.vaunt.dev/v1/github/entities/eccentriccoder01/repositories/talkheal/contributors?format=svg&limit=54" 
+      width="900" 
+      height="400" 
+      alt="Contributors Graph by Vaunt.dev" 
+    />
+  </a>
+</p>
+
 ## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).
