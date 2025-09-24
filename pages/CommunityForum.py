@@ -12,6 +12,14 @@ Welcome to the TalkHeal Community Forum! Here you can connect, share experiences
 - AI moderation ensures a safe and supportive space
 """)
 
+with st.expander("📘 Forum Guidelines"):
+    st.markdown("""
+    - **Be Kind & Respectful:** Treat everyone with respect. No personal attacks.
+    - **Stay Anonymous:** Do not share personal identifying information.
+    - **Offer Support:** Provide constructive and supportive feedback.
+    - **Safety First:** Do not post content that is graphic or promotes self-harm. Our AI moderator is here to help.
+    """)
+
 st.markdown('<div id="community-forum-section"></div>', unsafe_allow_html=True)
 with st.expander("Join the Anonymous Support Group"):
 	st.write("Post your message or support request below. All posts are anonymous and moderated by AI for safety.")
