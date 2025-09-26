@@ -12,6 +12,7 @@ BLOG_POSTS = [
         "author": "Team Talkheal",
         "date": datetime(2025, 9, 19),
         "excerpt": "Healing is not a destination, but a gentle, ongoing process of returning to yourself. This guide offers five simple yet powerful first steps you can take today...",
+        "featured_image": "static_files/Yoga.png",
         "content": '''
             <p>Healing is a personal and often non-linear journey. It's about progress, not perfection. If you're feeling lost and don't know where to begin, remember that the smallest step in the right direction can make the biggest difference. Here are five simple yet powerful first steps you can take today.</p>
 
@@ -55,6 +56,7 @@ BLOG_POSTS = [
         "author": "Team Talkheal",
         "date": datetime(2025, 9, 22),
         "excerpt": "Our feelings can seem chaotic, but they hold valuable clues to our well-being. Discover how the simple act of tracking your mood can serve as a personal map, guiding you toward greater self-awareness and emotional balance...",
+        "featured_image": "static_files/Tools.png",
         "content": '''
             <p>Our emotions can often feel like unpredictable weather—stormy one moment, sunny the next. But what if you had a way to navigate this internal landscape? Mood tracking is that compass. It's the simple practice of noting how you feel each day, and it's a powerful tool for self-discovery.</p>
 
@@ -85,6 +87,7 @@ BLOG_POSTS = [
         "author": "Team Talkheal",
         "date": datetime(2025, 9, 22),
         "excerpt": "Big life changes often start with the smallest steps. We explore the science behind how habits are formed and offer practical, gentle strategies to help you build positive routines that last, one small win at a time...",
+        "featured_image": "static_files/Home_Lavender.png",
         "content": '''
             <p>Have you ever set a huge goal—like meditating for 30 minutes every day—only to give up after a few attempts? You're not alone. The secret to lasting change isn't about massive bursts of effort; it's about the quiet, consistent power of small, positive habits.</p>
 
@@ -129,6 +132,7 @@ def show_blog_list():
         st.markdown("---")
         col1, col2 = st.columns([4, 1])
         with col1:
+            st.image(post["featured_image"])
             st.subheader(post["title"])
             st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')}")
             st.write(post["excerpt"])
@@ -149,6 +153,7 @@ def show_full_post(post_id):
 
     st.title(post["title"])
     st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')}")
+    st.image(post["featured_image"])
     st.markdown("---")
     st.markdown(post["content"], unsafe_allow_html=True)
     st.markdown("---")
