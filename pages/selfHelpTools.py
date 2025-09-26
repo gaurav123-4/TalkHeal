@@ -145,55 +145,57 @@ country_helplines = {
 }
 IASP_LINK = "https://findahelpline.com/"
 
+# Enhanced Knowledge Base with icons
 mental_health_resources_full = {
     "Depression & Mood Disorders": {
+        "icon": "😔",
         "description": "Information on understanding and coping with depression, persistent depressive disorder, and other mood-related challenges.",
         "links": [
-            {"label": "NIMH - Depression",
-                "url": "https://www.nimh.nih.gov/health/topics/depression"},
-            {"label": "Mayo Clinic - Depression",
-                "url": "https://www.mayoclinic.org/diseases-conditions/depression/symptoms-causes/syc-20356007"}
+            {"label": "NIMH - Depression", "url": "https://www.nimh.nih.gov/health/topics/depression"},
+            {"label": "Mayo Clinic - Depression", "url": "https://www.mayoclinic.org/diseases-conditions/depression/symptoms-causes/syc-20356007"}
         ]
     },
     "Anxiety & Panic Disorders": {
+        "icon": "😨",
         "description": "Guidance on managing generalized anxiety, social anxiety, panic attacks, and phobias.",
         "links": [
             {"label": "ADAA - Anxiety & Depression", "url": "https://adaa.org/"},
-            {"label": "NIMH - Anxiety Disorders",
-                "url": "https://www.nimh.nih.gov/health/topics/anxiety-disorders"}
+            {"label": "NIMH - Anxiety Disorders", "url": "https://www.nimh.nih.gov/health/topics/anxiety-disorders"}
         ]
     },
     "Bipolar Disorder": {
+        "icon": "🎭",
         "description": "Understanding the complexities of bipolar disorder, including mood swings and treatment options.",
         "links": [
-            {"label": "NIMH - Bipolar Disorder",
-                "url": "https://www.nimh.nih.gov/health/topics/bipolar-disorder"}
+            {"label": "NIMH - Bipolar Disorder", "url": "https://www.nimh.nih.gov/health/topics/bipolar-disorder"}
         ]
     },
     "PTSD & Trauma": {
+        "icon": "🧠",
         "description": "Resources for individuals experiencing post-traumatic stress disorder and other trauma-related conditions.",
         "links": [
             {"label": "PTSD: National Center", "url": "https://www.ptsd.va.gov/"}
         ]
     },
     "OCD & Related Disorders": {
+        "icon": "🔄",
         "description": "Support and information for obsessive-compulsive disorder, body dysmorphic disorder, and hoarding disorder.",
         "links": [
             {"label": "IOCDF - OCD", "url": "https://iocdf.org/"}
         ]
     },
     "Coping Skills & Self-Care": {
+        "icon": "❤️‍🩹",
         "description": "Practical strategies and techniques for stress management, emotional regulation, and daily well-being.",
         "links": [
-            {"label": "HelpGuide - Stress Management",
-                "url": "https://www.helpguide.org/articles/stress/stress-management.htm"}
+            {"label": "HelpGuide - Stress Management", "url": "https://www.helpguide.org/articles/stress/stress-management.htm"}
         ]
     },
     "Therapy & Treatment Options": {
+        "icon": "🗣️",
         "description": "Overview of various therapeutic approaches, including CBT, DBT, and finding a therapist.",
         "links": [
-            {"label": "APA - Finding a Therapist",
-                "url": "https://www.apa.org/helpcenter/choose-therapist"}
+            {"label": "APA - Finding a Therapist", "url": "https://www.apa.org/helpcenter/choose-therapist"}
         ]
     }
 }
@@ -334,25 +336,31 @@ elif st.session_state.active_tool == "mental_check":
 
 elif st.session_state.active_tool == "knowledge":
     st.header("📚 Resources & Knowledge Base")
-    query = st.text_input("Search resources...", placeholder="e.g., anxiety tips, therapy")
+    query = st.text_input("Search resources by topic...", placeholder="e.g., anxiety, ptsd, self-care")
+
+    # Filter topics based on search query
     if query:
-        filtered = [k for k in mental_health_resources_full if query.lower() in k.lower()]
-        if not filtered:
-            st.info("No matching resources found.")
-        for topic in filtered:
-            st.markdown(f"**{topic}**")
-            st.info(mental_health_resources_full[topic]['description'])
-            for link in mental_health_resources_full[topic]['links']:
-                st.markdown(f"• [{link['label']}]({link['url']})")
-            st.markdown("---")
+        filtered_topics = {
+            topic: data for topic, data in mental_health_resources_full.items()
+            if query.lower() in topic.lower() or query.lower() in data['description'].lower()
+        }
     else:
-        tabs = st.tabs(list(mental_health_resources_full.keys()))
-        for i, topic in enumerate(mental_health_resources_full):
-            with tabs[i]:
-                st.markdown(f"**{topic}**")
-                st.info(mental_health_resources_full[topic]['description'])
-                for link in mental_health_resources_full[topic]['links']:
-                    st.markdown(f"• [{link['label']}]({link['url']})")
+        filtered_topics = mental_health_resources_full
+
+    if not filtered_topics:
+        st.info(f"No resources found matching '{query}'. Please try another search term.")
+    else:
+        # Use st.expander for a cleaner, more scalable layout
+        for topic, data in filtered_topics.items():
+            with st.expander(f"{data['icon']} {topic}", expanded=bool(query)):
+                st.info(data['description'])
+                
+                for link in data['links']:
+                    st.markdown(f"**[{link['label']}]({link['url']})**")
+                    # Extract domain for context
+                    domain = link['url'].split('/')[2]
+                    st.caption(f"🔗 {domain}")
+                st.markdown("---")
 
 elif st.session_state.active_tool == "crisis":
     st.header("☎️ Crisis Support")
