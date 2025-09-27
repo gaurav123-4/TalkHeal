@@ -1,6 +1,8 @@
 import streamlit as st
 import time
 import datetime
+import json
+from streamlit_lottie import st_lottie
 
 # --- CONFIG & CONSTANTS ---
 TECHNIQUES = {
@@ -8,6 +10,7 @@ TECHNIQUES = {
     "Box Breathing (4-4-4-4)": {"inhale": 4, "hold1": 4, "exhale": 4, "hold2": 4},
     "4-7-8 Breathing": {"inhale": 4, "hold1": 7, "exhale": 8, "hold2": 0},
 }
+LOTTIE_ANIMATION_PATH = "assets/yoga_animation.json"
 
 # --- STATE MANAGEMENT ---
 def initialize_state():
@@ -26,6 +29,14 @@ def initialize_state():
         st.session_state.breathing_technique = list(TECHNIQUES.keys())[0]
 
 # --- HELPER FUNCTIONS ---
+def load_lottie_animation(filepath):
+    """Loads a Lottie animation from a JSON file."""
+    try:
+        with open(filepath, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+
 def calculate_streak(log):
     if not log: return 0
     unique_dates = sorted(list(set([entry['timestamp'].date() for entry in log])), reverse=True)
@@ -41,24 +52,6 @@ def calculate_streak(log):
 def calculate_weekly_minutes(log):
     one_week_ago = datetime.datetime.now().date() - datetime.timedelta(days=7)
     return sum(entry['duration'] for entry in log if entry['timestamp'].date() > one_week_ago)
-
-def generate_animation_css(inhale, hold1, exhale, hold2):
-    total_duration = inhale + hold1 + exhale + hold2
-    if total_duration == 0: return ""
-    p_inhale_end = (inhale / total_duration) * 100
-    p_hold1_end = ((inhale + hold1) / total_duration) * 100
-    p_exhale_end = ((inhale + hold1 + exhale) / total_duration) * 100
-    return f"""
-    <style>
-    @keyframes breathe {{ 
-        0% {{ transform: scale(0.8); }} 
-        {p_inhale_end}% {{ transform: scale(1.2); }} 
-        {p_hold1_end}% {{ transform: scale(1.2); }} 
-        {p_exhale_end}% {{ transform: scale(0.8); }}
-        100% {{ transform: scale(0.8); }}
-    }}
-    .breathing-circle {{ animation: breathe {total_duration}s ease-in-out infinite; margin: auto; margin-top: 50px; height: 150px; width: 150px; border-radius: 50%; background-color: #90e0ef; }}
-    </style>"""
 
 # --- UI VIEWS ---
 def show_setup_view():
@@ -86,11 +79,13 @@ def run_session_view():
     inhale, hold1, exhale, hold2 = params['inhale'], params['hold1'], params['exhale'], params['hold2']
     cycle_length = sum(params.values())
 
-    st.markdown(generate_animation_css(**params), unsafe_allow_html=True)
     st.markdown(f"<h2 style='text-align: center; color: teal;'>🧘 {st.session_state.breathing_technique}</h2>", unsafe_allow_html=True)
     
-    st.markdown('<div class="breathing-circle"></div>', unsafe_allow_html=True)
-    st.write("")
+    lottie_animation = load_lottie_animation(LOTTIE_ANIMATION_PATH)
+    if lottie_animation:
+        st_lottie(lottie_animation, height=200, speed=1, quality="high")
+    else:
+        st.warning("Animation file not found. Displaying a placeholder.")
 
     timer_placeholder = st.empty()
     breath_text_placeholder = st.empty()
