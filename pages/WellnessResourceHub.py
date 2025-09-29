@@ -1,5 +1,6 @@
 import streamlit as st
 import random
+import pandas as pd
 
 st.set_page_config(page_title="Wellness Resource Hub", layout="wide")
 
@@ -13,6 +14,7 @@ page = st.sidebar.radio(
         "✅ Quick Self-Check",
         "📅 Daily Planner",
         "📊 Mood Tracker",
+        "📓 Journaling Prompts",
         "📚 Wellness Resources"
     ]
 )
@@ -203,10 +205,46 @@ elif page == "📊 Mood Tracker":
                 st.markdown(f"- **{entry['mood']}**: *{entry['note']}*")
             else:
                 st.markdown(f"- **{entry['mood']}**")
+
+        st.subheader("📊 Mood Analysis")
+        st.write("Here is a summary of your logged moods:")
+        df = pd.DataFrame(st.session_state.moods)
+        mood_counts = df['mood'].value_counts()
+        st.bar_chart(mood_counts)
+
     else:
         st.info("No moods logged yet.")
 
-# --- Page 6: Wellness Resources ---
+# --- Page 6: Journaling Prompts ---
+elif page == "📓 Journaling Prompts":
+    st.title("📓 Journaling Prompts")
+    st.write("Use these prompts to inspire your self-reflection. You don't have to answer them all; just pick one that resonates with you today.")
+
+    st.subheader("🌟 For Gratitude and Positivity")
+    st.markdown("""
+        - What is one small thing that brought you joy today?
+        - Who is someone you're grateful for, and why?
+        - Write about a compliment you received that made you feel good.
+        - What is a personal strength you are proud of?
+    """)
+
+    st.subheader("🤔 For Self-Reflection and Growth")
+    st.markdown("""
+        - What is a challenge you recently overcame, and what did you learn?
+        - If you could give your past self one piece of advice, what would it be?
+        - Describe a time you felt truly at peace. What were you doing?
+        - What is one habit you'd like to develop, and what is the first step?
+    """)
+
+    st.subheader("🔮 For Future Goals and Aspirations")
+    st.markdown("""
+        - Describe your ideal day, from morning to night.
+        - What is a skill you want to learn in the next year?
+        - If there were no obstacles, what is one dream you would pursue?
+        - Write a letter to your future self, five years from now.
+    """)
+
+# --- Page 7: Wellness Resources ---
 elif page == "📚 Wellness Resources":
     st.title("📚 Wellness Resources")
     st.write("A curated list of trusted resources to support your well-being journey.")
