@@ -92,8 +92,11 @@ def show():
         font-size: 1.5rem;
         margin-right: 1rem;
     }
+          
     </style>
     """, unsafe_allow_html=True)
+
+    
 
     with st.container():
         # --- Header Section --- 

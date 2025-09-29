@@ -52,6 +52,7 @@ def set_background(image_path):
 # ✅ Set your background image
 set_background("static_files/pink.png")
 
+
 st.set_page_config(page_title="Wellness Resource Hub", layout="wide")
 
 # --- Sidebar Navigation ---

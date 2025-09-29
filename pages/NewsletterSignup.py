@@ -33,6 +33,11 @@ def set_background(image_path):
         [data-testid="stHeader"] {{
             background-color: rgba(0, 0, 0, 0);
         }}
+        
+        h1 {{
+            color: rgb(214, 51, 108) !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }}
 
         /* Hide left/right arrow at sidebar bottom */
         button[title="Close sidebar"],
@@ -76,7 +81,7 @@ def newsletter_signup_form():
             else:
                 st.error("Please enter a valid email address.")
     
-    st.markdown("<p style='text-align: center; color: #888; font-size: 0.9rem;'>We respect your privacy and will never share your email.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #ff0a54; font-size: 0.9rem;'>We respect your privacy and will never share your email.</p>", unsafe_allow_html=True)
 
 def show():
     """Renders the Newsletter Signup page."""

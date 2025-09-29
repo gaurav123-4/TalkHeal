@@ -10,13 +10,13 @@ def apply_custom_css():
     from core.theme import get_current_theme
     theme_config = get_current_theme()
     theme_overrides = {
-        'primary': '#6366f1',
-        'primary_light': '#818cf8',
-        'primary_dark': '#4f46e5',
+        'primary': '#ff7096',
+        'primary_light': '#ff99ac',
+        'primary_dark': '#ff477e',
         'secondary': '#ec4899',
         'success': '#10b981',
-        'warning': '#f59e0b',
-        'danger': '#ef4444',
+        'warning': '#ff0a54',
+        'danger': '#c9184a',
         'surface': 'rgba(255,255,255,0.14)',
         'surface_alt': 'rgba(25,25,46,0.23)',
         'text_primary': '#fff',

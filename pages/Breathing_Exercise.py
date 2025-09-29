@@ -130,7 +130,7 @@ def run_session_view():
     inhale, hold1, exhale, hold2 = params['inhale'], params['hold1'], params['exhale'], params['hold2']
     cycle_length = sum(params.values())
 
-    st.markdown(f"<h2 style='text-align: center; color: teal;'>🧘 {st.session_state.breathing_technique}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='text-align: center; color: teal;'>🧘 {st.session_state.breathing_technique}</h1>", unsafe_allow_html=True)
     
     lottie_animation = load_lottie_animation(LOTTIE_ANIMATION_PATH)
     if lottie_animation:

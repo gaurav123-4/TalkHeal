@@ -52,12 +52,64 @@ def set_background(image_path):
 # Set your background image
 set_background("static_files/pink.png")
 
+def show():
+    """Renders a more visually appealing Community page using tabs and icons."""
+
+    st.markdown("""
+    <style>
+    /* General container style */
+    .main-container {
+        padding: 1rem;
+    }
+    
+    .pinned-msg {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #ffe4f0 0%, #fff 100%);
+        border-radius: 18px;
+        margin-bottom: 2rem;
+    }
+    .pinned-msg h1 {
+        color: rgb(214, 51, 108);
+        font-family: 'Baloo 2', cursive;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    /* Custom list style with icons */
+    .icon-list-item {
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        color: #31333F; /* Set text color for dark mode visibility */
+    }
+    .icon-list-item span {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+          
+    </style>
+    """, unsafe_allow_html=True)
+
+    
+
+    with st.container():
+    
+        st.markdown("""
+        <div class="pinned-msg">
+            <h1>📌 Pinned Messages</h1>
+        </div>
+        """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    show()
 
 def render_pinned_messages_page():
-    """Render the pinned messages page"""
-    st.title("📌 Pinned Messages")
-    inject_custom_css()  # load same chat bubble styles
-
+    
     # Initialize pinned messages if not exists
     if "pinned_messages" not in st.session_state:
         st.session_state.pinned_messages = []

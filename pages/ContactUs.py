@@ -48,30 +48,64 @@ set_background("static_files/pink.png")
 
 
 def show():
-    # Inject CSS to style the container
+    """Renders a more visually appealing Community page using tabs and icons."""
+
     st.markdown("""
-        <style>
-            .contact-container {
-                background: linear-gradient(135deg, #ffe4f0 0%, #fff 100%);
-                border-radius: 18px;
-                box-shadow: 0 2px 18px 0 rgba(209,74,122,0.12);
-                padding: 2.5rem;
-                margin: 2rem auto;
-                max-width: 900px;
-            }
-            .contact-container h2 {
-                color: #d14a7a;
-                font-family: 'Baloo 2', cursive;
-            }
-        </style>
+    <style>
+    /* General container style */
+    .main-container {
+        padding: 1rem;
+    }
+   
+    .contact-container {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #ffe4f0 0%, #fff 100%);
+        border-radius: 18px;
+        margin-bottom: 2rem;
+    }
+    .contact-container h1 {
+        color: rgb(214, 51, 108);
+        font-family: 'Baloo 2', cursive;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    .contact-container p {
+        color: #333;
+        font-size: 1.2rem;
+        font-style: italic;
+    }
+    /* Custom list style with icons */
+    .icon-list-item {
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        color: #31333F; /* Set text color for dark mode visibility */
+    }
+    .icon-list-item span {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+          
+    </style>
     """, unsafe_allow_html=True)
 
-    # Use a markdown div to apply the custom class
-    st.markdown("<div class='contact-container'>", unsafe_allow_html=True)
+    
 
-    st.markdown("<h2>Contact Us</h2>", unsafe_allow_html=True)
-    st.write("We'd love to hear from you! Please fill out the form below or reach out to us via email.")
-    st.write("") # Add a little space
+    with st.container():
+        # --- Header Section --- 
+        st.markdown("""
+        <div class="contact-container">
+            <h1>📞Contact Us</h1>
+            <p>We'd love to hear from you! Please fill out the form below or reach out to us via email.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
 
     # --- Interactive Contact Form ---
     with st.form("contact_form", clear_on_submit=True):

@@ -46,17 +46,64 @@ def set_background(image_path):
 # ✅ Set your background image
 set_background("static_files/pink.png")
 
-
 def show():
-    # Page Header
+    """Renders a more visually appealing Community page using tabs and icons."""
+
     st.markdown("""
-        <div style='background: var(--secondary-background-color); border-radius: 18px; box-shadow: 0 2px 18px 0 rgba(0,0,0,0.1); padding: 2.5rem; margin: 2rem auto; max-width: 900px;'>
-            <h2 style='text-align: center; font-family: "Helvetica Neue", sans-serif;'>Expert-Led Q&A Sessions</h2>
-            <p style='font-size: 1.1rem; text-align: center;'>
-                Connect with licensed mental health professionals, gain valuable insights, and get your questions answered in our expert-led sessions.
-            </p>
-        </div>
+    <style>
+    /* General container style */
+    .main-container {
+        padding: 1rem;
+    }
+   
+    .QnA{
+        text-align: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #ffe4f0 0%, #fff 100%);
+        border-radius: 18px;
+        margin-bottom: 2rem;
+    }
+    .QnA h1 {
+        color: rgb(214, 51, 108);
+        font-family: 'Baloo 2', cursive;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    .QnA p {
+        color: #333;
+        font-size: 1.2rem;
+        font-style: italic;
+    }
+    /* Custom list style with icons */
+    .icon-list-item {
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        color: #31333F; /* Set text color for dark mode visibility */
+    }
+    .icon-list-item span {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+          
+    </style>
     """, unsafe_allow_html=True)
+
+    
+
+    with st.container():
+        
+        st.markdown("""
+        <div class="QnA">
+            <h1>Expert-Led Q&A Sessions</h1>
+            <p>Connect with licensed mental health professionals, gain valuable insights, and get your questions answered in our expert-led sessions.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("---")
 

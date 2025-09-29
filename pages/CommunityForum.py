@@ -48,9 +48,68 @@ def set_background(image_path):
 # ✅ Set your background image
 set_background("static_files/pink.png")
 
-# --- Page Configuration ---
-st.set_page_config(page_title="Community Forum", page_icon="🌐", layout="wide")
+def show():
+    """Renders a more visually appealing Community page using tabs and icons."""
 
+    st.markdown("""
+    <style>
+    /* General container style */
+    .main-container {
+        padding: 1rem;
+    }
+    /* Header style */
+    .community-header {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #ffe4f0 0%, #fff 100%);
+        border-radius: 18px;
+        margin-bottom: 2rem;
+    }
+    .community-header h1 {
+        color: rgb(214, 51, 108);
+        font-family: 'Baloo 2', cursive;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    .community-header p {
+        color: #333;
+        font-size: 1.2rem;
+        font-style: italic;
+    }
+    /* Custom list style with icons */
+    .icon-list-item {
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        color: #31333F; /* Set text color for dark mode visibility */
+    }
+    .icon-list-item span {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+          
+    </style>
+    """, unsafe_allow_html=True)
+
+    
+
+    with st.container():
+        # --- Header Section --- 
+        st.markdown("""
+        <div class="community-header">
+            <h1>🌐Community Forum</h1>
+            <p>Welcome! Connect, share, and support each other in a safe, AI-moderated environment.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    show()
+    
 # --- Helper Functions ---
 
 # List of fun anonymous names
@@ -151,9 +210,6 @@ def show_posts():
 
 initialize_state()
 
-st.title("🌐 Community Forum")
-st.markdown("Welcome! Connect, share, and support each other in a safe, AI-moderated environment.")
-
 with st.expander("📘 Forum Guidelines"):
     st.markdown("""
     - **Be Kind & Respectful:** Treat everyone with respect. No personal attacks.
@@ -177,3 +233,5 @@ with col2:
 
 st.markdown("---")
 st.info("This is a prototype. Posts are cleared when you close the browser tab.")
+
+

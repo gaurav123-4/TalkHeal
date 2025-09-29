@@ -41,6 +41,11 @@ def set_background(image_path):
     [data-testid="stHeader"] {
         background-color: rgba(0, 0, 0, 0);
     }
+    
+    h1 {
+            color: rgb(214, 51, 108) !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
 
     /* Hide left/right arrow at sidebar bottom */
     button[title="Close sidebar"],
