@@ -11,7 +11,6 @@ page = st.sidebar.radio(
     "Go to:",
     [
         "🏠 Wellness Hub",
-        "🌞 Daily Affirmation",
         "✅ Quick Self-Check",
         "📅 Daily Planner",
         "📊 Mood Tracker",
@@ -71,41 +70,48 @@ wellness_tasks = [
 
 # --- Page 1: Wellness Hub ---
 if page == "🏠 Wellness Hub":
-    st.title("🌿 Wellness Resource Hub")
-    st.write("Click on a category to explore simple wellness tips and resources.")
+    st.title("🌿 Wellness Hub Dashboard")
 
+    # Integrated Daily Affirmation
+    st.info(f"✨ **Today's Affirmation:** {random.choice(affirmations)}")
+
+    st.markdown("---    ")
+    st.write("Explore these wellness categories to find tips and resources for your well-being.")
+
+    # Card-based layout for categories
     col1, col2 = st.columns(2)
 
     with col1:
-        with st.expander("🧘 Mind"):
+        with st.container(border=True):
+            st.subheader("🧘 Mind")
             for tip in categories["🧘 Mind"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ") # Add some padding
 
-        with st.expander("🥗 Nutrition"):
+        with st.container(border=True):
+            st.subheader("🥗 Nutrition")
             for tip in categories["🥗 Nutrition"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ")
 
-        with st.expander("🌸 Stress Relief"):
+        with st.container(border=True):
+            st.subheader("🌸 Stress Relief")
             for tip in categories["🌸 Stress Relief"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ")
 
     with col2:
-        with st.expander("💪 Body"):
+        with st.container(border=True):
+            st.subheader("💪 Body")
             for tip in categories["💪 Body"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ")
 
-        with st.expander("😴 Sleep"):
+        with st.container(border=True):
+            st.subheader("😴 Sleep")
             for tip in categories["😴 Sleep"]:
-                st.write("- " + tip)
-
-    st.markdown("---")
-    st.success(random.choice(affirmations))
-
-# --- Page 2: Daily Affirmation ---
-elif page == "🌞 Daily Affirmation":
-    st.title("🌞 Daily Positive Affirmation")
-    st.write("Here’s a little boost for your day:")
-    st.info(random.choice(affirmations))
+                st.write(f"- {tip}")
+            st.write(" ")
 
 # --- Page 3: Quick Self-Check ---
 elif page == "✅ Quick Self-Check":
