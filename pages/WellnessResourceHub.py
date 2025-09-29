@@ -184,27 +184,48 @@ elif page == "📚 Wellness Resources":
 
     st.subheader("🧘 Meditation & Mindfulness")
     st.markdown("""
-        - **[Headspace](https://www.headspace.com/)**: Guided meditations, animations, articles, and videos to help with mindfulness.
+        - **[Headspace](https://www.headspace.com/)**: Guided meditations, animations, articles, and videos.
         - **[Calm](https://www.calm.com/)**: A popular app for sleep, meditation, and relaxation.
+        - **[Tara Brach](https://www.tarabrach.com/guided-meditations/)**: Free guided meditations and talks on mindfulness.
+        - **[Mindful.org](https://www.mindful.org/)**: Articles, guides, and resources on practicing mindfulness.
     """)
 
     st.subheader("💪 Fitness & Movement")
     st.markdown("""
         - **[Nike Training Club](https://www.nike.com/ntc-app)**: A wide range of free workouts and personalized training plans.
+        - **[Yoga with Adriene](https://www.youtube.com/user/yogawithadriene)**: High-quality free yoga and mindfulness videos for all levels.
+        - **[Fitness Blender](https://www.fitnessblender.com/)**: A huge variety of free, full-length workout videos.
     """)
 
     st.subheader("🥗 Nutrition")
     st.markdown("""
-        - **[Nutrition.gov](https://www.nutrition.gov/)**: Trustworthy information to help you make healthy eating choices.
+        - **[Nutrition.gov](https://www.nutrition.gov/)**: Trustworthy information to make healthy eating choices.
+        - **[MyFitnessPal](https://www.myfitnesspal.com/)**: A popular tool for tracking food intake and calories.
     """)
 
     st.subheader("😴 Sleep Health")
     st.markdown("""
         - **[Sleep Foundation](https://www.sleepfoundation.org/)**: Evidence-based information and resources on sleep health.
+        - **[The Sleep Council](https://sleepcouncil.org.uk/)**: Practical advice on how to get a better night's sleep.
+    """)
+
+    st.subheader("🎙️ Wellness Podcasts")
+    st.markdown("""
+        - **[The Happiness Lab](https://www.pushkin.fm/podcasts/the-happiness-lab-with-dr-laurie-santros)**: Dr. Laurie Santos explores the science of happiness.
+        - **[Feel Better, Live More](https://drchatterjee.com/blog/)**: Hosted by Dr. Rangan Chatterjee, offering practical health advice.
+        - **[Ten Percent Happier](https://www.tenpercent.com/podcast)**: Interviews with meditation experts and scientists.
+    """)
+
+    st.subheader("📖 Recommended Books")
+    st.markdown("""
+        - **[Atomic Habits by James Clear](https://jamesclear.com/atomic-habits)**: A guide to building good habits and breaking bad ones.
+        - **[The Power of Now by Eckhart Tolle](https://eckharttolle.com/power-of-now-a-guide-to-spiritual-enlightenment/)**: A book on mindfulness and living in the present moment.
+        - **[10% Happier by Dan Harris](https.www.goodreads.com/book/show/18505796-10-happier)**: A true story about a news anchor who discovers meditation.
     """)
 
     st.subheader("❤️ Crisis Support")
     st.warning("If you are in immediate distress, please reach out. You are not alone.")
     st.markdown("""
         - **[Crisis Text Line](https://www.crisistextline.org/)**: Text HOME to 741741 from anywhere in the US, anytime, about any type of crisis.
+        - **[The National Suicide Prevention Lifeline](https://suicidepreventionlifeline.org/)**: Call 988 for free and confidential support.
     """)
