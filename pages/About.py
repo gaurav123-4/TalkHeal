@@ -35,6 +35,11 @@ def set_background(image_path):
             background-color: rgba(0, 0, 0, 0);
         }}
 
+        h1 {{
+            color: rgb(214, 51, 108) !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }}
+
         /* Hide left/right arrow at sidebar bottom */
         button[title="Close sidebar"],
         button[title="Open sidebar"] {{
@@ -46,7 +51,7 @@ def set_background(image_path):
     )
 
 # ✅ Set your background image
-set_background("static_files/mint.png")
+set_background("static_files/pink.png")
 
 # ------------ About Page Content ------------
 st.title("About TalkHeal")

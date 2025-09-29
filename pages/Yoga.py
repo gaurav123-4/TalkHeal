@@ -38,7 +38,7 @@ try:
 except FileNotFoundError:
     yoga_data = {}
 
-background_image_path = "static_files/lavender.png"
+background_image_path = "static_files/pink.png"
 base64_background_image = get_base64_of_bin_file(background_image_path)
 
 st.markdown(f"""
@@ -80,8 +80,13 @@ div[style*="background:"]
     border: none !important;
 }}
 
-h1, h2, h3, h4, h5, h6, p, span, strong, div, label {{
-    color: #4a148c !important;
+h1 {{
+    color: rgb(214, 51, 108) !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}}
+
+h2, h3, h4, h5, h6, p, span, strong, div, label {{
+    color: rgba(49, 51, 63, 0.8) !important;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }}
 
@@ -157,7 +162,7 @@ div[data-baseweb="popover"] > div > ul {{
 }}
 
 div[data-baseweb="popover"] li {{
-    color: #4a148c !important;
+    color: rgba(49, 51, 63, 0.8) !important;
     font-weight: 500;
     transition: background-color 0.2s ease;
 }}
@@ -231,7 +236,7 @@ button[data-testid="stExpanderToggle"]:hover {{
 
 div[data-testid="stButton"] > button {{
     background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-    color: #4a148c !important; 
+    color: rgba(49, 51, 63, 0.8) !important; 
     border: 1px solid #cccccc !important; 
     border-radius: 12px !important;
     font-weight: bold !important;

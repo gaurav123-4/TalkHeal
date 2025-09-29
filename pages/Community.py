@@ -1,5 +1,52 @@
 import streamlit as st
+import base64
 from pathlib import Path
+
+def set_background(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+
+    st.markdown(
+        f"""
+        <style>
+        /* Entire app background */
+        html, body, [data-testid="stApp"] {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+
+        /* Main content transparency */
+        .block-container {{
+            background-color: rgba(255, 255, 255, 0);
+        }}
+
+        /* Sidebar: brighter translucent background */
+        [data-testid="stSidebar"] {{
+            background-color: rgba(255, 255, 255, 0.6);  /* Brighter and translucent */
+            color: black;  /* Adjusted for light background */
+        }}
+
+        /* Header bar: fully transparent */
+        [data-testid="stHeader"] {{
+            background-color: rgba(0, 0, 0, 0);
+        }}
+
+        /* Hide left/right arrow at sidebar bottom */
+        button[title="Close sidebar"],
+        button[title="Open sidebar"] {{
+            display: none !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ✅ Set your background image
+set_background("static_files/pink.png")
+
 
 def show():
     """Renders a more visually appealing Community page using tabs and icons."""
@@ -14,12 +61,12 @@ def show():
     .community-header {
         text-align: center;
         padding: 2rem 1rem;
-        background: linear-gradient(135deg, #e6f7ff 0%, #f0f8ff 100%);
+        background: linear-gradient(135deg, #ffe4f0 0%, #fff 100%);
         border-radius: 18px;
         margin-bottom: 2rem;
     }
     .community-header h1 {
-        color: #007bff;
+        color: rgb(214, 51, 108);
         font-family: 'Baloo 2', cursive;
         font-size: 2.5rem;
         font-weight: 700;
@@ -52,7 +99,7 @@ def show():
         # --- Header Section --- 
         st.markdown("""
         <div class="community-header">
-            <h1>Welcome to the TalkHeal Community</h1>
+            <h1>👋Welcome to the TalkHeal Community</h1>
             <p>Connect. Share. Grow.</p>
         </div>
         """, unsafe_allow_html=True)

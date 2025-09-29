@@ -1,8 +1,59 @@
 import streamlit as st
+import base64
 import time
 import datetime
 import json
 from streamlit_lottie import st_lottie
+
+def set_background(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+
+    st.markdown(
+        f"""
+        <style>
+        /* Entire app background */
+        html, body, [data-testid="stApp"] {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+
+        /* Main content transparency */
+        .block-container {{
+            background-color: rgba(255, 255, 255, 0);
+        }}
+
+        /* Sidebar: brighter translucent background */
+        [data-testid="stSidebar"] {{
+            background-color: rgba(255, 255, 255, 0.6);  /* Brighter and translucent */
+            color: black;  /* Adjusted for light background */
+        }}
+        
+        h1 {{
+            color: rgb(214, 51, 108) !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }}
+
+        /* Header bar: fully transparent */
+        [data-testid="stHeader"] {{
+            background-color: rgba(0, 0, 0, 0);
+        }}
+
+        /* Hide left/right arrow at sidebar bottom */
+        button[title="Close sidebar"],
+        button[title="Open sidebar"] {{
+            display: none !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ✅ Set your background image
+set_background("static_files/pink.png")
 
 # --- CONFIG & CONSTANTS ---
 TECHNIQUES = {
@@ -55,7 +106,7 @@ def calculate_weekly_minutes(log):
 
 # --- UI VIEWS ---
 def show_setup_view():
-    st.markdown("<h2 style='text-align: center; color: teal;'>🧘 Breathing Exercise</h2>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: teal;'>🧘 Breathing Exercise</h2>", unsafe_allow_html=True)
     st.markdown("Use this guided exercise to relax. Select a technique, then start your session.")
 
     st.markdown("### 📊 Your Progress")
