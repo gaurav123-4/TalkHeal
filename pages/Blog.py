@@ -48,6 +48,7 @@ def show_full_post(post_id):
             st.rerun()
         return
 
+    # --- Post Content ---
     st.title(post["title"])
     st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')}")
     st.image(post["featured_image"])
@@ -58,8 +59,45 @@ def show_full_post(post_id):
         del st.session_state.selected_blog_post
         st.rerun()
 
+    # --- Comments Section ---
+    st.subheader("💬 Comments")
+
+    post_comments = st.session_state.comments.get(post_id, [])
+
+    if not post_comments:
+        st.info("No comments yet. Be the first to comment!")
+    else:
+        for comment in post_comments:
+            with st.container(border=True):
+                st.caption(f"{comment['author']} on {comment['timestamp'].strftime('%B %d, %Y at %I:%M %p')}")
+                st.write(comment["comment"])
+
+    st.markdown("---")
+
+    # --- Comment Form ---
+    st.subheader("Leave a Comment")
+    with st.form("comment_form", clear_on_submit=True):
+        name = st.text_input("Your Name")
+        comment_text = st.text_area("Your Comment")
+        submitted = st.form_submit_button("Submit Comment")
+
+        if submitted and name and comment_text:
+            if post_id not in st.session_state.comments:
+                st.session_state.comments[post_id] = []
+            
+            st.session_state.comments[post_id].append({
+                "author": name,
+                "comment": comment_text,
+                "timestamp": datetime.now()
+            })
+            st.rerun()
+
 def show():
     """Main function to render the blog page."""
+    # Initialize session state for comments if it doesn't exist
+    if 'comments' not in st.session_state:
+        st.session_state.comments = {}
+
     if "selected_blog_post" in st.session_state:
         show_full_post(st.session_state.selected_blog_post)
     else:
