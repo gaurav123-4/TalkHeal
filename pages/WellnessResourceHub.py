@@ -160,20 +160,31 @@ elif page == "📅 Daily Planner":
 # --- Page 5: Mood Tracker ---
 elif page == "📊 Mood Tracker":
     st.title("📊 Mood Tracker")
-    st.write("Log your daily mood and track progress.")
+    st.write("Log your daily mood and add a note to track progress and identify patterns.")
 
+    # Initialize or migrate session state for moods
     if "moods" not in st.session_state:
         st.session_state.moods = []
+    # Simple migration from old format (list of strings) to new format (list of dicts)
+    elif st.session_state.moods and isinstance(st.session_state.moods[0], str):
+        st.session_state.moods = [{"mood": m, "note": ""} for m in st.session_state.moods]
 
     mood = st.radio("How do you feel today?", ["😊 Happy", "😐 Okay", "😟 Stressed", "😢 Sad"])
+    note = st.text_input("Add a note to remember the context (optional):")
+
     if st.button("Log Mood"):
-        st.session_state.moods.append(mood)
+        st.session_state.moods.append({"mood": mood, "note": note})
         st.success(f"Logged mood: {mood}")
+        st.rerun()
 
     st.subheader("📅 Mood History")
     if st.session_state.moods:
-        for entry in st.session_state.moods:
-            st.write("- " + entry)
+        # Display moods in reverse chronological order
+        for entry in reversed(st.session_state.moods):
+            if entry["note"]:
+                st.markdown(f"- **{entry['mood']}**: *{entry['note']}*")
+            else:
+                st.markdown(f"- **{entry['mood']}**")
     else:
         st.info("No moods logged yet.")
 
