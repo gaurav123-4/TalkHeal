@@ -54,6 +54,18 @@ affirmations = [
     "💡 Every day is a new beginning — take a deep breath and start fresh."
 ]
 
+# --- Wellness Task Suggestions ---
+wellness_tasks = [
+    "Drink a full glass of water",
+    "Stretch for 5 minutes",
+    "Take 10 deep, slow breaths",
+    "Write down one thing you're grateful for",
+    "Go for a 10-minute walk outside",
+    "Tidy up your workspace for 5 minutes",
+    "Listen to one favorite calming song",
+    "Step away from screens for 5 minutes"
+]
+
 # --- Page 1: Wellness Hub ---
 if page == "🏠 Wellness Hub":
     st.title("🌿 Wellness Resource Hub")
@@ -130,6 +142,12 @@ elif page == "📅 Daily Planner":
         if submitted and new_task:
             st.session_state.tasks.append({"task": new_task, "completed": False})
             st.rerun()
+
+    # --- Wellness Task Suggestion Button ---
+    if st.button("💡 Suggest a Wellness Task"):
+        suggested_task = random.choice(wellness_tasks)
+        st.session_state.tasks.append({"task": suggested_task, "completed": False})
+        st.rerun()
 
     st.subheader("✅ Your Tasks")
 
