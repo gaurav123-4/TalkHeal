@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 import pandas as pd
+from datetime import datetime
 
 st.set_page_config(page_title="Wellness Resource Hub", layout="wide")
 
@@ -109,13 +110,18 @@ elif page == "🌞 Daily Affirmation":
 # --- Page 3: Quick Self-Check ---
 elif page == "✅ Quick Self-Check":
     st.title("✅ Quick Wellness Self-Check")
-    st.write("Answer a few quick questions to get simple wellness advice.")
+    st.write("Track your well-being over time. Answer a few quick questions to get simple wellness advice and see your progress.")
+
+    # Initialize session state for self-check history
+    if "self_check_history" not in st.session_state:
+        st.session_state.self_check_history = []
 
     stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
     sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
     mood = st.slider("How is your overall mood today?", 0, 10, 6)
 
-    if st.button("Get My Wellness Tip"):
+    if st.button("Log and Get My Wellness Tip"):
+        # --- Tip Logic ---
         if stress > 7:
             st.warning("😟 You seem stressed. Try deep breathing or take a short walk.")
         elif sleep < 6:
@@ -124,6 +130,28 @@ elif page == "✅ Quick Self-Check":
             st.info("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
         else:
             st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
+        
+        # --- Store Data ---
+        st.session_state.self_check_history.append({
+            "Date": datetime.now(),
+            "Stress": stress,
+            "Sleep (hours)": sleep,
+            "Mood": mood
+        })
+        st.rerun()
+
+    # --- History and Visualization ---
+    if st.session_state.self_check_history:
+        st.markdown("---")
+        st.subheader("📈 Your Self-Check History")
+        
+        history_df = pd.DataFrame(st.session_state.self_check_history)
+        history_df = history_df.set_index("Date")
+        
+        st.line_chart(history_df)
+        
+        with st.expander("View Raw Data"):
+            st.dataframe(history_df)
 
 # --- Page 4: Daily Planner ---
 elif page == "📅 Daily Planner":
