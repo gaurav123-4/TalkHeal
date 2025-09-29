@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import datetime
 import json
+import math
 
 # --- Blog Data ---
 # In a real app, this might come from a database or a CMS.
@@ -16,6 +17,15 @@ def load_blog_posts():
 BLOG_POSTS = load_blog_posts()
 
 
+def get_reading_time(content):
+    """Estimates the reading time for a given text."""
+    word_count = len(content.split())
+    minutes = math.ceil(word_count / 200)  # Assuming 200 WPM reading speed
+    if minutes < 2:
+        return "1 min read"
+    return f"{minutes} min read"
+
+
 def show_blog_list():
     """Displays the list of blog post summaries."""
     st.markdown("""
@@ -25,13 +35,30 @@ def show_blog_list():
         </div>
     """, unsafe_allow_html=True)
 
-    for post in sorted(BLOG_POSTS, key=lambda x: x["date"], reverse=True):
+    # --- Search Bar ---
+    search_query = st.text_input("Search articles by keyword:", placeholder="e.g., mindfulness, habits...")
+
+    # --- Filtering Logic ---
+    posts_to_show = sorted(BLOG_POSTS, key=lambda x: x["date"], reverse=True)
+    if search_query:
+        posts_to_show = [
+            p for p in posts_to_show
+            if search_query.lower() in p['title'].lower() or search_query.lower() in p['excerpt'].lower()
+        ]
+
+    if not posts_to_show:
+        st.info(f'No articles found for "{search_query}". Please try another keyword.')
+        return
+
+    # --- Display Posts ---
+    for post in posts_to_show:
         st.markdown("---")
+        reading_time = get_reading_time(post["content"])
         col1, col2 = st.columns([4, 1])
         with col1:
             st.image(post["featured_image"])
             st.subheader(post["title"])
-            st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')}")
+            st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')} · {reading_time}")
             st.write(post["excerpt"])
         with col2:
             if st.button("Read More", key=f"read_{post['id']}", use_container_width=True):
@@ -49,8 +76,9 @@ def show_full_post(post_id):
         return
 
     # --- Post Content ---
+    reading_time = get_reading_time(post["content"])
     st.title(post["title"])
-    st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')}")
+    st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')} · {reading_time}")
     st.image(post["featured_image"])
     st.markdown("---")
     st.markdown(post["content"], unsafe_allow_html=True)
