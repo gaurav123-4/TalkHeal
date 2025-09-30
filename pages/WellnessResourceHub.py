@@ -1,5 +1,7 @@
 import streamlit as st
 import random
+import pandas as pd
+from datetime import datetime
 
 st.set_page_config(page_title="Wellness Resource Hub", layout="wide")
 
@@ -9,10 +11,10 @@ page = st.sidebar.radio(
     "Go to:",
     [
         "🏠 Wellness Hub",
-        "🌞 Daily Affirmation",
         "✅ Quick Self-Check",
         "📅 Daily Planner",
         "📊 Mood Tracker",
+        "📓 Journaling Prompts",
         "📚 Wellness Resources"
     ]
 )
@@ -54,54 +56,78 @@ affirmations = [
     "💡 Every day is a new beginning — take a deep breath and start fresh."
 ]
 
+# --- Wellness Task Suggestions ---
+wellness_tasks = [
+    "Drink a full glass of water",
+    "Stretch for 5 minutes",
+    "Take 10 deep, slow breaths",
+    "Write down one thing you're grateful for",
+    "Go for a 10-minute walk outside",
+    "Tidy up your workspace for 5 minutes",
+    "Listen to one favorite calming song",
+    "Step away from screens for 5 minutes"
+]
+
 # --- Page 1: Wellness Hub ---
 if page == "🏠 Wellness Hub":
-    st.title("🌿 Wellness Resource Hub")
-    st.write("Click on a category to explore simple wellness tips and resources.")
+    st.title("🌿 Wellness Hub Dashboard")
 
+    # Integrated Daily Affirmation
+    st.info(f"✨ **Today's Affirmation:** {random.choice(affirmations)}")
+
+    st.markdown("---    ")
+    st.write("Explore these wellness categories to find tips and resources for your well-being.")
+
+    # Card-based layout for categories
     col1, col2 = st.columns(2)
 
     with col1:
-        with st.expander("🧘 Mind"):
+        with st.container(border=True):
+            st.subheader("🧘 Mind")
             for tip in categories["🧘 Mind"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ") # Add some padding
 
-        with st.expander("🥗 Nutrition"):
+        with st.container(border=True):
+            st.subheader("🥗 Nutrition")
             for tip in categories["🥗 Nutrition"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ")
 
-        with st.expander("🌸 Stress Relief"):
+        with st.container(border=True):
+            st.subheader("🌸 Stress Relief")
             for tip in categories["🌸 Stress Relief"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ")
 
     with col2:
-        with st.expander("💪 Body"):
+        with st.container(border=True):
+            st.subheader("💪 Body")
             for tip in categories["💪 Body"]:
-                st.write("- " + tip)
+                st.write(f"- {tip}")
+            st.write(" ")
 
-        with st.expander("😴 Sleep"):
+        with st.container(border=True):
+            st.subheader("😴 Sleep")
             for tip in categories["😴 Sleep"]:
-                st.write("- " + tip)
-
-    st.markdown("---")
-    st.success(random.choice(affirmations))
-
-# --- Page 2: Daily Affirmation ---
-elif page == "🌞 Daily Affirmation":
-    st.title("🌞 Daily Positive Affirmation")
-    st.write("Here’s a little boost for your day:")
-    st.info(random.choice(affirmations))
+                st.write(f"- {tip}")
+            st.write(" ")
 
 # --- Page 3: Quick Self-Check ---
 elif page == "✅ Quick Self-Check":
     st.title("✅ Quick Wellness Self-Check")
-    st.write("Answer a few quick questions to get simple wellness advice.")
+    st.write("Track your well-being over time. Answer a few quick questions to get simple wellness advice and see your progress.")
+
+    # Initialize session state for self-check history
+    if "self_check_history" not in st.session_state:
+        st.session_state.self_check_history = []
 
     stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
     sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
     mood = st.slider("How is your overall mood today?", 0, 10, 6)
 
-    if st.button("Get My Wellness Tip"):
+    if st.button("Log and Get My Wellness Tip"):
+        # --- Tip Logic ---
         if stress > 7:
             st.warning("😟 You seem stressed. Try deep breathing or take a short walk.")
         elif sleep < 6:
@@ -110,6 +136,28 @@ elif page == "✅ Quick Self-Check":
             st.info("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
         else:
             st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
+        
+        # --- Store Data ---
+        st.session_state.self_check_history.append({
+            "Date": datetime.now(),
+            "Stress": stress,
+            "Sleep (hours)": sleep,
+            "Mood": mood
+        })
+        st.rerun()
+
+    # --- History and Visualization ---
+    if st.session_state.self_check_history:
+        st.markdown("---")
+        st.subheader("📈 Your Self-Check History")
+        
+        history_df = pd.DataFrame(st.session_state.self_check_history)
+        history_df = history_df.set_index("Date")
+        
+        st.line_chart(history_df)
+        
+        with st.expander("View Raw Data"):
+            st.dataframe(history_df)
 
 # --- Page 4: Daily Planner ---
 elif page == "📅 Daily Planner":
@@ -130,6 +178,12 @@ elif page == "📅 Daily Planner":
         if submitted and new_task:
             st.session_state.tasks.append({"task": new_task, "completed": False})
             st.rerun()
+
+    # --- Wellness Task Suggestion Button ---
+    if st.button("💡 Suggest a Wellness Task"):
+        suggested_task = random.choice(wellness_tasks)
+        st.session_state.tasks.append({"task": suggested_task, "completed": False})
+        st.rerun()
 
     st.subheader("✅ Your Tasks")
 
@@ -160,51 +214,119 @@ elif page == "📅 Daily Planner":
 # --- Page 5: Mood Tracker ---
 elif page == "📊 Mood Tracker":
     st.title("📊 Mood Tracker")
-    st.write("Log your daily mood and track progress.")
+    st.write("Log your daily mood and add a note to track progress and identify patterns.")
 
+    # Initialize or migrate session state for moods
     if "moods" not in st.session_state:
         st.session_state.moods = []
+    # Simple migration from old format (list of strings) to new format (list of dicts)
+    elif st.session_state.moods and isinstance(st.session_state.moods[0], str):
+        st.session_state.moods = [{"mood": m, "note": ""} for m in st.session_state.moods]
 
     mood = st.radio("How do you feel today?", ["😊 Happy", "😐 Okay", "😟 Stressed", "😢 Sad"])
+    note = st.text_input("Add a note to remember the context (optional):")
+
     if st.button("Log Mood"):
-        st.session_state.moods.append(mood)
+        st.session_state.moods.append({"mood": mood, "note": note})
         st.success(f"Logged mood: {mood}")
+        st.rerun()
 
     st.subheader("📅 Mood History")
     if st.session_state.moods:
-        for entry in st.session_state.moods:
-            st.write("- " + entry)
+        # Display moods in reverse chronological order
+        for entry in reversed(st.session_state.moods):
+            if entry["note"]:
+                st.markdown(f"- **{entry['mood']}**: *{entry['note']}*")
+            else:
+                st.markdown(f"- **{entry['mood']}**")
+
+        st.subheader("📊 Mood Analysis")
+        st.write("Here is a summary of your logged moods:")
+        df = pd.DataFrame(st.session_state.moods)
+        mood_counts = df['mood'].value_counts()
+        st.bar_chart(mood_counts)
+
     else:
         st.info("No moods logged yet.")
 
-# --- Page 6: Wellness Resources ---
+# --- Page 6: Journaling Prompts ---
+elif page == "📓 Journaling Prompts":
+    st.title("📓 Journaling Prompts")
+    st.write("Use these prompts to inspire your self-reflection. You don't have to answer them all; just pick one that resonates with you today.")
+
+    st.subheader("🌟 For Gratitude and Positivity")
+    st.markdown("""
+        - What is one small thing that brought you joy today?
+        - Who is someone you're grateful for, and why?
+        - Write about a compliment you received that made you feel good.
+        - What is a personal strength you are proud of?
+    """)
+
+    st.subheader("🤔 For Self-Reflection and Growth")
+    st.markdown("""
+        - What is a challenge you recently overcame, and what did you learn?
+        - If you could give your past self one piece of advice, what would it be?
+        - Describe a time you felt truly at peace. What were you doing?
+        - What is one habit you'd like to develop, and what is the first step?
+    """)
+
+    st.subheader("🔮 For Future Goals and Aspirations")
+    st.markdown("""
+        - Describe your ideal day, from morning to night.
+        - What is a skill you want to learn in the next year?
+        - If there were no obstacles, what is one dream you would pursue?
+        - Write a letter to your future self, five years from now.
+    """)
+
+# --- Page 7: Wellness Resources ---
 elif page == "📚 Wellness Resources":
     st.title("📚 Wellness Resources")
     st.write("A curated list of trusted resources to support your well-being journey.")
 
     st.subheader("🧘 Meditation & Mindfulness")
     st.markdown("""
-        - **[Headspace](https://www.headspace.com/)**: Guided meditations, animations, articles, and videos to help with mindfulness.
+        - **[Headspace](https://www.headspace.com/)**: Guided meditations, animations, articles, and videos.
         - **[Calm](https://www.calm.com/)**: A popular app for sleep, meditation, and relaxation.
+        - **[Tara Brach](https://www.tarabrach.com/guided-meditations/)**: Free guided meditations and talks on mindfulness.
+        - **[Mindful.org](https://www.mindful.org/)**: Articles, guides, and resources on practicing mindfulness.
     """)
 
     st.subheader("💪 Fitness & Movement")
     st.markdown("""
         - **[Nike Training Club](https://www.nike.com/ntc-app)**: A wide range of free workouts and personalized training plans.
+        - **[Yoga with Adriene](https://www.youtube.com/user/yogawithadriene)**: High-quality free yoga and mindfulness videos for all levels.
+        - **[Fitness Blender](https://www.fitnessblender.com/)**: A huge variety of free, full-length workout videos.
     """)
 
     st.subheader("🥗 Nutrition")
     st.markdown("""
-        - **[Nutrition.gov](https://www.nutrition.gov/)**: Trustworthy information to help you make healthy eating choices.
+        - **[Nutrition.gov](https://www.nutrition.gov/)**: Trustworthy information to make healthy eating choices.
+        - **[MyFitnessPal](https://www.myfitnesspal.com/)**: A popular tool for tracking food intake and calories.
     """)
 
     st.subheader("😴 Sleep Health")
     st.markdown("""
         - **[Sleep Foundation](https://www.sleepfoundation.org/)**: Evidence-based information and resources on sleep health.
+        - **[The Sleep Council](https://sleepcouncil.org.uk/)**: Practical advice on how to get a better night's sleep.
+    """)
+
+    st.subheader("🎙️ Wellness Podcasts")
+    st.markdown("""
+        - **[The Happiness Lab](https://www.pushkin.fm/podcasts/the-happiness-lab-with-dr-laurie-santros)**: Dr. Laurie Santos explores the science of happiness.
+        - **[Feel Better, Live More](https://drchatterjee.com/blog/)**: Hosted by Dr. Rangan Chatterjee, offering practical health advice.
+        - **[Ten Percent Happier](https://www.tenpercent.com/podcast)**: Interviews with meditation experts and scientists.
+    """)
+
+    st.subheader("📖 Recommended Books")
+    st.markdown("""
+        - **[Atomic Habits by James Clear](https://jamesclear.com/atomic-habits)**: A guide to building good habits and breaking bad ones.
+        - **[The Power of Now by Eckhart Tolle](https://eckharttolle.com/power-of-now-a-guide-to-spiritual-enlightenment/)**: A book on mindfulness and living in the present moment.
+        - **[10% Happier by Dan Harris](https.www.goodreads.com/book/show/18505796-10-happier)**: A true story about a news anchor who discovers meditation.
     """)
 
     st.subheader("❤️ Crisis Support")
     st.warning("If you are in immediate distress, please reach out. You are not alone.")
     st.markdown("""
         - **[Crisis Text Line](https://www.crisistextline.org/)**: Text HOME to 741741 from anywhere in the US, anytime, about any type of crisis.
+        - **[The National Suicide Prevention Lifeline](https://suicidepreventionlifeline.org/)**: Call 988 for free and confidential support.
     """)
