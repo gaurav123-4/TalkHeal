@@ -419,6 +419,13 @@ elif st.session_state.active_tool == "crisis":
     for r in GLOBAL_RESOURCES:
         st.markdown(f"**{r['name']}**: {r['desc']} [Visit Website]({r['url']})")
     
+    st.info("""
+    **What to expect when you call a helpline:**
+    You'll connect with a trained crisis counselor who can provide confidential support.
+    You don't need to be suicidal to call; they can help with various emotional distress.
+    They are there to listen without judgment and help you explore options.
+    """)
+
     user_country_auto = get_user_country()
     st.markdown("### 🚨 Emergency Help")
 
