@@ -137,11 +137,42 @@ country_helplines = {
         "Sneha Foundation: 044-24640050"
     ],
     "GB": [
-        "Samaritans: 116 123"
+        "Samaritans: 116 123",
+        "Shout 85258: Text SHOUT to 85258"
     ],
     "AU": [
-        "Lifeline: 13 11 14"
+        "Lifeline: 13 11 14",
+        "Suicide Call Back Service: 1300 659 467"
+    ],
+    "CA": [
+        "Crisis Services Canada: 1-833-456-4566",
+        "Kids Help Phone: 1-800-668-6868"
+    ],
+    "DE": [
+        "Telefonseelsorge: 0800 1110111 or 0800 1110222"
+    ],
+    "FR": [
+        "Suicide Écoute: 01 45 39 40 00"
+    ],
+    "NZ": [
+        "Lifeline Aotearoa: 0800 543 354",
+        "Youthline: 0800 376 633"
+    ],
+    "ZA": [
+        "SADAG (South African Depression and Anxiety Group): 0800 567 567"
     ]
+}
+
+country_names = {
+    "US": "United States",
+    "IN": "India",
+    "GB": "United Kingdom",
+    "AU": "Australia",
+    "CA": "Canada",
+    "DE": "Germany",
+    "FR": "France",
+    "NZ": "New Zealand",
+    "ZA": "South Africa"
 }
 IASP_LINK = "https://findahelpline.com/"
 
@@ -387,11 +418,26 @@ elif st.session_state.active_tool == "crisis":
     st.header("☎️ Crisis Support")
     for r in GLOBAL_RESOURCES:
         st.markdown(f"**{r['name']}**: {r['desc']} [Visit Website]({r['url']})")
-    user_country = get_user_country()
+    
+    user_country_auto = get_user_country()
     st.markdown("### 🚨 Emergency Help")
-    if user_country and user_country in country_helplines:
-        st.markdown(f"**Helplines for {user_country}:**")
-        for line in country_helplines[user_country]:
+
+    # Allow user to manually select country
+    all_available_countries = sorted(list(country_helplines.keys()))
+    default_country_index = 0
+    if user_country_auto and user_country_auto in all_available_countries:
+        default_country_index = all_available_countries.index(user_country_auto)
+
+    selected_country = st.selectbox(
+        "Select your country for local helplines:",
+        options=all_available_countries,
+        index=default_country_index,
+        format_func=lambda x: f"{x} - {country_names.get(x, 'Unknown')}"
+    )
+
+    if selected_country and selected_country in country_helplines:
+        st.markdown(f"**Helplines for {selected_country} ({country_names.get(selected_country, 'Unknown')}):**")
+        for line in country_helplines[selected_country]:
             st.markdown(f"• {line}")
     else:
         st.markdown(f"[Find help worldwide via IASP]({IASP_LINK})")
