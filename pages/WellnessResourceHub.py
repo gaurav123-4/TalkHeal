@@ -81,7 +81,12 @@ wellness_tasks = [
     "Go for a 10-minute walk outside",
     "Tidy up your workspace for 5 minutes",
     "Listen to one favorite calming song",
-    "Step away from screens for 5 minutes"
+    "Step away from screens for 5 minutes",
+    "Jot down 3 things you accomplished today, big or small.",
+    "Send a thank you message to a friend or family member.",
+    "Step outside for 2 minutes and take a breath of fresh air.",
+    "Put on a favorite upbeat song and have a mini dance party.",
+    "Look out a window and name 5 different things you can see."
 ]
 
 # --- Page 1: Wellness Hub ---
