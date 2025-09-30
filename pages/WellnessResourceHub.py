@@ -214,8 +214,10 @@ elif page == "📅 Daily Planner":
         col1, col2 = st.columns([0.9, 0.1])
         with col1:
             # The checkbox state directly modifies the session state dictionary value
+            # The label now uses markdown for a strike-through effect when completed
+            label = f"~~{task['task']}~~" if task["completed"] else task["task"]
             st.session_state.tasks[i]["completed"] = st.checkbox(
-                task["task"],
+                label,
                 value=task["completed"],
                 key=f"task_{i}"
             )
