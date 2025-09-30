@@ -318,22 +318,52 @@ elif st.session_state.active_tool == "mental_check":
     st.text_area(f"✏️ {journal_prompt_text}", key="mood_journal_area", value=st.session_state.mood_journal_entry, height=70)
 
     st.markdown("**Why are you feeling this way?**")
-    context_reasons = ["No specific reason", "Work", "Family", "Health", "Relationships", "Financial", "Social", "Personal goals", "Weather", "Other"]
-    selected_reason = st.selectbox("Select a reason (optional):", options=context_reasons)
+    if "custom_reasons" not in st.session_state:
+        st.session_state.custom_reasons = []
+    
+    default_reasons = ["No specific reason", "Work", "Family", "Health", "Relationships", "Financial", "Social", "Personal goals", "Weather", "Other"]
+    all_reasons = default_reasons + st.session_state.custom_reasons
+    
+    selected_reason = st.selectbox("Select a reason (optional):", options=all_reasons, key="mood_reason_select")
+    
+    new_custom_reason = st.text_input("Add a custom reason (optional):", key="new_custom_reason_input")
+    if st.button("Add Custom Reason", key="add_custom_reason_button") and new_custom_reason.strip():
+        if new_custom_reason.strip() not in st.session_state.custom_reasons:
+            st.session_state.custom_reasons.append(new_custom_reason.strip())
+            st.session_state.new_custom_reason_input = "" # Clear input after adding
+            st.rerun()
 
     st.markdown("**What did you do today?** (optional)")
-    activities = []
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.checkbox("✅ Exercise"):
-            activities.append("Exercise")
-        if st.checkbox("✅ Socialized"):
-            activities.append("Socialized")
-    with col2:
-        if st.checkbox("✅ Ate healthy"):
-            activities.append("Ate healthy")
-        if st.checkbox("✅ Slept well"):
-            activities.append("Slept well")
+    if "custom_activities" not in st.session_state:
+        st.session_state.custom_activities = []
+    if "selected_activities" not in st.session_state:
+        st.session_state.selected_activities = []
+
+    default_activities = ["Exercise", "Socialized", "Ate healthy", "Slept well", "Meditated", "Worked", "Relaxed", "Hobbies"]
+    all_activities_options = sorted(list(set(default_activities + st.session_state.custom_activities)))
+
+    # Display checkboxes for all activities
+    cols_per_row = 2
+    num_cols = st.columns(cols_per_row)
+    for i, activity in enumerate(all_activities_options):
+        with num_cols[i % cols_per_row]:
+            # Use a unique key for each checkbox
+            if st.checkbox(f"✅ {activity}", key=f"activity_checkbox_{activity}", value=activity in st.session_state.selected_activities):
+                if activity not in st.session_state.selected_activities:
+                    st.session_state.selected_activities.append(activity)
+            else:
+                if activity in st.session_state.selected_activities:
+                    st.session_state.selected_activities.remove(activity)
+
+    new_custom_activity = st.text_input("Add a custom activity (optional):", key="new_custom_activity_input")
+    if st.button("Add Custom Activity", key="add_custom_activity_button") and new_custom_activity.strip():
+        if new_custom_activity.strip() not in st.session_state.custom_activities:
+            st.session_state.custom_activities.append(new_custom_activity.strip())
+            st.session_state.new_custom_activity_input = "" # Clear input after adding
+            st.rerun()
+    
+    # Update the activities list to be saved
+    activities = st.session_state.selected_activities
 
     tips_for_mood = {
         "very_low": "Remember, it's okay not to be okay. Consider connecting with a professional.",
