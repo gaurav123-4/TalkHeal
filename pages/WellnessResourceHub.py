@@ -53,7 +53,23 @@ affirmations = [
     "✨ You are stronger than you think.",
     "🌞 Small steps every day lead to big changes.",
     "🌸 Prioritize your well-being — you deserve it.",
-    "💡 Every day is a new beginning — take a deep breath and start fresh."
+    "💡 Every day is a new beginning — take a deep breath and start fresh.",
+    "🌱 Your growth is a journey, not a race.",
+    "💖 Be kind to your mind. You're doing your best.",
+    "🌟 You are capable of amazing things.",
+    "🧘‍♀️ Inhale peace, exhale stress.",
+    "🌈 Healing is not linear — and that’s okay.",
+    "🔥 Challenges help you grow stronger and wiser.",
+    "🌻 You radiate positivity and resilience.",
+    "☀️ Even the darkest night ends with sunrise.",
+    "💎 You are enough, just as you are.",
+    "🌊 Let go of what you can’t control — flow forward.",
+    "🌿 Rest is productive — recharge without guilt.",
+    "🎯 Focus on progress, not perfection.",
+    "❤️ Your feelings are valid, and so are you.",
+    "🦋 Transformation takes time — trust the process.",
+    "✨ You bring light to the spaces you enter.",
+    "🌼 Celebrate small victories — they matter."
 ]
 
 # --- Wellness Task Suggestions ---
