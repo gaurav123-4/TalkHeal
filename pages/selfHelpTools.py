@@ -153,7 +153,8 @@ mental_health_resources_full = {
         "links": [
             {"label": "NIMH - Depression", "url": "https://www.nimh.nih.gov/health/topics/depression"},
             {"label": "Mayo Clinic - Depression", "url": "https://www.mayoclinic.org/diseases-conditions/depression/symptoms-causes/syc-20356007"}
-        ]
+        ],
+        "tags": ["Depression", "Mood Disorders", "Mental Health", "Coping Skills"]
     },
     "Anxiety & Panic Disorders": {
         "icon": "😨",
@@ -161,42 +162,48 @@ mental_health_resources_full = {
         "links": [
             {"label": "ADAA - Anxiety & Depression", "url": "https://adaa.org/"},
             {"label": "NIMH - Anxiety Disorders", "url": "https://www.nimh.nih.gov/health/topics/anxiety-disorders"}
-        ]
+        ],
+        "tags": ["Anxiety", "Panic Attacks", "Phobias", "Stress Management", "Mental Health"]
     },
     "Bipolar Disorder": {
         "icon": "🎭",
         "description": "Understanding the complexities of bipolar disorder, including mood swings and treatment options.",
         "links": [
             {"label": "NIMH - Bipolar Disorder", "url": "https://www.nimh.nih.gov/health/topics/bipolar-disorder"}
-        ]
+        ],
+        "tags": ["Bipolar", "Mood Disorders", "Mental Health", "Treatment Options"]
     },
     "PTSD & Trauma": {
         "icon": "🧠",
         "description": "Resources for individuals experiencing post-traumatic stress disorder and other trauma-related conditions.",
         "links": [
             {"label": "PTSD: National Center", "url": "https://www.ptsd.va.gov/"}
-        ]
+        ],
+        "tags": ["PTSD", "Trauma", "Mental Health", "Coping Skills"]
     },
     "OCD & Related Disorders": {
         "icon": "🔄",
         "description": "Support and information for obsessive-compulsive disorder, body dysmorphic disorder, and hoarding disorder.",
         "links": [
             {"label": "IOCDF - OCD", "url": "https://iocdf.org/"}
-        ]
+        ],
+        "tags": ["OCD", "Mental Health", "Coping Skills"]
     },
     "Coping Skills & Self-Care": {
         "icon": "❤️‍🩹",
         "description": "Practical strategies and techniques for stress management, emotional regulation, and daily well-being.",
         "links": [
             {"label": "HelpGuide - Stress Management", "url": "https://www.helpguide.org/articles/stress/stress-management.htm"}
-        ]
+        ],
+        "tags": ["Coping Skills", "Self-Care", "Stress Management", "Emotional Regulation", "Well-being", "Mindfulness"]
     },
     "Therapy & Treatment Options": {
         "icon": "🗣️",
         "description": "Overview of various therapeutic approaches, including CBT, DBT, and finding a therapist.",
         "links": [
             {"label": "APA - Finding a Therapist", "url": "https://www.apa.org/helpcenter/choose-therapist"}
-        ]
+        ],
+        "tags": ["Therapy", "Treatment Options", "CBT", "DBT", "Mental Health Professionals"]
     }
 }
 st.title("🧰 Self Help Tools")
@@ -339,25 +346,36 @@ elif st.session_state.active_tool == "mental_check":
 
 elif st.session_state.active_tool == "knowledge":
     st.header("📚 Resources & Knowledge Base")
+
+    all_tags = sorted(list(set(tag for data in mental_health_resources_full.values() for tag in data.get("tags", []))))
+    selected_tags = st.multiselect("Filter by Tags:", options=all_tags, placeholder="Select tags to filter resources")
+
     query = st.text_input("Search resources by topic...", placeholder="e.g., anxiety, ptsd, self-care")
 
-    # Filter topics based on search query
-    if query:
-        filtered_topics = {
-            topic: data for topic, data in mental_health_resources_full.items()
-            if query.lower() in topic.lower() or query.lower() in data['description'].lower()
-        }
-    else:
-        filtered_topics = mental_health_resources_full
+    # Filter topics based on search query and selected tags
+    filtered_topics = {}
+    for topic, data in mental_health_resources_full.items():
+        matches_query = True
+        if query:
+            matches_query = query.lower() in topic.lower() or query.lower() in data['description'].lower()
+
+        matches_tags = True
+        if selected_tags:
+            matches_tags = any(tag in data.get("tags", []) for tag in selected_tags)
+
+        if matches_query and matches_tags:
+            filtered_topics[topic] = data
 
     if not filtered_topics:
-        st.info(f"No resources found matching '{query}'. Please try another search term.")
+        st.info(f"No resources found matching your criteria. Please try another search term or different tags.")
     else:
         # Use st.expander for a cleaner, more scalable layout
         for topic, data in filtered_topics.items():
-            with st.expander(f"{data['icon']} {topic}", expanded=bool(query)):
+            with st.expander(f"{data['icon']} {topic}", expanded=bool(query) or bool(selected_tags)):
                 st.info(data['description'])
-                
+
+                st.markdown("Tags: " + ", ".join([f"`{tag}`" for tag in data.get("tags", [])]))
+
                 for link in data['links']:
                     st.markdown(f"**[{link['label']}]({link['url']})**")
                     # Extract domain for context
