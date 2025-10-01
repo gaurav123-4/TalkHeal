@@ -212,70 +212,118 @@ def display_habit_management():
                             if (h.get('name') if isinstance(h, dict) else h.name) == habit.name)
         
         with st.expander(f"🎯 {habit.name}", expanded=False):
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.metric("Current Streak", f"{habit.streak} days", f"+{habit.total_completions} total")
-            with col2:
-                difficulty_emoji = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
-                st.metric("Difficulty", f"{difficulty_emoji.get(habit.difficulty, '')} {habit.difficulty}")
-            with col3:
-                st.metric("Category", habit.category)
-            
-            # Check completion status
-            today = datetime.date.today()
-            last_completed = None
-            if habit.last_completed:
-                if isinstance(habit.last_completed, str):
-                    last_completed = datetime.datetime.strptime(habit.last_completed, '%Y-%m-%d').date()
-                else:
-                    last_completed = habit.last_completed
-            
-            # Action buttons
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                if last_completed == today:
-                    st.success("✅ Completed Today!")
-                else:
-                    if st.button("Mark Complete", key=f"complete_{original_index}"):
+            # Check if this habit is currently being edited
+            if st.session_state.get(f"editing_{original_index}", False):
+                st.markdown("#### Edit Habit Details")
+                with st.form(key=f"edit_habit_form_{original_index}"):
+                    col1_edit, col2_edit = st.columns(2)
+                    with col1_edit:
+                        edited_name = st.text_input("Habit Name", value=habit.name, key=f"edit_name_{original_index}")
+                        edited_category = st.selectbox("Category", list(get_habit_categories().keys()), index=list(get_habit_categories().keys()).index(habit.category), key=f"edit_category_{original_index}")
+                    with col2_edit:
+                        edited_difficulty = st.selectbox("Difficulty", ["Easy", "Medium", "Hard"], index=["Easy", "Medium", "Hard"].index(habit.difficulty), key=f"edit_difficulty_{original_index}")
+                        
+                        # Handle reminder_time conversion
+                        current_reminder_time = None
+                        if habit.reminder_time:
+                            try:
+                                current_reminder_time = datetime.datetime.strptime(habit.reminder_time, '%H:%M:%S').time()
+                            except ValueError:
+                                # Handle cases where reminder_time might be in a different format or invalid
+                                pass
+                        edited_reminder_time = st.time_input("Reminder Time (Optional)", value=current_reminder_time, key=f"edit_reminder_{original_index}")
+                    
+                    edited_notes = st.text_area("Notes (Optional)", value=habit.notes, key=f"edit_notes_{original_index}")
+                    
+                    col_save, col_cancel = st.columns(2)
+                    with col_save:
+                        save_changes = st.form_submit_button("💾 Save Changes")
+                    with col_cancel:
+                        cancel_edit = st.form_submit_button("❌ Cancel")
+                    
+                    if save_changes:
                         # Update habit in session state
                         habit_data = st.session_state.habits[original_index]
                         if isinstance(habit_data, dict):
-                            if last_completed == today - datetime.timedelta(days=1):
-                                habit_data['streak'] += 1
-                            else:
-                                habit_data['streak'] = 1
-                            habit_data['total_completions'] += 1
-                            habit_data['last_completed'] = today.isoformat()
+                            habit_data['name'] = edited_name
+                            habit_data['category'] = edited_category
+                            habit_data['difficulty'] = edited_difficulty
+                            habit_data['notes'] = edited_notes
+                            habit_data['reminder_time'] = edited_reminder_time.isoformat() if edited_reminder_time else None
                         
-                        # Award points
-                        points = {"Easy": 5, "Medium": 10, "Hard": 15}
-                        st.session_state.user_points += points.get(habit.difficulty, 5)
-                        
+                        st.session_state[f"editing_{original_index}"] = False
+                        st.success(f"Habit '{edited_name}' updated!")
                         st.rerun()
-            
-            with col2:
-                if st.button("Edit", key=f"edit_{original_index}"):
-                    st.session_state[f"editing_{original_index}"] = True
-                    st.rerun()
-            
-            with col3:
-                if st.button("Archive", key=f"archive_{original_index}"):
-                    if st.session_state.get(f"confirm_archive_{original_index}", False):
-                        st.session_state.habits.pop(original_index)
+                    
+                    if cancel_edit:
+                        st.session_state[f"editing_{original_index}"] = False
                         st.rerun()
+            else:
+                # Normal display mode
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("Current Streak", f"{habit.streak} days", f"+{habit.total_completions} total")
+                with col2:
+                    difficulty_emoji = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
+                    st.metric("Difficulty", f"{difficulty_emoji.get(habit.difficulty, '')} {habit.difficulty}")
+                with col3:
+                    st.metric("Category", habit.category)
+                
+                # Check completion status
+                today = datetime.date.today()
+                last_completed = None
+                if habit.last_completed:
+                    if isinstance(habit.last_completed, str):
+                        last_completed = datetime.datetime.strptime(habit.last_completed, '%Y-%m-%d').date()
                     else:
-                        st.session_state[f"confirm_archive_{original_index}"] = True
+                        last_completed = habit.last_completed
+                
+                # Action buttons
+                col_complete, col_edit, col_archive, col_confirm = st.columns(4)
+                
+                with col_complete:
+                    if last_completed == today:
+                        st.success("✅ Completed Today!")
+                    else:
+                        if st.button("Mark Complete", key=f"complete_{original_index}"):
+                            # Update habit in session state
+                            habit_data = st.session_state.habits[original_index]
+                            if isinstance(habit_data, dict):
+                                if last_completed == today - datetime.timedelta(days=1):
+                                    habit_data['streak'] += 1
+                                else:
+                                    habit_data['streak'] = 1
+                                habit_data['total_completions'] += 1
+                                habit_data['last_completed'] = today.isoformat()
+                            
+                            # Award points
+                            points = {"Easy": 5, "Medium": 10, "Hard": 15}
+                            st.session_state.user_points += points.get(habit.difficulty, 5)
+                            
+                            st.rerun()
+                
+                with col_edit:
+                    if st.button("✏️ Edit", key=f"edit_btn_{original_index}"):
+                        st.session_state[f"editing_{original_index}"] = True
                         st.rerun()
-            
-            with col4:
-                if st.session_state.get(f"confirm_archive_{original_index}", False):
-                    st.warning("Click Archive again to confirm")
-            
-            # Show notes if any
-            if habit.notes:
-                st.write(f"📝 **Notes:** {habit.notes}")
+                
+                with col_archive:
+                    if st.button("Archive", key=f"archive_{original_index}"):
+                        if st.session_state.get(f"confirm_archive_{original_index}", False):
+                            st.session_state.habits.pop(original_index)
+                            st.rerun()
+                        else:
+                            st.session_state[f"confirm_archive_{original_index}"] = True
+                            st.rerun()
+                
+                with col_confirm:
+                    if st.session_state.get(f"confirm_archive_{original_index}", False):
+                        st.warning("Click Archive again to confirm")
+                
+                # Show notes if any
+                if habit.notes:
+                    st.write(f"📝 **Notes:** {habit.notes}")
 
 def display_add_habit_form():
     """Display form to add new habits"""
