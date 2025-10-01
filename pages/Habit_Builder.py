@@ -35,6 +35,9 @@ def initialize_session_state():
     if 'habits' not in st.session_state:
         st.session_state.habits = []
     
+    if 'archived_habits' not in st.session_state:
+        st.session_state.archived_habits = []
+    
     if 'completed_challenges' not in st.session_state:
         st.session_state.completed_challenges = []
     
@@ -309,9 +312,12 @@ def display_habit_management():
                         st.rerun()
                 
                 with col_archive:
-                    if st.button("Archive", key=f"archive_{original_index}"):
+                    if st.button("🗄️ Archive", key=f"archive_{original_index}"):
                         if st.session_state.get(f"confirm_archive_{original_index}", False):
-                            st.session_state.habits.pop(original_index)
+                            archived_habit = st.session_state.habits.pop(original_index)
+                            st.session_state.archived_habits.append(archived_habit)
+                            st.success(f"Habit '{habit.name}' archived.")
+                            st.session_state[f"confirm_archive_{original_index}"] = False
                             st.rerun()
                         else:
                             st.session_state[f"confirm_archive_{original_index}"] = True
@@ -324,6 +330,46 @@ def display_habit_management():
                 # Show notes if any
                 if habit.notes:
                     st.write(f"📝 **Notes:** {habit.notes}")
+
+def display_archived_habits():
+    """Display archived habits and allow for restoration or permanent deletion."""
+    st.markdown("### 🗄️ Archived Habits")
+    
+    if not st.session_state.get('archived_habits', []):
+        st.info("You have no archived habits.")
+        return
+    
+    st.write("Here are your archived habits. You can restore them to your active list or delete them permanently.")
+    
+    # Use a copy to avoid issues with list modification during iteration
+    for i, archived_habit_data in enumerate(st.session_state.archived_habits[:]):
+        # Handle both dict and Habit object formats
+        if isinstance(archived_habit_data, dict):
+            archived_habit = Habit(**archived_habit_data)
+        else:
+            archived_habit = archived_habit_data
+            
+        with st.container():
+            col1, col2, col3 = st.columns([3, 1, 1])
+            
+            with col1:
+                st.markdown(f"**{archived_habit.name}** `({archived_habit.category})`")
+                st.caption(f"Archived with streak: {archived_habit.streak}, Total completions: {archived_habit.total_completions}")
+            
+            with col2:
+                if st.button("✅ Restore", key=f"restore_{i}"):
+                    restored_habit = st.session_state.archived_habits[i]
+                    st.session_state.habits.append(restored_habit)
+                    st.session_state.archived_habits = [h for idx, h in enumerate(st.session_state.archived_habits) if idx != i]
+                    st.success(f"Habit '{archived_habit.name}' restored!")
+                    st.rerun()
+            
+            with col3:
+                if st.button("❌ Delete Permanently", key=f"delete_perm_{i}"):
+                    st.session_state.archived_habits = [h for idx, h in enumerate(st.session_state.archived_habits) if idx != i]
+                    st.warning(f"Habit '{archived_habit.name}' permanently deleted.")
+                    st.rerun()
+            st.markdown("---")
 
 def display_add_habit_form():
     """Display form to add new habits"""
@@ -383,7 +429,7 @@ def display_daily_challenge():
     difficulty_colors = {"Easy": "#28a745", "Medium": "#ffc107", "Hard": "#dc3545"}
     color = difficulty_colors.get(challenge.difficulty, "#6c757d")
     
-    st.markdown(f"""
+    st.markdown(f'''
     <div style='background: linear-gradient(135deg, {color}20, {color}10); 
                 border-left: 5px solid {color}; 
                 border-radius: 10px; 
@@ -397,7 +443,7 @@ def display_daily_challenge():
             <span><strong>Points:</strong> {challenge.points} 🌟</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    ''', unsafe_allow_html=True)
     
     # Challenge completion
     if st.session_state.get('daily_challenge_completed', False):
@@ -483,7 +529,7 @@ def show():
     initialize_session_state()
     
     # Header
-    st.markdown("""
+    st.markdown('''
     <div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                 border-radius: 15px; margin-bottom: 2rem; color: white;'>
         <h1 style='margin: 0; font-size: 2.5rem;'>🎯 Habit Builder Pro</h1>
@@ -491,15 +537,16 @@ def show():
             Build lasting habits, track your progress, and transform your mental well-being
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    ''', unsafe_allow_html=True)
     
     # Navigation tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📊 Dashboard", 
         "🎯 My Habits", 
         "🏆 Daily Challenge", 
         "➕ Add Habit", 
-        "📈 Analytics"
+        "📈 Analytics",
+        "🗄️ Archived"
     ])
     
     with tab1:
@@ -548,6 +595,9 @@ def show():
     with tab5:
         st.markdown("### 📈 Progress Analytics")
         display_progress_analytics()
+
+    with tab6:
+        display_archived_habits()
     
     # Sidebar with quick stats and tips
     with st.sidebar:
@@ -571,8 +621,10 @@ def show():
         if st.button("🗑️ Reset All Data"):
             if st.session_state.get('confirm_reset', False):
                 st.session_state.habits = []
+                st.session_state.archived_habits = []
                 st.session_state.completed_challenges = []
                 st.session_state.user_points = 0
+                st.session_state.confirm_reset = False
                 st.success("Data reset successfully!")
                 st.rerun()
             else:
