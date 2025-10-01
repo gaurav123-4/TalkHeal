@@ -225,6 +225,11 @@ elif page == "📅 Daily Planner":
         progress_ratio = completed_count / total_count if total_count > 0 else 0
         st.progress(progress_ratio, text=f"{completed_count}/{total_count} Tasks Completed")
 
+        # --- Celebrate Completion ---
+        if completed_count > 0 and completed_count == total_count:
+            st.balloons()
+            st.success("🎉 All tasks completed! Great job!")
+
     # --- Task Display, Edit, and Deletion Logic ---
     indices_to_delete = []
     for i, task in enumerate(st.session_state.tasks):
