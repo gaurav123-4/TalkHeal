@@ -142,11 +142,42 @@ country_helplines = {
         "Sneha Foundation: 044-24640050"
     ],
     "GB": [
-        "Samaritans: 116 123"
+        "Samaritans: 116 123",
+        "Shout 85258: Text SHOUT to 85258"
     ],
     "AU": [
-        "Lifeline: 13 11 14"
+        "Lifeline: 13 11 14",
+        "Suicide Call Back Service: 1300 659 467"
+    ],
+    "CA": [
+        "Crisis Services Canada: 1-833-456-4566",
+        "Kids Help Phone: 1-800-668-6868"
+    ],
+    "DE": [
+        "Telefonseelsorge: 0800 1110111 or 0800 1110222"
+    ],
+    "FR": [
+        "Suicide Écoute: 01 45 39 40 00"
+    ],
+    "NZ": [
+        "Lifeline Aotearoa: 0800 543 354",
+        "Youthline: 0800 376 633"
+    ],
+    "ZA": [
+        "SADAG (South African Depression and Anxiety Group): 0800 567 567"
     ]
+}
+
+country_names = {
+    "US": "United States",
+    "IN": "India",
+    "GB": "United Kingdom",
+    "AU": "Australia",
+    "CA": "Canada",
+    "DE": "Germany",
+    "FR": "France",
+    "NZ": "New Zealand",
+    "ZA": "South Africa"
 }
 IASP_LINK = "https://findahelpline.com/"
 
@@ -158,7 +189,8 @@ mental_health_resources_full = {
         "links": [
             {"label": "NIMH - Depression", "url": "https://www.nimh.nih.gov/health/topics/depression"},
             {"label": "Mayo Clinic - Depression", "url": "https://www.mayoclinic.org/diseases-conditions/depression/symptoms-causes/syc-20356007"}
-        ]
+        ],
+        "tags": ["Depression", "Mood Disorders", "Mental Health", "Coping Skills"]
     },
     "Anxiety & Panic Disorders": {
         "icon": "😨",
@@ -166,42 +198,48 @@ mental_health_resources_full = {
         "links": [
             {"label": "ADAA - Anxiety & Depression", "url": "https://adaa.org/"},
             {"label": "NIMH - Anxiety Disorders", "url": "https://www.nimh.nih.gov/health/topics/anxiety-disorders"}
-        ]
+        ],
+        "tags": ["Anxiety", "Panic Attacks", "Phobias", "Stress Management", "Mental Health"]
     },
     "Bipolar Disorder": {
         "icon": "🎭",
         "description": "Understanding the complexities of bipolar disorder, including mood swings and treatment options.",
         "links": [
             {"label": "NIMH - Bipolar Disorder", "url": "https://www.nimh.nih.gov/health/topics/bipolar-disorder"}
-        ]
+        ],
+        "tags": ["Bipolar", "Mood Disorders", "Mental Health", "Treatment Options"]
     },
     "PTSD & Trauma": {
         "icon": "🧠",
         "description": "Resources for individuals experiencing post-traumatic stress disorder and other trauma-related conditions.",
         "links": [
             {"label": "PTSD: National Center", "url": "https://www.ptsd.va.gov/"}
-        ]
+        ],
+        "tags": ["PTSD", "Trauma", "Mental Health", "Coping Skills"]
     },
     "OCD & Related Disorders": {
         "icon": "🔄",
         "description": "Support and information for obsessive-compulsive disorder, body dysmorphic disorder, and hoarding disorder.",
         "links": [
             {"label": "IOCDF - OCD", "url": "https://iocdf.org/"}
-        ]
+        ],
+        "tags": ["OCD", "Mental Health", "Coping Skills"]
     },
     "Coping Skills & Self-Care": {
         "icon": "❤️‍🩹",
         "description": "Practical strategies and techniques for stress management, emotional regulation, and daily well-being.",
         "links": [
             {"label": "HelpGuide - Stress Management", "url": "https://www.helpguide.org/articles/stress/stress-management.htm"}
-        ]
+        ],
+        "tags": ["Coping Skills", "Self-Care", "Stress Management", "Emotional Regulation", "Well-being", "Mindfulness"]
     },
     "Therapy & Treatment Options": {
         "icon": "🗣️",
         "description": "Overview of various therapeutic approaches, including CBT, DBT, and finding a therapist.",
         "links": [
             {"label": "APA - Finding a Therapist", "url": "https://www.apa.org/helpcenter/choose-therapist"}
-        ]
+        ],
+        "tags": ["Therapy", "Treatment Options", "CBT", "DBT", "Mental Health Professionals"]
     }
 }
 st.title("🧰 Self Help Tools")
@@ -238,6 +276,9 @@ col7, col8 = st.columns(3)[0:2]
 with col7:
     if st.button("🃏 Quick Coping Cards", use_container_width=True):
         st.session_state.active_tool = "quick_coping"
+with col8:
+    if st.button("🌳 Grounding Exercise", use_container_width=True):
+        st.session_state.active_tool = "grounding_exercise"
 
 st.markdown("---")
 
@@ -282,22 +323,52 @@ elif st.session_state.active_tool == "mental_check":
     st.text_area(f"✏️ {journal_prompt_text}", key="mood_journal_area", value=st.session_state.mood_journal_entry, height=70)
 
     st.markdown("**Why are you feeling this way?**")
-    context_reasons = ["No specific reason", "Work", "Family", "Health", "Relationships", "Financial", "Social", "Personal goals", "Weather", "Other"]
-    selected_reason = st.selectbox("Select a reason (optional):", options=context_reasons)
+    if "custom_reasons" not in st.session_state:
+        st.session_state.custom_reasons = []
+    
+    default_reasons = ["No specific reason", "Work", "Family", "Health", "Relationships", "Financial", "Social", "Personal goals", "Weather", "Other"]
+    all_reasons = default_reasons + st.session_state.custom_reasons
+    
+    selected_reason = st.selectbox("Select a reason (optional):", options=all_reasons, key="mood_reason_select")
+    
+    new_custom_reason = st.text_input("Add a custom reason (optional):", key="new_custom_reason_input")
+    if st.button("Add Custom Reason", key="add_custom_reason_button") and new_custom_reason.strip():
+        if new_custom_reason.strip() not in st.session_state.custom_reasons:
+            st.session_state.custom_reasons.append(new_custom_reason.strip())
+            st.session_state.new_custom_reason_input = "" # Clear input after adding
+            st.rerun()
 
     st.markdown("**What did you do today?** (optional)")
-    activities = []
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.checkbox("✅ Exercise"):
-            activities.append("Exercise")
-        if st.checkbox("✅ Socialized"):
-            activities.append("Socialized")
-    with col2:
-        if st.checkbox("✅ Ate healthy"):
-            activities.append("Ate healthy")
-        if st.checkbox("✅ Slept well"):
-            activities.append("Slept well")
+    if "custom_activities" not in st.session_state:
+        st.session_state.custom_activities = []
+    if "selected_activities" not in st.session_state:
+        st.session_state.selected_activities = []
+
+    default_activities = ["Exercise", "Socialized", "Ate healthy", "Slept well", "Meditated", "Worked", "Relaxed", "Hobbies"]
+    all_activities_options = sorted(list(set(default_activities + st.session_state.custom_activities)))
+
+    # Display checkboxes for all activities
+    cols_per_row = 2
+    num_cols = st.columns(cols_per_row)
+    for i, activity in enumerate(all_activities_options):
+        with num_cols[i % cols_per_row]:
+            # Use a unique key for each checkbox
+            if st.checkbox(f"✅ {activity}", key=f"activity_checkbox_{activity}", value=activity in st.session_state.selected_activities):
+                if activity not in st.session_state.selected_activities:
+                    st.session_state.selected_activities.append(activity)
+            else:
+                if activity in st.session_state.selected_activities:
+                    st.session_state.selected_activities.remove(activity)
+
+    new_custom_activity = st.text_input("Add a custom activity (optional):", key="new_custom_activity_input")
+    if st.button("Add Custom Activity", key="add_custom_activity_button") and new_custom_activity.strip():
+        if new_custom_activity.strip() not in st.session_state.custom_activities:
+            st.session_state.custom_activities.append(new_custom_activity.strip())
+            st.session_state.new_custom_activity_input = "" # Clear input after adding
+            st.rerun()
+    
+    # Update the activities list to be saved
+    activities = st.session_state.selected_activities
 
     tips_for_mood = {
         "very_low": "Remember, it's okay not to be okay. Consider connecting with a professional.",
@@ -341,25 +412,36 @@ elif st.session_state.active_tool == "mental_check":
 
 elif st.session_state.active_tool == "knowledge":
     st.header("📚 Resources & Knowledge Base")
+
+    all_tags = sorted(list(set(tag for data in mental_health_resources_full.values() for tag in data.get("tags", []))))
+    selected_tags = st.multiselect("Filter by Tags:", options=all_tags, placeholder="Select tags to filter resources")
+
     query = st.text_input("Search resources by topic...", placeholder="e.g., anxiety, ptsd, self-care")
 
-    # Filter topics based on search query
-    if query:
-        filtered_topics = {
-            topic: data for topic, data in mental_health_resources_full.items()
-            if query.lower() in topic.lower() or query.lower() in data['description'].lower()
-        }
-    else:
-        filtered_topics = mental_health_resources_full
+    # Filter topics based on search query and selected tags
+    filtered_topics = {}
+    for topic, data in mental_health_resources_full.items():
+        matches_query = True
+        if query:
+            matches_query = query.lower() in topic.lower() or query.lower() in data['description'].lower()
+
+        matches_tags = True
+        if selected_tags:
+            matches_tags = any(tag in data.get("tags", []) for tag in selected_tags)
+
+        if matches_query and matches_tags:
+            filtered_topics[topic] = data
 
     if not filtered_topics:
-        st.info(f"No resources found matching '{query}'. Please try another search term.")
+        st.info(f"No resources found matching your criteria. Please try another search term or different tags.")
     else:
         # Use st.expander for a cleaner, more scalable layout
         for topic, data in filtered_topics.items():
-            with st.expander(f"{data['icon']} {topic}", expanded=bool(query)):
+            with st.expander(f"{data['icon']} {topic}", expanded=bool(query) or bool(selected_tags)):
                 st.info(data['description'])
-                
+
+                st.markdown("Tags: " + ", ".join([f"`{tag}`" for tag in data.get("tags", [])]))
+
                 for link in data['links']:
                     st.markdown(f"**[{link['label']}]({link['url']})**")
                     # Extract domain for context
@@ -371,11 +453,33 @@ elif st.session_state.active_tool == "crisis":
     st.header("☎️ Crisis Support")
     for r in GLOBAL_RESOURCES:
         st.markdown(f"**{r['name']}**: {r['desc']} [Visit Website]({r['url']})")
-    user_country = get_user_country()
+    
+    st.info("""
+    **What to expect when you call a helpline:**
+    You'll connect with a trained crisis counselor who can provide confidential support.
+    You don't need to be suicidal to call; they can help with various emotional distress.
+    They are there to listen without judgment and help you explore options.
+    """)
+
+    user_country_auto = get_user_country()
     st.markdown("### 🚨 Emergency Help")
-    if user_country and user_country in country_helplines:
-        st.markdown(f"**Helplines for {user_country}:**")
-        for line in country_helplines[user_country]:
+
+    # Allow user to manually select country
+    all_available_countries = sorted(list(country_helplines.keys()))
+    default_country_index = 0
+    if user_country_auto and user_country_auto in all_available_countries:
+        default_country_index = all_available_countries.index(user_country_auto)
+
+    selected_country = st.selectbox(
+        "Select your country for local helplines:",
+        options=all_available_countries,
+        index=default_country_index,
+        format_func=lambda x: f"{x} - {country_names.get(x, 'Unknown')}"
+    )
+
+    if selected_country and selected_country in country_helplines:
+        st.markdown(f"**Helplines for {selected_country} ({country_names.get(selected_country, 'Unknown')}):**")
+        for line in country_helplines[selected_country]:
             st.markdown(f"• {line}")
     else:
         st.markdown(f"[Find help worldwide via IASP]({IASP_LINK})")
@@ -414,3 +518,64 @@ elif st.session_state.active_tool == "quizzes":
 
 elif st.session_state.active_tool == "quick_coping":
     render_quick_coping_cards()
+
+elif st.session_state.active_tool == "grounding_exercise":
+    st.header("🌳 5-4-3-2-1 Grounding Exercise")
+
+    if "grounding_step" not in st.session_state:
+        st.session_state.grounding_step = 0
+    if "grounding_responses" not in st.session_state:
+        st.session_state.grounding_responses = {
+            "see": [], "feel": [], "hear": [], "smell": [], "taste": []
+        }
+
+    steps = [
+        {"prompt": "5 things you can SEE", "key": "see", "count": 5},
+        {"prompt": "4 things you can FEEL", "key": "feel", "count": 4},
+        {"prompt": "3 things you can HEAR", "key": "hear", "count": 3},
+        {"prompt": "2 things you can SMELL", "key": "smell", "count": 2},
+        {"prompt": "1 thing you can TASTE", "key": "taste", "count": 1}
+    ]
+
+    if st.session_state.grounding_step < len(steps):
+        current_step_info = steps[st.session_state.grounding_step]
+        st.subheader(f"Step {st.session_state.grounding_step + 1}: {current_step_info['prompt']}")
+        st.write(f"List {current_step_info['count']} items, one per line.")
+
+        # Use a unique key for the text area to prevent issues on re-renders
+        input_key = f"grounding_input_{current_step_info['key']}"
+        user_input = st.text_area("Your observations:", key=input_key, height=150)
+
+        col_next, col_reset = st.columns([1, 1])
+        with col_next:
+            if st.button("Next Step", use_container_width=True):
+                responses = [item.strip() for item in user_input.split('\n') if item.strip()]
+                if len(responses) < current_step_info['count']:
+                    st.warning(f"Please list at least {current_step_info['count']} items.")
+                else:
+                    st.session_state.grounding_responses[current_step_info['key']] = responses
+                    st.session_state.grounding_step += 1
+                    # Clear the text area for the next step
+                    st.rerun()
+        with col_reset:
+            if st.button("Start Over", use_container_width=True):
+                st.session_state.grounding_step = 0
+                st.session_state.grounding_responses = {
+                    "see": [], "feel": [], "hear": [], "smell": [], "taste": []
+                }
+                st.rerun()
+    else:
+        st.subheader("Grounding Exercise Complete!")
+        st.success("You've completed the 5-4-3-2-1 grounding exercise. Take a deep breath.")
+        st.markdown("### Your Responses:")
+        for key, value in st.session_state.grounding_responses.items():
+            st.markdown(f"**{key.capitalize()}:**")
+            for item in value:
+                st.write(f"- {item}")
+        
+        if st.button("Start New Exercise", use_container_width=True):
+            st.session_state.grounding_step = 0
+            st.session_state.grounding_responses = {
+                "see": [], "feel": [], "hear": [], "smell": [], "taste": []
+            }
+            st.rerun()

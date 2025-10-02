@@ -1,6 +1,8 @@
 import streamlit as st
 import base64
 from datetime import datetime
+import json
+import math
 
 def set_background(image_path):
     with open(image_path, "rb") as image_file:
@@ -51,6 +53,7 @@ set_background("static_files/pink.png")
 # In a real app, this might come from a database or a CMS.
 # For now, we'll store it as a list of dictionaries.
 
+
 BLOG_POSTS = [
     {
         "id": 1,
@@ -62,30 +65,24 @@ BLOG_POSTS = [
         "content": '''
             <p>Healing is a personal and often non-linear journey. It's about progress, not perfection. If you're feeling lost and don't know where to begin, remember that the smallest step in the right direction can make the biggest difference. Here are five simple yet powerful first steps you can take today.</p>
 
-            <h4>1. Acknowledge Your Feelings Without Judgment</h4>
-            <p>The first step is always awareness. Allow yourself to feel whatever you are feeling—sadness, anger, confusion, or numbness. Don't try to suppress these emotions or judge yourself for having them. Find a quiet space, take a deep breath, and simply say to yourself, "I am feeling [your emotion], and that is okay." This simple act of validation is a powerful form of self-compassion.</p>
+def load_blog_posts():
+    with open('data/blog_posts.json', 'r') as f:
+        posts = json.load(f)
+    for post in posts:
+        post['date'] = datetime.strptime(post['date'], '%Y-%m-%d')
+    return posts
 
-            <h4>2. Practice Mindful Breathing</h4>
-            <p>When we are overwhelmed, our breathing often becomes shallow and rapid. Ground yourself in the present moment with a simple breathing exercise.
-            <ul>
-                <li>Find a comfortable position, either sitting or lying down.</li>
-                <li>Close your eyes and place one hand on your belly.</li>
-                <li>Inhale slowly through your nose for a count of four, feeling your belly rise.</li>
-                <li>Hold your breath for a count of four.</li>
-                <li>Exhale slowly through your mouth for a count of six, feeling your belly fall.</li>
-            </ul>
-            Repeat this for 2-3 minutes. This technique, known as diaphragmatic breathing, activates the body's relaxation response and can instantly reduce feelings of anxiety.</p>
 
-            <h4>3. Write It Down: The Power of Journaling</h4>
-            <p>You don't have to be a writer to benefit from journaling. Get a notebook or use the journaling feature in TalkHeal and just start writing. Don't worry about grammar or making sense. This is for your eyes only.
-            <br><br>
-            Try one of these prompts:
-            <ul>
-                <li>"Today, I am feeling..."</li>
-                <li>"One thing I can do to be kind to myself right now is..."</li>
-                <li>"What is one small thing that brought me a moment of peace today?"</li>
-            </ul>
-            Externalizing your thoughts can bring clarity and provide a sense of release.</p>
+BLOG_POSTS = load_blog_posts()
+
+
+def get_reading_time(content):
+    """Estimates the reading time for a given text."""
+    word_count = len(content.split())
+    minutes = math.ceil(word_count / 200)  # Assuming 200 WPM reading speed
+    if minutes < 2:
+        return "1 min read"
+    return f"{minutes} min read"
 
             <h4>4. Connect with Nature</h4>
             <p>Nature has a profound ability to soothe and heal. If you can, spend 10-15 minutes outdoors. It doesn't have to be a strenuous hike; a simple walk in a local park, sitting on a bench, or even just paying attention to the sky from your window can help. Focus on the sensory details—the feeling of the sun on your skin, the sound of birds, the smell of rain. This helps pull you out of your internal world and into the calming presence of the natural world.</p>
@@ -174,13 +171,30 @@ def show_blog_list():
         </div>
     """, unsafe_allow_html=True)
 
-    for post in sorted(BLOG_POSTS, key=lambda x: x["date"], reverse=True):
+    # --- Search Bar ---
+    search_query = st.text_input("Search articles by keyword:", placeholder="e.g., mindfulness, habits...")
+
+    # --- Filtering Logic ---
+    posts_to_show = sorted(BLOG_POSTS, key=lambda x: x["date"], reverse=True)
+    if search_query:
+        posts_to_show = [
+            p for p in posts_to_show
+            if search_query.lower() in p['title'].lower() or search_query.lower() in p['excerpt'].lower()
+        ]
+
+    if not posts_to_show:
+        st.info(f'No articles found for "{search_query}". Please try another keyword.')
+        return
+
+    # --- Display Posts ---
+    for post in posts_to_show:
         st.markdown("---")
+        reading_time = get_reading_time(post["content"])
         col1, col2 = st.columns([4, 1])
         with col1:
             st.image(post["featured_image"])
             st.subheader(post["title"])
-            st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')}")
+            st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')} · {reading_time}")
             st.write(post["excerpt"])
         with col2:
             if st.button("Read More", key=f"read_{post['id']}", use_container_width=True):
@@ -197,8 +211,10 @@ def show_full_post(post_id):
             st.rerun()
         return
 
+    # --- Post Content ---
+    reading_time = get_reading_time(post["content"])
     st.title(post["title"])
-    st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')}")
+    st.caption(f"By {post['author']} on {post['date'].strftime('%B %d, %Y')} · {reading_time}")
     st.image(post["featured_image"])
     st.markdown("---")
     st.markdown(post["content"], unsafe_allow_html=True)
@@ -207,8 +223,45 @@ def show_full_post(post_id):
         del st.session_state.selected_blog_post
         st.rerun()
 
+    # --- Comments Section ---
+    st.subheader("💬 Comments")
+
+    post_comments = st.session_state.comments.get(post_id, [])
+
+    if not post_comments:
+        st.info("No comments yet. Be the first to comment!")
+    else:
+        for comment in post_comments:
+            with st.container(border=True):
+                st.caption(f"{comment['author']} on {comment['timestamp'].strftime('%B %d, %Y at %I:%M %p')}")
+                st.write(comment["comment"])
+
+    st.markdown("---")
+
+    # --- Comment Form ---
+    st.subheader("Leave a Comment")
+    with st.form("comment_form", clear_on_submit=True):
+        name = st.text_input("Your Name")
+        comment_text = st.text_area("Your Comment")
+        submitted = st.form_submit_button("Submit Comment")
+
+        if submitted and name and comment_text:
+            if post_id not in st.session_state.comments:
+                st.session_state.comments[post_id] = []
+            
+            st.session_state.comments[post_id].append({
+                "author": name,
+                "comment": comment_text,
+                "timestamp": datetime.now()
+            })
+            st.rerun()
+
 def show():
     """Main function to render the blog page."""
+    # Initialize session state for comments if it doesn't exist
+    if 'comments' not in st.session_state:
+        st.session_state.comments = {}
+
     if "selected_blog_post" in st.session_state:
         show_full_post(st.session_state.selected_blog_post)
     else:

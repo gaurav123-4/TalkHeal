@@ -276,6 +276,42 @@ def render_sidebar():
 
     
     with st.sidebar:
+        # --- Water Intake Tracker Section ---
+        with st.expander("💧 Water Intake Tracker", expanded=False):
+            from core.water_tracker import get_today_total, load_water_log
+            import pandas as pd
+            import datetime
+            total = get_today_total()
+            st.markdown("""
+                <div style="display: flex; align-items: center; gap: 0.7em; margin-bottom: 0.5em;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/728/728093.png" width="38" height="38" style="border-radius: 50%; box-shadow: 0 2px 8px #b3e0ff55; background: #e6f7ff;" alt="Water Glass">
+                    <div style="font-size: 1.1em; font-weight: 600; color: #0077b6;">Today's Water</div>
+                </div>
+            """, unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size:2.1em; font-weight:700; color:#0096c7; text-align:center; margin-bottom:0.2em;'>{total} <span style='font-size:0.5em;'>ml</span></div>", unsafe_allow_html=True)
+            st.progress(min(total / 2000, 1.0), text=f"{total}/2000 ml (Goal)")
+            # --- 7-day bar chart ---
+            data = load_water_log()
+            today = datetime.date.today()
+            days = [(today - datetime.timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+            chart_data = {d: sum(e['amount_ml'] for e in data.get(d, [])) for d in days}
+            df = pd.DataFrame({"Date": list(chart_data.keys()), "Water (ml)": list(chart_data.values())})
+            st.markdown("<div style='margin:0.5em 0 0.2em 0; font-size:0.98em; color:#555; text-align:center;'>Last 7 Days</div>", unsafe_allow_html=True)
+            st.bar_chart(df.set_index("Date"), height=120, use_container_width=True)
+            st.markdown("""
+                <div style="font-size:0.98em; color:#555; margin:0.5em 0 0.2em 0; text-align:center;">
+                    <span style="background:#e0f7fa; color:#00796b; border-radius:8px; padding:2px 10px; font-size:0.95em;">Tip: Aim for 2L (2000ml) daily</span>
+                </div>
+                <div style="display:flex; justify-content:center; margin-top:0.7em;">
+                    <button style="background:linear-gradient(90deg,#48c6ef 0%,#6f86d6 100%);color:white;font-weight:600;border:none;border-radius:1.2rem;padding:0.6rem 1.5rem;font-size:1.1em;cursor:pointer;box-shadow:0 2px 8px 0 #48c6ef33;transition:background 0.2s;outline:none;width:100%;max-width:220px;" onclick="window.location.hash='water-intake-tracker'">Go to Water Tracker</button>
+                </div>
+                <div style="margin-top:0.7em; text-align:center;">
+                    <span style="font-size:0.95em; color:#0096c7;">💧 Stay hydrated for better mood & focus!</span>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("Open Water Tracker", key="sidebar_water_tracker", use_container_width=True, type="primary"):
+                st.session_state.active_page = "WaterIntakeTracker"
+                st.rerun()
         # Theme Settings Section
         with st.expander("🎨 Appearance Settings", expanded=False):
             current_theme = get_current_theme()
