@@ -208,6 +208,13 @@ elif page == "📅 Daily Planner":
 
     st.subheader("✅ Your Tasks")
 
+    # --- Display Progress Bar ---
+    if st.session_state.tasks:
+        completed_count = sum(1 for t in st.session_state.tasks if t["completed"])
+        total_count = len(st.session_state.tasks)
+        progress_ratio = completed_count / total_count if total_count > 0 else 0
+        st.progress(progress_ratio, text=f"{completed_count}/{total_count} Tasks Completed")
+
     # --- Task Deletion and Completion Logic ---
     indices_to_delete = []
     for i, task in enumerate(st.session_state.tasks):
