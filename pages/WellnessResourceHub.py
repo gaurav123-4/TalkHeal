@@ -2,6 +2,7 @@ import streamlit as st
 import random
 import pandas as pd
 from datetime import datetime
+import uuid
 
 st.set_page_config(page_title="Wellness Resource Hub", layout="wide")
 
@@ -188,16 +189,25 @@ elif page == "📅 Daily Planner":
     # Initialize or migrate session state for tasks
     if "tasks" not in st.session_state:
         st.session_state.tasks = []
+        st.session_state.editing_task_id = None
+        st.session_state.edited_task_text = ""
     # Simple migration from old format (list of strings) to new format (list of dicts)
     elif st.session_state.tasks and isinstance(st.session_state.tasks[0], str):
-        st.session_state.tasks = [{"task": t, "completed": False} for t in st.session_state.tasks]
+        st.session_state.tasks = [{"task": t, "completed": False, "key": str(uuid.uuid4())} for t in st.session_state.tasks]
+        st.session_state.editing_task_id = None
+        st.session_state.edited_task_text = ""
+
+    # Ensure all existing tasks have a 'key' if they somehow don't (e.g., after a hot reload)
+    for task in st.session_state.tasks:
+        if "key" not in task:
+            task["key"] = str(uuid.uuid4())
 
     # --- Task Input Form ---
     with st.form("new_task_form", clear_on_submit=True):
         new_task = st.text_input("Add a new task:")
         submitted = st.form_submit_button("➕ Add Task")
         if submitted and new_task:
-            st.session_state.tasks.append({"task": new_task, "completed": False})
+            st.session_state.tasks.append({"task": new_task, "completed": False, "key": str(uuid.uuid4())})
             st.rerun()
 
     # --- Wellness Task Suggestion Button ---
@@ -215,27 +225,57 @@ elif page == "📅 Daily Planner":
         progress_ratio = completed_count / total_count if total_count > 0 else 0
         st.progress(progress_ratio, text=f"{completed_count}/{total_count} Tasks Completed")
 
-    # --- Task Deletion and Completion Logic ---
+    # --- Task Display, Edit, and Deletion Logic ---
     indices_to_delete = []
     for i, task in enumerate(st.session_state.tasks):
-        col1, col2 = st.columns([0.9, 0.1])
-        with col1:
-            # The checkbox state directly modifies the session state dictionary value
-            # The label now uses markdown for a strike-through effect when completed
-            label = f"~~{task['task']}~~" if task["completed"] else task["task"]
-            st.session_state.tasks[i]["completed"] = st.checkbox(
-                label,
-                value=task["completed"],
-                key=f"task_{i}"
-            )
-        with col2:
-            if st.button("🗑️", key=f"delete_{i}", help=f"Delete task: {task['task']}"):
-                indices_to_delete.append(i)
+        if st.session_state.editing_task_id == task["key"]:
+            # Editing mode
+            col_edit_input, col_edit_save, col_edit_cancel = st.columns([0.7, 0.15, 0.15])
+            with col_edit_input:
+                st.session_state.edited_task_text = st.text_input(
+                    "Edit Task:",
+                    value=st.session_state.edited_task_text,
+                    key=f"edit_input_{task['key']}",
+                    label_visibility="collapsed"
+                )
+            with col_edit_save:
+                if st.button("💾 Save", key=f"save_edit_{task['key']}"):
+                    # Find the task by key and update its text
+                    for t in st.session_state.tasks:
+                        if t["key"] == task["key"]:
+                            t["task"] = st.session_state.edited_task_text
+                            break
+                    st.session_state.editing_task_id = None
+                    st.session_state.edited_task_text = ""
+                    st.rerun()
+            with col_edit_cancel:
+                if st.button("❌ Cancel", key=f"cancel_edit_{task['key']}"):
+                    st.session_state.editing_task_id = None
+                    st.session_state.edited_task_text = ""
+                    st.rerun()
+        else:
+            # Normal display mode
+            col_checkbox, col_edit_btn, col_delete_btn = st.columns([0.7, 0.15, 0.15])
+            with col_checkbox:
+                label = f"~~{task['task']}~~" if task["completed"] else task["task"]
+                st.session_state.tasks[i]["completed"] = st.checkbox(
+                    label,
+                    value=task["completed"],
+                    key=f"task_{task['key']}" # Use task key for unique widget key
+                )
+            with col_edit_btn:
+                if st.button("✏️ Edit", key=f"edit_btn_{task['key']}"):
+                    st.session_state.editing_task_id = task["key"]
+                    st.session_state.edited_task_text = task["task"]
+                    st.rerun()
+            with col_delete_btn:
+                if st.button("🗑️", key=f"delete_btn_{task['key']}", help=f"Delete task: {task['task']}"):
+                    indices_to_delete.append(i)
 
     # Perform deletions after iterating through the list
     if indices_to_delete:
-        for i in sorted(indices_to_delete, reverse=True):
-            del st.session_state.tasks[i]
+        # Delete tasks by key to avoid issues with re-indexing
+        st.session_state.tasks = [t for i, t in enumerate(st.session_state.tasks) if i not in indices_to_delete]
         st.rerun()
 
     if not st.session_state.tasks:
