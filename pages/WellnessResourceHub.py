@@ -543,12 +543,14 @@ elif page == "🎯 Wellness Goals":
     # --- Goal Input Form ---
     with st.form("new_goal_form", clear_on_submit=True):
         new_goal = st.text_input("Enter a new wellness goal:")
+        target_date = st.date_input("Set a target date:", min_value=datetime.today())
         submitted = st.form_submit_button("➕ Add Goal")
         if submitted and new_goal:
             st.session_state.wellness_goals.append({
                 "goal": new_goal,
                 "status": "Not Started",
-                "key": str(uuid.uuid4())
+                "key": str(uuid.uuid4()),
+                "target_date": target_date
             })
             st.rerun()
 
@@ -577,6 +579,16 @@ elif page == "🎯 Wellness Goals":
 
             with col_text:
                 st.write(goal["goal"])
+                # Check if target_date exists for backward compatibility
+                if "target_date" in goal and goal["target_date"]:
+                    days_remaining = (goal["target_date"] - datetime.now().date()).days
+                    if goal["status"] != "Completed":
+                        if days_remaining >= 0:
+                            st.caption(f"Target: {goal['target_date'].strftime('%b %d, %Y')} | {days_remaining} days left")
+                        else:
+                            st.caption(f"Target: {goal['target_date'].strftime('%b %d, %Y')} | Overdue by {-days_remaining} days")
+                    else:
+                        st.caption(f"Target: {goal['target_date'].strftime('%b %d, %Y')}")
 
             with col_status:
                 statuses = ["Not Started", "In Progress", "Completed"]
