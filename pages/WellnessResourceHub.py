@@ -358,6 +358,10 @@ elif page == "📚 Wellness Resources":
     st.title("📚 Wellness Resources")
     st.write("A curated list of trusted resources to support your well-being journey.")
 
+    # --- Initialize Session State for Ratings ---
+    if 'user_ratings' not in st.session_state:
+        st.session_state.user_ratings = {}
+
     # --- Data for Wellness Resources ---
     wellness_resources_data = {
         "🧘 Meditation & Mindfulness": [
@@ -427,5 +431,27 @@ elif page == "📚 Wellness Resources":
                     st.markdown(f"##### {resource['title']}")
                     st.write(resource['description'])
                     st.page_link(resource['url'], label="Visit Resource 🔗", icon="➡️")
+
+                    # --- Rating Logic ---
+                    if category != "❤️ Crisis Support":
+                        st.markdown("---")
+                        current_rating = st.session_state.user_ratings.get(resource['url'], 0)
+                        
+                        key = f"rating_{resource['url']}"
+
+                        new_rating = st.selectbox(
+                            "Your Rating:",
+                            options=[0, 1, 2, 3, 4, 5],
+                            format_func=lambda x: f"{'⭐'*x}" if x > 0 else "Not Rated",
+                            index=current_rating,
+                            key=key
+                        )
+
+                        if new_rating != current_rating:
+                            if new_rating > 0:
+                                st.session_state.user_ratings[resource['url']] = new_rating
+                            elif resource['url'] in st.session_state.user_ratings:
+                                del st.session_state.user_ratings[resource['url']]
+                            st.rerun()
         
         st.write("") # Add space between categories
