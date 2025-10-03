@@ -533,7 +533,7 @@ elif page == "🎨 Creative Corner":
 # --- Page 10: Wellness Goals ---
 elif page == "🎯 Wellness Goals":
     st.title("🎯 Wellness Goal Setting")
-    st.markdown("Set, track, and accomplish your long-term wellness goals. Breaking down your ambitions into smaller steps can make them more achievable.")
+    st.markdown("Set long-term ambitions and break them down into smaller, manageable sub-tasks.")
     st.markdown("---")
 
     # Initialize session state for goals
@@ -542,15 +542,20 @@ elif page == "🎯 Wellness Goals":
 
     # --- Goal Input Form ---
     with st.form("new_goal_form", clear_on_submit=True):
-        new_goal = st.text_input("Enter a new wellness goal:")
-        target_date = st.date_input("Set a target date:", min_value=datetime.today())
-        submitted = st.form_submit_button("➕ Add Goal")
+        col1, col2 = st.columns([0.7, 0.3])
+        with col1:
+            new_goal = st.text_input("Enter a new wellness goal:", label_visibility="collapsed", placeholder="Enter a new wellness goal...")
+        with col2:
+            target_date = st.date_input("Target Date", min_value=datetime.today(), label_visibility="collapsed")
+        
+        submitted = st.form_submit_button("➕ Add New Goal")
         if submitted and new_goal:
             st.session_state.wellness_goals.append({
                 "goal": new_goal,
                 "status": "Not Started",
                 "key": str(uuid.uuid4()),
-                "target_date": target_date
+                "target_date": target_date,
+                "sub_tasks": []
             })
             st.rerun()
 
@@ -558,7 +563,12 @@ elif page == "🎯 Wellness Goals":
 
     # --- Display Progress Bar ---
     if st.session_state.wellness_goals:
-        completed_count = sum(1 for g in st.session_state.wellness_goals if g["status"] == "Completed")
+        # Auto-migrate old goals to new data structure
+        for i, goal in enumerate(st.session_state.wellness_goals):
+            if "sub_tasks" not in goal:
+                st.session_state.wellness_goals[i]["sub_tasks"] = []
+
+        completed_count = sum(1 for g in st.session_state.wellness_goals if g.get("status") == "Completed")
         total_count = len(st.session_state.wellness_goals)
         progress_ratio = completed_count / total_count if total_count > 0 else 0
         st.progress(progress_ratio, text=f"{completed_count}/{total_count} Goals Completed")
@@ -571,44 +581,89 @@ elif page == "🎯 Wellness Goals":
     if not st.session_state.wellness_goals:
         st.info("You haven't set any goals yet. Add one above to get started!")
     else:
-        indices_to_delete = []
+        goal_indices_to_delete = []
         for i, goal in enumerate(st.session_state.wellness_goals):
-            key_prefix = goal['key']
-            st.markdown("---")
-            col_text, col_status, col_delete = st.columns([0.6, 0.25, 0.15])
+            goal_key = goal['key']
 
-            with col_text:
-                st.write(goal["goal"])
-                # Check if target_date exists for backward compatibility
-                if "target_date" in goal and goal["target_date"]:
-                    days_remaining = (goal["target_date"] - datetime.now().date()).days
-                    if goal["status"] != "Completed":
-                        if days_remaining >= 0:
-                            st.caption(f"Target: {goal['target_date'].strftime('%b %d, %Y')} | {days_remaining} days left")
-                        else:
-                            st.caption(f"Target: {goal['target_date'].strftime('%b %d, %Y')} | Overdue by {-days_remaining} days")
-                    else:
-                        st.caption(f"Target: {goal['target_date'].strftime('%b %d, %Y')}")
-
-            with col_status:
-                statuses = ["Not Started", "In Progress", "Completed"]
-                current_status_index = statuses.index(goal["status"])
-                new_status = st.radio(
-                    "Status",
-                    options=statuses,
-                    index=current_status_index,
-                    key=f"status_{key_prefix}",
-                    horizontal=True,
-                    label_visibility="collapsed"
-                )
-                if new_status != goal["status"]:
-                    st.session_state.wellness_goals[i]["status"] = new_status
+            # --- Automatic Status Update Logic ---
+            if goal.get("sub_tasks"):
+                all_subs_completed = all(st["completed"] for st in goal["sub_tasks"])
+                if all_subs_completed:
+                    st.session_state.wellness_goals[i]["status"] = "Completed"
+                elif any(st["completed"] for st in goal["sub_tasks"]):
+                    st.session_state.wellness_goals[i]["status"] = "In Progress"
+                else:
+                    st.session_state.wellness_goals[i]["status"] = "Not Started"
+            
+            st.markdown("--- ")
+            
+            # --- Main Goal Display ---
+            col_title, col_delete_goal = st.columns([0.9, 0.1])
+            with col_title:
+                st.subheader(goal["goal"])
+            with col_delete_goal:
+                if st.button("🗑️", key=f"delete_goal_{goal_key}", help="Delete this entire goal"):
+                    goal_indices_to_delete.append(i)
                     st.rerun()
 
-            with col_delete:
-                if st.button("🗑️ Delete", key=f"delete_{key_prefix}"):
-                    indices_to_delete.append(i)
+            # --- Goal Details (Status, Date, Sub-task progress) ---
+            status = goal.get("status", "Not Started")
+            color = "green" if status == "Completed" else "orange" if status == "In Progress" else "blue"
+            
+            sub_task_count = len(goal.get("sub_tasks", []))
+            completed_sub_tasks = sum(1 for st in goal.get("sub_tasks", []) if st["completed"])
 
-        if indices_to_delete:
-            st.session_state.wellness_goals = [g for i, g in enumerate(st.session_state.wellness_goals) if i not in indices_to_delete]
+            meta_col1, meta_col2, meta_col3 = st.columns(3)
+            with meta_col1:
+                st.markdown(f":{color}[●] **Status:** {status}")
+            with meta_col2:
+                if "target_date" in goal and goal["target_date"]:
+                    days_remaining = (goal["target_date"] - datetime.now().date()).days
+                    if status != "Completed" and days_remaining < 0:
+                        st.markdown(f"🗓️ **Target:** {goal['target_date'].strftime('%b %d')} (Overdue)")
+                    else:
+                        st.markdown(f"🗓️ **Target:** {goal['target_date'].strftime('%b %d, %Y')}")
+            with meta_col3:
+                st.markdown(f"✅ **Sub-tasks:** {completed_sub_tasks}/{sub_task_count}")
+
+            # --- Sub-task Management --- 
+            with st.expander("Manage Sub-tasks"):
+                # --- Add new sub-task ---
+                with st.form(f"sub_task_form_{goal_key}", clear_on_submit=True):
+                    new_sub_task_text = st.text_input("Add a new sub-task", placeholder="Break it down...", label_visibility="collapsed")
+                    if st.form_submit_button("➕ Add Sub-task"):
+                        if new_sub_task_text:
+                            st.session_state.wellness_goals[i]["sub_tasks"].append({
+                                "task": new_sub_task_text,
+                                "completed": False,
+                                "key": str(uuid.uuid4())
+                            })
+                            st.rerun()
+
+                # --- Display and manage sub-tasks ---
+                sub_indices_to_delete = []
+                for sub_i, sub_task in enumerate(goal["sub_tasks"]):
+                    sub_task_key = sub_task['key']
+                    sub_col1, sub_col2 = st.columns([0.9, 0.1])
+                    with sub_col1:
+                        is_completed = st.checkbox(
+                            sub_task["task"],
+                            value=sub_task["completed"],
+                            key=f"subtask_{sub_task_key}"
+                        )
+                        if is_completed != sub_task["completed"]:
+                            st.session_state.wellness_goals[i]["sub_tasks"][sub_i]["completed"] = is_completed
+                            st.rerun()
+                    with sub_col2:
+                        if st.button("🗑️", key=f"delete_subtask_{sub_task_key}", help="Delete sub-task"):
+                            sub_indices_to_delete.append(sub_i)
+                
+                if sub_indices_to_delete:
+                    for index in sorted(sub_indices_to_delete, reverse=True):
+                        del st.session_state.wellness_goals[i]["sub_tasks"][index]
+                    st.rerun()
+
+        if goal_indices_to_delete:
+            for index in sorted(goal_indices_to_delete, reverse=True):
+                del st.session_state.wellness_goals[index]
             st.rerun()
