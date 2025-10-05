@@ -27,3 +27,4 @@ meteostat
 textblob
 transformers
 torch
+streamlit-drawable-canvas

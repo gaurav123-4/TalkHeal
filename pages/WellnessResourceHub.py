@@ -17,7 +17,8 @@ page = st.sidebar.radio(
         "📊 Mood Tracker",
         "📓 Journaling Prompts",
         "📚 Wellness Resources",
-        "🤝 Community Tips"
+        "🤝 Community Tips",
+        "🎨 Creative Corner"
     ]
 )
 
@@ -493,3 +494,37 @@ elif page == "🤝 Community Tips":
             st.write(f"*{item['story']}*")
             st.caption(f"— {item['author']}")
         st.write("") # Add some space
+
+# --- Page 9: Creative Corner ---
+elif page == "🎨 Creative Corner":
+    st.title("🎨 Creative Corner")
+    st.markdown("Unleash your creativity! Use this space to draw, doodle, and relax. Don't worry about making it perfect—just have fun.")
+    st.markdown("---")
+
+    # Import inside the page to avoid dependency issues if not installed
+    try:
+        from streamlit_drawable_canvas import st_canvas
+    except ImportError:
+        st.error("The Creative Corner requires the `streamlit-drawable-canvas` library. Please install it by running `pip install streamlit-drawable-canvas`")
+        st.stop()
+
+    # --- Canvas Controls ---
+    col1, col2 = st.columns(2)
+    with col1:
+        stroke_width = st.slider("Stroke width: ", 1, 25, 3)
+    with col2:
+        stroke_color = st.color_picker("Stroke color: ", "#000000")
+
+    bg_color = st.color_picker("Background color: ", "#EEEEEE")
+
+    # --- Create the Canvas ---
+    canvas_result = st_canvas(
+        fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
+        stroke_width=stroke_width,
+        stroke_color=stroke_color,
+        background_color=bg_color,
+        height=400,
+        width=600,
+        drawing_mode="freedraw",
+        key="canvas",
+    )
