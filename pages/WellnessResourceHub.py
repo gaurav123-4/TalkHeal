@@ -14,6 +14,7 @@ page = st.sidebar.radio(
         "🏠 Wellness Hub",
         "✅ Quick Self-Check",
         "📅 Daily Planner",
+        "🎯 Wellness Goals",
         "📊 Mood Tracker",
         "📓 Journaling Prompts",
         "📚 Wellness Resources",
@@ -528,3 +529,74 @@ elif page == "🎨 Creative Corner":
         drawing_mode="freedraw",
         key="canvas",
     )
+
+# --- Page 10: Wellness Goals ---
+elif page == "🎯 Wellness Goals":
+    st.title("🎯 Wellness Goal Setting")
+    st.markdown("Set, track, and accomplish your long-term wellness goals. Breaking down your ambitions into smaller steps can make them more achievable.")
+    st.markdown("---")
+
+    # Initialize session state for goals
+    if "wellness_goals" not in st.session_state:
+        st.session_state.wellness_goals = []
+
+    # --- Goal Input Form ---
+    with st.form("new_goal_form", clear_on_submit=True):
+        new_goal = st.text_input("Enter a new wellness goal:")
+        submitted = st.form_submit_button("➕ Add Goal")
+        if submitted and new_goal:
+            st.session_state.wellness_goals.append({
+                "goal": new_goal,
+                "status": "Not Started",
+                "key": str(uuid.uuid4())
+            })
+            st.rerun()
+
+    st.subheader("📈 Your Goals")
+
+    # --- Display Progress Bar ---
+    if st.session_state.wellness_goals:
+        completed_count = sum(1 for g in st.session_state.wellness_goals if g["status"] == "Completed")
+        total_count = len(st.session_state.wellness_goals)
+        progress_ratio = completed_count / total_count if total_count > 0 else 0
+        st.progress(progress_ratio, text=f"{completed_count}/{total_count} Goals Completed")
+
+        if completed_count > 0 and completed_count == total_count:
+            st.balloons()
+            st.success("🎉 You've completed all your goals! Amazing work!")
+
+    # --- Display and Manage Goals ---
+    if not st.session_state.wellness_goals:
+        st.info("You haven't set any goals yet. Add one above to get started!")
+    else:
+        indices_to_delete = []
+        for i, goal in enumerate(st.session_state.wellness_goals):
+            key_prefix = goal['key']
+            st.markdown("---")
+            col_text, col_status, col_delete = st.columns([0.6, 0.25, 0.15])
+
+            with col_text:
+                st.write(goal["goal"])
+
+            with col_status:
+                statuses = ["Not Started", "In Progress", "Completed"]
+                current_status_index = statuses.index(goal["status"])
+                new_status = st.radio(
+                    "Status",
+                    options=statuses,
+                    index=current_status_index,
+                    key=f"status_{key_prefix}",
+                    horizontal=True,
+                    label_visibility="collapsed"
+                )
+                if new_status != goal["status"]:
+                    st.session_state.wellness_goals[i]["status"] = new_status
+                    st.rerun()
+
+            with col_delete:
+                if st.button("🗑️ Delete", key=f"delete_{key_prefix}"):
+                    indices_to_delete.append(i)
+
+        if indices_to_delete:
+            st.session_state.wellness_goals = [g for i, g in enumerate(st.session_state.wellness_goals) if i not in indices_to_delete]
+            st.rerun()
