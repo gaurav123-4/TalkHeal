@@ -395,19 +395,32 @@ elif page == "📚 Wellness Resources":
         ]
     }
 
+    # --- Filtering Logic ---
+    all_categories = list(wellness_resources_data.keys())
+    selected_categories = st.multiselect(
+        "Filter resources by category:",
+        options=all_categories,
+        default=[]
+    )
+
+    # If no categories are selected, show all. Otherwise, show only selected.
+    categories_to_show = selected_categories if selected_categories else all_categories
+
+    st.markdown("---")
+
     # --- Display Resources in Cards ---
-    for category, resources in wellness_resources_data.items():
+    for category in categories_to_show:
+        resources = wellness_resources_data[category]
+
         if category == "❤️ Crisis Support":
             st.subheader(category)
             st.warning("If you are in immediate distress, please reach out. You are not alone.")
         else:
             st.subheader(category)
 
-        # Create columns for a 2-column layout to start, will adjust if needed
         col1, col2 = st.columns(2)
         
         for i, resource in enumerate(resources):
-            # Alternate between columns
             target_col = col1 if i % 2 == 0 else col2
             with target_col:
                 with st.container(border=True):
@@ -415,5 +428,4 @@ elif page == "📚 Wellness Resources":
                     st.write(resource['description'])
                     st.page_link(resource['url'], label="Visit Resource 🔗", icon="➡️")
         
-        # Add a little space between categories
-        st.write("")
+        st.write("") # Add space between categories
