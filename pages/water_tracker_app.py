@@ -134,6 +134,18 @@ def get_daily_total():
     today_log = st.session_state.app_data["log"].get(today_str, [])
     return sum(entry['amount'] for entry in today_log)
 
+def delete_log_entry(timestamp_to_delete):
+    """Deletes a specific water intake entry based on its timestamp."""
+    today_str = str(date.today())
+    today_log = st.session_state.app_data["log"].get(today_str, [])
+    
+    # Filter out the entry to be deleted
+    updated_log = [entry for entry in today_log if entry["timestamp"] != timestamp_to_delete]
+    
+    if len(updated_log) < len(today_log):
+        st.session_state.app_data["log"][today_str] = updated_log
+        save_data(st.session_state.app_data)
+
 
 # --- UI Components ---
 def display_progress_circle(today_total, goal):
@@ -165,7 +177,7 @@ with st.sidebar:
     st.header("⚙️ Settings")
     current_goal = st.session_state.app_data.get("goal", 2500)
     new_goal = st.number_input(
-        "Daily Goal (ml)", min_value=1, value=current_goal, step=50
+        "Daily Goal (ml)", min_value=1, max_value=10000, value=int(current_goal), step=50
     )
     if new_goal != current_goal:
         st.session_state.app_data['goal'] = new_goal
@@ -216,6 +228,11 @@ with st.expander("📜 View Today's Log", expanded=True):
         st.info("No entries yet for today. Time to hydrate!")
     else:
         for entry in reversed(today_log):
-            time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
-            st.markdown(f"- **{entry['amount']} ml** at `{time_str}`")
-
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
+                st.markdown(f"- **{entry['amount']} ml** at `{time_str}`")
+            with col2:
+                if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
+                    delete_log_entry(entry['timestamp'])
+                    st.rerun()
