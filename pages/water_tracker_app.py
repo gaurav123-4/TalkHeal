@@ -146,6 +146,19 @@ def delete_log_entry(timestamp_to_delete):
         st.session_state.app_data["log"][today_str] = updated_log
         save_data(st.session_state.app_data)
 
+def update_log_entry(timestamp_to_update, new_amount):
+    """Updates the amount for a specific water intake entry."""
+    today_str = str(date.today())
+    today_log = st.session_state.app_data["log"].get(today_str, [])
+    
+    for entry in today_log:
+        if entry["timestamp"] == timestamp_to_update:
+            entry["amount"] = new_amount
+            break
+            
+    st.session_state.app_data["log"][today_str] = today_log
+    save_data(st.session_state.app_data)
+
 
 # --- UI Components ---
 def display_progress_circle(today_total, goal):
@@ -171,13 +184,15 @@ def display_progress_circle(today_total, goal):
 # Initialize session state from file
 if 'app_data' not in st.session_state:
     st.session_state.app_data = load_data()
+if 'editing_timestamp' not in st.session_state:
+    st.session_state.editing_timestamp = None
 
 # --- Sidebar for Settings ---
 with st.sidebar:
     st.header("⚙️ Settings")
     current_goal = st.session_state.app_data.get("goal", 2500)
     new_goal = st.number_input(
-        "Daily Goal (ml)", min_value=1, max_value=10000, value=int(current_goal), step=50
+        "Daily Goal (ml)", min_value=1.0, value=float(current_goal), step=50.0
     )
     if new_goal != current_goal:
         st.session_state.app_data['goal'] = new_goal
@@ -212,7 +227,7 @@ for i, amount in enumerate(common_amounts):
 
 # Custom amount input form
 with st.form("add_water_form", clear_on_submit=True):
-    custom_amount = st.number_input("Enter a custom amount (ml)", min_value=1, step=10)
+    custom_amount = st.number_input("Enter a custom amount (ml)", min_value=1.0, step=10.0)
     submitted = st.form_submit_button("✅ Add Custom Amount")
     
     if submitted and custom_amount > 0:
@@ -228,11 +243,37 @@ with st.expander("📜 View Today's Log", expanded=True):
         st.info("No entries yet for today. Time to hydrate!")
     else:
         for entry in reversed(today_log):
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
-                st.markdown(f"- **{entry['amount']} ml** at `{time_str}`")
-            with col2:
-                if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
-                    delete_log_entry(entry['timestamp'])
-                    st.rerun()
+            # If this entry is the one being edited, show the edit UI
+            if st.session_state.editing_timestamp == entry['timestamp']:
+                col1, col2, col3 = st.columns([2, 1, 1])
+                with col1:
+                    new_amount = st.number_input(
+                        "New amount",
+                        min_value=1.0,
+                        value=float(entry['amount']),
+                        step=10.0,
+                        key=f"input_{entry['timestamp']}"
+                    )
+                with col2:
+                    if st.button("💾", key=f"save_{entry['timestamp']}", help="Save changes"):
+                        update_log_entry(entry['timestamp'], new_amount)
+                        st.session_state.editing_timestamp = None
+                        st.rerun()
+                with col3:
+                    if st.button("✖️", key=f"cancel_{entry['timestamp']}", help="Cancel edit"):
+                        st.session_state.editing_timestamp = None
+                        st.rerun()
+            else:
+                # Otherwise, show the normal log entry
+                col1, col2, col3 = st.columns([3, 1, 1])
+                with col1:
+                    time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
+                    st.markdown(f"- **{entry['amount']} ml** at `{time_str}`")
+                with col2:
+                    if st.button("✏️", key=f"edit_{entry['timestamp']}", help="Edit this entry"):
+                        st.session_state.editing_timestamp = entry['timestamp']
+                        st.rerun()
+                with col3:
+                    if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
+                        delete_log_entry(entry['timestamp'])
+                        st.rerun()
