@@ -358,50 +358,62 @@ elif page == "📚 Wellness Resources":
     st.title("📚 Wellness Resources")
     st.write("A curated list of trusted resources to support your well-being journey.")
 
-    st.subheader("🧘 Meditation & Mindfulness")
-    st.markdown("""
-        - **[Headspace](https://www.headspace.com/)**: Guided meditations, animations, articles, and videos.
-        - **[Calm](https://www.calm.com/)**: A popular app for sleep, meditation, and relaxation.
-        - **[Tara Brach](https://www.tarabrach.com/guided-meditations/)**: Free guided meditations and talks on mindfulness.
-        - **[Mindful.org](https://www.mindful.org/)**: Articles, guides, and resources on practicing mindfulness.
-    """)
+    # --- Data for Wellness Resources ---
+    wellness_resources_data = {
+        "🧘 Meditation & Mindfulness": [
+            {"title": "Headspace", "url": "https://www.headspace.com/", "description": "Guided meditations, animations, articles, and videos."},
+            {"title": "Calm", "url": "https://www.calm.com/", "description": "A popular app for sleep, meditation, and relaxation."},
+            {"title": "Tara Brach", "url": "https://www.tarabrach.com/guided-meditations/", "description": "Free guided meditations and talks on mindfulness."},
+            {"title": "Mindful.org", "url": "https://www.mindful.org/", "description": "Articles, guides, and resources on practicing mindfulness."}
+        ],
+        "💪 Fitness & Movement": [
+            {"title": "Nike Training Club", "url": "https://www.nike.com/ntc-app", "description": "A wide range of free workouts and personalized training plans."},
+            {"title": "Yoga with Adriene", "url": "https://www.youtube.com/user/yogawithadriene", "description": "High-quality free yoga and mindfulness videos for all levels."},
+            {"title": "Fitness Blender", "url": "https://www.fitnessblender.com/", "description": "A huge variety of free, full-length workout videos."}
+        ],
+        "🥗 Nutrition": [
+            {"title": "Nutrition.gov", "url": "https://www.nutrition.gov/", "description": "Trustworthy information to make healthy eating choices."},
+            {"title": "MyFitnessPal", "url": "https://www.myfitnesspal.com/", "description": "A popular tool for tracking food intake and calories."}
+        ],
+        "😴 Sleep Health": [
+            {"title": "Sleep Foundation", "url": "https://www.sleepfoundation.org/", "description": "Evidence-based information and resources on sleep health."},
+            {"title": "The Sleep Council", "url": "https://sleepcouncil.org.uk/", "description": "Practical advice on how to get a better night's sleep."}
+        ],
+        "🎙️ Wellness Podcasts": [
+            {"title": "The Happiness Lab", "url": "https://www.pushkin.fm/podcasts/the-happiness-lab-with-dr-laurie-santros", "description": "Dr. Laurie Santos explores the science of happiness."},
+            {"title": "Feel Better, Live More", "url": "https://drchatterjee.com/blog/", "description": "Hosted by Dr. Rangan Chatterjee, offering practical health advice."},
+            {"title": "Ten Percent Happier", "url": "https://www.tenpercent.com/podcast", "description": "Interviews with meditation experts and scientists."}
+        ],
+        "📖 Recommended Books": [
+            {"title": "Atomic Habits by James Clear", "url": "https://jamesclear.com/atomic-habits", "description": "A guide to building good habits and breaking bad ones."},
+            {"title": "The Power of Now by Eckhart Tolle", "url": "https://eckharttolle.com/power-of-now-a-guide-to-spiritual-enlightenment/", "description": "A book on mindfulness and living in the present moment."},
+            {"title": "10% Happier by Dan Harris", "url": "https://www.goodreads.com/book/show/18505796-10-happier", "description": "A true story about a news anchor who discovers meditation."}
+        ],
+        "❤️ Crisis Support": [
+            {"title": "Crisis Text Line", "url": "https://www.crisistextline.org/", "description": "Text HOME to 741741 from anywhere in the US, anytime, about any type of crisis."},
+            {"title": "The National Suicide Prevention Lifeline", "url": "https://suicidepreventionlifeline.org/", "description": "Call 988 for free and confidential support."}
+        ]
+    }
 
-    st.subheader("💪 Fitness & Movement")
-    st.markdown("""
-        - **[Nike Training Club](https://www.nike.com/ntc-app)**: A wide range of free workouts and personalized training plans.
-        - **[Yoga with Adriene](https://www.youtube.com/user/yogawithadriene)**: High-quality free yoga and mindfulness videos for all levels.
-        - **[Fitness Blender](https://www.fitnessblender.com/)**: A huge variety of free, full-length workout videos.
-    """)
+    # --- Display Resources in Cards ---
+    for category, resources in wellness_resources_data.items():
+        if category == "❤️ Crisis Support":
+            st.subheader(category)
+            st.warning("If you are in immediate distress, please reach out. You are not alone.")
+        else:
+            st.subheader(category)
 
-    st.subheader("🥗 Nutrition")
-    st.markdown("""
-        - **[Nutrition.gov](https://www.nutrition.gov/)**: Trustworthy information to make healthy eating choices.
-        - **[MyFitnessPal](https://www.myfitnesspal.com/)**: A popular tool for tracking food intake and calories.
-    """)
-
-    st.subheader("😴 Sleep Health")
-    st.markdown("""
-        - **[Sleep Foundation](https://www.sleepfoundation.org/)**: Evidence-based information and resources on sleep health.
-        - **[The Sleep Council](https://sleepcouncil.org.uk/)**: Practical advice on how to get a better night's sleep.
-    """)
-
-    st.subheader("🎙️ Wellness Podcasts")
-    st.markdown("""
-        - **[The Happiness Lab](https://www.pushkin.fm/podcasts/the-happiness-lab-with-dr-laurie-santros)**: Dr. Laurie Santos explores the science of happiness.
-        - **[Feel Better, Live More](https://drchatterjee.com/blog/)**: Hosted by Dr. Rangan Chatterjee, offering practical health advice.
-        - **[Ten Percent Happier](https://www.tenpercent.com/podcast)**: Interviews with meditation experts and scientists.
-    """)
-
-    st.subheader("📖 Recommended Books")
-    st.markdown("""
-        - **[Atomic Habits by James Clear](https://jamesclear.com/atomic-habits)**: A guide to building good habits and breaking bad ones.
-        - **[The Power of Now by Eckhart Tolle](https://eckharttolle.com/power-of-now-a-guide-to-spiritual-enlightenment/)**: A book on mindfulness and living in the present moment.
-        - **[10% Happier by Dan Harris](https.www.goodreads.com/book/show/18505796-10-happier)**: A true story about a news anchor who discovers meditation.
-    """)
-
-    st.subheader("❤️ Crisis Support")
-    st.warning("If you are in immediate distress, please reach out. You are not alone.")
-    st.markdown("""
-        - **[Crisis Text Line](https://www.crisistextline.org/)**: Text HOME to 741741 from anywhere in the US, anytime, about any type of crisis.
-        - **[The National Suicide Prevention Lifeline](https://suicidepreventionlifeline.org/)**: Call 988 for free and confidential support.
-    """)
+        # Create columns for a 2-column layout to start, will adjust if needed
+        col1, col2 = st.columns(2)
+        
+        for i, resource in enumerate(resources):
+            # Alternate between columns
+            target_col = col1 if i % 2 == 0 else col2
+            with target_col:
+                with st.container(border=True):
+                    st.markdown(f"##### {resource['title']}")
+                    st.write(resource['description'])
+                    st.page_link(resource['url'], label="Visit Resource 🔗", icon="➡️")
+        
+        # Add a little space between categories
+        st.write("")
