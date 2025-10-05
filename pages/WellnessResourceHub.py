@@ -16,7 +16,8 @@ page = st.sidebar.radio(
         "📅 Daily Planner",
         "📊 Mood Tracker",
         "📓 Journaling Prompts",
-        "📚 Wellness Resources"
+        "📚 Wellness Resources",
+        "🤝 Community Tips"
     ]
 )
 
@@ -88,6 +89,30 @@ wellness_tasks = [
     "Step outside for 2 minutes and take a breath of fresh air.",
     "Put on a favorite upbeat song and have a mini dance party.",
     "Look out a window and name 5 different things you can see."
+]
+
+# --- Community Stories Data ---
+community_stories = [
+    {
+        "author": "A grateful user",
+        "category": "Gratitude",
+        "story": "I started writing down three things I'm grateful for every night before bed. It felt silly at first, but after a week, I noticed I was feeling more positive throughout the day. It's the small things that make a big difference."
+    },
+    {
+        "author": "Someone who found calm",
+        "category": "Stress Relief",
+        "story": "The 4-7-8 breathing technique has been a lifesaver for my anxiety. Whenever I feel overwhelmed, I take a few minutes to do it, and it's like hitting a reset button. Inhale for 4, hold for 7, exhale for 8. Try it!"
+    },
+    {
+        "author": "A student",
+        "category": "Productivity",
+        "story": "I used to struggle with procrastination. Now, I use the Pomodoro Technique (25 minutes of focused work, 5-minute break). Knowing I have a break coming up makes it so much easier to start. The 'Focus Session' feature here is great for that."
+    },
+    {
+        "author": "A recent graduate",
+        "category": "Self-Kindness",
+        "story": "My therapist told me to treat myself like I would treat a good friend. It changed my perspective. I'm much less critical of myself now and celebrate small wins instead of only focusing on my flaws. Be kind to yourself!"
+    }
 ]
 
 # --- Page 1: Wellness Hub ---
@@ -330,28 +355,28 @@ elif page == "📓 Journaling Prompts":
     st.write("Use these prompts to inspire your self-reflection. You don't have to answer them all; just pick one that resonates with you today.")
 
     st.subheader("🌟 For Gratitude and Positivity")
-    st.markdown("""
+    st.markdown('''
         - What is one small thing that brought you joy today?
         - Who is someone you're grateful for, and why?
         - Write about a compliment you received that made you feel good.
         - What is a personal strength you are proud of?
-    """)
+    ''')
 
     st.subheader("🤔 For Self-Reflection and Growth")
-    st.markdown("""
+    st.markdown('''
         - What is a challenge you recently overcame, and what did you learn?
         - If you could give your past self one piece of advice, what would it be?
         - Describe a time you felt truly at peace. What were you doing?
         - What is one habit you'd like to develop, and what is the first step?
-    """)
+    ''')
 
     st.subheader("🔮 For Future Goals and Aspirations")
-    st.markdown("""
+    st.markdown('''
         - Describe your ideal day, from morning to night.
         - What is a skill you want to learn in the next year?
         - If there were no obstacles, what is one dream you would pursue?
         - Write a letter to your future self, five years from now.
-    """)
+    ''')
 
 # --- Page 7: Wellness Resources ---
 elif page == "📚 Wellness Resources":
@@ -455,3 +480,16 @@ elif page == "📚 Wellness Resources":
                             st.rerun()
         
         st.write("") # Add space between categories
+
+# --- Page 8: Community Tips ---
+elif page == "🤝 Community Tips":
+    st.title("🤝 Community Tips & Stories")
+    st.markdown("A collection of anonymous stories and practical tips from our community. We hope you find encouragement and new ideas here.")
+    st.markdown("---")
+
+    for item in community_stories:
+        with st.container(border=True):
+            st.markdown(f"**A tip about: {item['category']}**")
+            st.write(f"*{item['story']}*")
+            st.caption(f"— {item['author']}")
+        st.write("") # Add some space
