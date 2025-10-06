@@ -1,8 +1,7 @@
 import streamlit as st
 import json
 import os
-from datetime import datetime, date
-import time
+from datetime import datetime, date, time
 
 # --- Configuration ---
 DATA_FILE = "water_tracker_data.json"
@@ -99,18 +98,27 @@ st.markdown("""
 
 # --- Data Handling Functions ---
 def load_data():
-    """Loads user data from the JSON file."""
+    """Loads user data from the JSON file, with defaults for new reminder settings."""
+    defaults = {
+        "goal": 2500, 
+        "units": "ml", 
+        "log": {},
+        "reminders_enabled": False,
+        "reminder_interval": 60,
+        "reminder_start_time": "09:00",
+        "reminder_end_time": "21:00"
+    }
     if not os.path.exists(DATA_FILE):
-        return {"goal": 2500, "units": "ml", "log": {}}
+        return defaults
     try:
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
-            # Ensure units key exists for backward compatibility
-            if "units" not in data:
-                data["units"] = "ml"
+            # Set defaults for any missing keys for backward compatibility
+            for key, value in defaults.items():
+                data.setdefault(key, value)
             return data
     except (json.JSONDecodeError, FileNotFoundError):
-        return {"goal": 2500, "units": "ml", "log": {}}
+        return defaults
 
 def save_data(data):
     """Saves user data to the JSON file."""
@@ -127,6 +135,9 @@ def log_water_intake(amount_ml):
         "amount": amount_ml,
         "timestamp": datetime.now().isoformat()
     })
+    # Reset reminder snooze when a drink is logged
+    if 'last_toast_time' in st.session_state:
+        del st.session_state['last_toast_time']
     save_data(st.session_state.app_data)
 
 def get_daily_total():
@@ -196,6 +207,36 @@ def display_progress_circle(today_total_ml, goal_ml):
     </div>
     """, unsafe_allow_html=True)
 
+def check_and_show_reminder():
+    """Checks if a reminder should be shown and displays a toast message."""
+    settings = st.session_state.app_data
+    if not settings.get("reminders_enabled", False):
+        return
+
+    now = datetime.now()
+    start_time = datetime.strptime(settings.get("reminder_start_time", "09:00"), "%H:%M").time()
+    end_time = datetime.strptime(settings.get("reminder_end_time", "21:00"), "%H:%M").time()
+
+    if not (start_time <= now.time() <= end_time):
+        return
+
+    today_log = settings.get("log", {}).get(str(date.today()), [])
+    last_drink_time = None
+    if today_log:
+        last_drink_time = datetime.fromisoformat(today_log[-1]['timestamp'])
+    else:
+        last_drink_time = now.replace(hour=start_time.hour, minute=start_time.minute, second=0, microsecond=0)
+
+    interval_minutes = settings.get("reminder_interval", 60)
+    minutes_passed = (now - last_drink_time).total_seconds() / 60
+
+    if minutes_passed > interval_minutes:
+        last_toast_time = st.session_state.get('last_toast_time')
+        if last_toast_time and (now - last_toast_time).total_seconds() / 60 < interval_minutes:
+            return
+
+        st.toast(f"💧 Time to hydrate! It's been about {int(minutes_passed)} minutes.", icon="💧")
+        st.session_state.last_toast_time = now
 
 # --- Main Application Logic ---
 
@@ -237,9 +278,39 @@ with st.sidebar:
         save_data(st.session_state.app_data)
         st.rerun()
 
+    st.divider()
+    st.header("⏰ Reminders")
+    
+    reminders_enabled = st.toggle("Enable Reminders", value=st.session_state.app_data.get('reminders_enabled', False))
+    if reminders_enabled != st.session_state.app_data.get('reminders_enabled'):
+        st.session_state.app_data['reminders_enabled'] = reminders_enabled
+        save_data(st.session_state.app_data)
+        st.rerun()
+
+    reminder_interval = st.number_input("Interval (minutes)", min_value=1, value=st.session_state.app_data.get('reminder_interval', 60))
+    if reminder_interval != st.session_state.app_data.get('reminder_interval'):
+        st.session_state.app_data['reminder_interval'] = reminder_interval
+        save_data(st.session_state.app_data)
+
+    start_time_val = datetime.strptime(st.session_state.app_data.get('reminder_start_time', "09:00"), "%H:%M").time()
+    reminder_start_time = st.time_input("Start Time", value=start_time_val)
+    if reminder_start_time.strftime("%H:%M") != st.session_state.app_data.get('reminder_start_time'):
+        st.session_state.app_data['reminder_start_time'] = reminder_start_time.strftime("%H:%M")
+        save_data(st.session_state.app_data)
+
+    end_time_val = datetime.strptime(st.session_state.app_data.get('reminder_end_time', "21:00"), "%H:%M").time()
+    reminder_end_time = st.time_input("End Time", value=end_time_val)
+    if reminder_end_time.strftime("%H:%M") != st.session_state.app_data.get('reminder_end_time'):
+        st.session_state.app_data['reminder_end_time'] = reminder_end_time.strftime("%H:%M")
+        save_data(st.session_state.app_data)
+
+
 # --- Main Page Content ---
 st.title("💧 daily water tracker")
 st.markdown("Your simple and beautiful daily water tracker.")
+
+# Check for reminders at the start of the script run
+check_and_show_reminder()
 
 # Calculate today's total and check against the goal (always in ml)
 total_consumed_ml = get_daily_total()
