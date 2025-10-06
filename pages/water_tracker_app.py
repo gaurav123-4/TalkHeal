@@ -6,6 +6,7 @@ import time
 
 # --- Configuration ---
 DATA_FILE = "water_tracker_data.json"
+ML_TO_OZ = 0.033814
 
 # --- UI Styling ---
 st.set_page_config(
@@ -104,9 +105,9 @@ def load_data():
     try:
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
-            if data.get("units") != "ml": # Convert old data if necessary
+            # Ensure units key exists for backward compatibility
+            if "units" not in data:
                 data["units"] = "ml"
-                data["goal"] = 2500
             return data
     except (json.JSONDecodeError, FileNotFoundError):
         return {"goal": 2500, "units": "ml", "log": {}}
@@ -116,20 +117,20 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-def log_water_intake(amount):
-    """Logs a new water intake entry and saves it."""
+def log_water_intake(amount_ml):
+    """Logs a new water intake entry (always in ml) and saves it."""
     today_str = str(date.today())
     if today_str not in st.session_state.app_data["log"]:
         st.session_state.app_data["log"][today_str] = []
     
     st.session_state.app_data["log"][today_str].append({
-        "amount": amount,
+        "amount": amount_ml,
         "timestamp": datetime.now().isoformat()
     })
     save_data(st.session_state.app_data)
 
 def get_daily_total():
-    """Calculates the total water intake for today."""
+    """Calculates the total water intake for today in ml."""
     today_str = str(date.today())
     today_log = st.session_state.app_data["log"].get(today_str, [])
     return sum(entry['amount'] for entry in today_log)
@@ -138,42 +139,59 @@ def delete_log_entry(timestamp_to_delete):
     """Deletes a specific water intake entry based on its timestamp."""
     today_str = str(date.today())
     today_log = st.session_state.app_data["log"].get(today_str, [])
-    
-    # Filter out the entry to be deleted
     updated_log = [entry for entry in today_log if entry["timestamp"] != timestamp_to_delete]
-    
     if len(updated_log) < len(today_log):
         st.session_state.app_data["log"][today_str] = updated_log
         save_data(st.session_state.app_data)
 
-def update_log_entry(timestamp_to_update, new_amount):
-    """Updates the amount for a specific water intake entry."""
+def update_log_entry(timestamp_to_update, new_amount_ml):
+    """Updates the amount for a specific water intake entry (always in ml)."""
     today_str = str(date.today())
     today_log = st.session_state.app_data["log"].get(today_str, [])
-    
     for entry in today_log:
         if entry["timestamp"] == timestamp_to_update:
-            entry["amount"] = new_amount
+            entry["amount"] = new_amount_ml
             break
-            
     st.session_state.app_data["log"][today_str] = today_log
     save_data(st.session_state.app_data)
 
+# --- Unit Conversion and Display Functions ---
+def get_display_amount(ml_value):
+    """Converts ml to the preferred unit for display."""
+    unit = st.session_state.app_data.get("units", "ml")
+    if unit == "oz":
+        return ml_value * ML_TO_OZ
+    return ml_value
+
+def get_display_string(ml_value):
+    """Returns a formatted string for the given ml value in the user's preferred unit."""
+    unit = st.session_state.app_data.get("units", "ml")
+    display_val = get_display_amount(ml_value)
+    return f"{display_val:.1f} {unit}" if unit == "oz" else f"{int(display_val)} {unit}"
+
+def convert_to_ml(amount, from_unit):
+    """Converts a given amount from a specific unit back to ml."""
+    if from_unit == "oz":
+        return amount / ML_TO_OZ
+    return amount
 
 # --- UI Components ---
-def display_progress_circle(today_total, goal):
-    """Renders the interactive progress circle."""
+def display_progress_circle(today_total_ml, goal_ml):
+    """Renders the interactive progress circle with preferred units."""
     progress = 0
-    if goal > 0:
-        progress = min((today_total / goal) * 100, 100)
+    if goal_ml > 0:
+        progress = min((today_total_ml / goal_ml) * 100, 100)
     
     fill_color = "#2193b0" if progress < 100 else "#28a745"
+    
+    total_display = get_display_string(today_total_ml)
+    goal_display = get_display_string(goal_ml)
 
     st.markdown(f"""
     <div class="progress-circle" style="--progress: {progress}; --fill-color: {fill_color};">
         <div class="progress-text">
             {progress:.0f}%
-            <div class="progress-subtext">{today_total:,} / {goal:,} ml</div>
+            <div class="progress-subtext">{total_display} / {goal_display}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -187,15 +205,35 @@ if 'app_data' not in st.session_state:
 if 'editing_timestamp' not in st.session_state:
     st.session_state.editing_timestamp = None
 
+# Get current unit preference
+unit = st.session_state.app_data.get("units", "ml")
+
 # --- Sidebar for Settings ---
 with st.sidebar:
     st.header("⚙️ Settings")
-    current_goal = st.session_state.app_data.get("goal", 2500)
-    new_goal = st.number_input(
-        "Daily Goal (ml)", min_value=1.0, value=float(current_goal), step=50.0
+    
+    # Unit Selector
+    new_unit = st.radio("Units", ["ml", "oz"], index=["ml", "oz"].index(unit))
+    if new_unit != unit:
+        st.session_state.app_data['units'] = new_unit
+        save_data(st.session_state.app_data)
+        st.rerun()
+
+    # Daily Goal Input
+    goal_ml = st.session_state.app_data.get("goal", 2500)
+    current_goal_display = get_display_amount(goal_ml)
+    
+    new_goal_display = st.number_input(
+        f"Daily Goal ({unit})",
+        min_value=1.0,
+        value=float(current_goal_display),
+        step=50.0 if unit == 'ml' else 0.5,
+        format="%.0f" if unit == 'ml' else "%.1f"
     )
-    if new_goal != current_goal:
-        st.session_state.app_data['goal'] = new_goal
+    
+    if new_goal_display != current_goal_display:
+        new_goal_ml = convert_to_ml(new_goal_display, unit)
+        st.session_state.app_data['goal'] = new_goal_ml
         save_data(st.session_state.app_data)
         st.rerun()
 
@@ -203,36 +241,35 @@ with st.sidebar:
 st.title("💧 daily water tracker")
 st.markdown("Your simple and beautiful daily water tracker.")
 
-# Calculate today's total and check against the goal
-goal = st.session_state.app_data.get("goal", 2500)
-total_consumed = get_daily_total()
-goal_reached_before = total_consumed >= goal
+# Calculate today's total and check against the goal (always in ml)
+total_consumed_ml = get_daily_total()
+goal_reached_before = total_consumed_ml >= goal_ml
 
 # Display the main progress circle
-display_progress_circle(total_consumed, goal)
+display_progress_circle(total_consumed_ml, goal_ml)
 
 st.subheader("Log Your Intake")
 
 # Quick-add buttons for a highly interactive experience
 button_cols = st.columns([1, 1, 1])
-common_amounts = [250, 500, 750]
+common_amounts_ml = [250, 500, 750]
 
-for i, amount in enumerate(common_amounts):
-    if button_cols[i].button(f"💧 {amount} ml"):
-        log_water_intake(amount)
-        # Check if the goal was just reached for the celebration
-        if not goal_reached_before and (total_consumed + amount) >= goal:
+for i, amount_ml in enumerate(common_amounts_ml):
+    if button_cols[i].button(f"💧 {get_display_string(amount_ml)}"):
+        log_water_intake(amount_ml)
+        if not goal_reached_before and (total_consumed_ml + amount_ml) >= goal_ml:
             st.balloons()
         st.rerun()
 
 # Custom amount input form
 with st.form("add_water_form", clear_on_submit=True):
-    custom_amount = st.number_input("Enter a custom amount (ml)", min_value=1.0, step=10.0)
+    custom_amount = st.number_input(f"Enter a custom amount ({unit})", min_value=0.1, step=0.1)
     submitted = st.form_submit_button("✅ Add Custom Amount")
     
     if submitted and custom_amount > 0:
-        log_water_intake(custom_amount)
-        if not goal_reached_before and (total_consumed + custom_amount) >= goal:
+        custom_amount_ml = convert_to_ml(custom_amount, unit)
+        log_water_intake(custom_amount_ml)
+        if not goal_reached_before and (total_consumed_ml + custom_amount_ml) >= goal_ml:
             st.balloons()
         st.rerun()
 
@@ -243,20 +280,24 @@ with st.expander("📜 View Today's Log", expanded=True):
         st.info("No entries yet for today. Time to hydrate!")
     else:
         for entry in reversed(today_log):
-            # If this entry is the one being edited, show the edit UI
+            entry_amount_ml = entry['amount']
+            
             if st.session_state.editing_timestamp == entry['timestamp']:
                 col1, col2, col3 = st.columns([2, 1, 1])
                 with col1:
-                    new_amount = st.number_input(
-                        "New amount",
-                        min_value=1.0,
-                        value=float(entry['amount']),
-                        step=10.0,
-                        key=f"input_{entry['timestamp']}"
+                    current_edit_amount = get_display_amount(entry_amount_ml)
+                    new_amount_display = st.number_input(
+                        f"New amount ({unit})",
+                        min_value=0.1,
+                        value=float(current_edit_amount),
+                        step=0.1,
+                        key=f"input_{entry['timestamp']}",
+                        format="%.1f"
                     )
                 with col2:
                     if st.button("💾", key=f"save_{entry['timestamp']}", help="Save changes"):
-                        update_log_entry(entry['timestamp'], new_amount)
+                        new_amount_ml = convert_to_ml(new_amount_display, unit)
+                        update_log_entry(entry['timestamp'], new_amount_ml)
                         st.session_state.editing_timestamp = None
                         st.rerun()
                 with col3:
@@ -264,11 +305,10 @@ with st.expander("📜 View Today's Log", expanded=True):
                         st.session_state.editing_timestamp = None
                         st.rerun()
             else:
-                # Otherwise, show the normal log entry
                 col1, col2, col3 = st.columns([3, 1, 1])
                 with col1:
                     time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
-                    st.markdown(f"- **{entry['amount']} ml** at `{time_str}`")
+                    st.markdown(f"- **{get_display_string(entry_amount_ml)}** at `{time_str}`")
                 with col2:
                     if st.button("✏️", key=f"edit_{entry['timestamp']}", help="Edit this entry"):
                         st.session_state.editing_timestamp = entry['timestamp']
