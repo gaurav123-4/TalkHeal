@@ -1,5 +1,5 @@
 import streamlit as st
-from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals, get_today_entries, load_water_log, edit_water_intake_entry
+from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals, get_today_entries, load_water_log, edit_water_intake_entry, delete_water_intake_entry
 import pandas as pd
 import datetime
 
@@ -279,7 +279,7 @@ with col2:
     """, unsafe_allow_html=True)
 st.caption("💡 Tip: Aim for at least 2 liters (2000 ml) per day!")
 
-# 2. Detailed Log View with Edit
+# 2. Detailed Log View with Edit/Delete
 with st.expander("📜 Today's Log", expanded=False):
     todays_entries = get_today_entries()
     if not todays_entries:
@@ -292,12 +292,17 @@ with st.expander("📜 Today's Log", expanded=False):
             ts = entry['timestamp']
             amount = entry['amount_ml']
             
-            col1, col2 = st.columns([3, 1])
+            col1, col2, col3 = st.columns([3, 1, 1])
             
             with col1:
                 st.markdown(f"**{pd.to_datetime(ts).strftime('%I:%M %p')}**: {amount} ml")
 
             with col2:
+                if st.button("Delete", key=f"delete_{ts}"):
+                    delete_water_intake_entry(ts)
+                    st.rerun()
+
+            with col3:
                 edit_key = f"edit_{ts}"
                 if edit_key not in st.session_state:
                     st.session_state[edit_key] = False
