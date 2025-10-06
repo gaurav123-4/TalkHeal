@@ -277,7 +277,48 @@ with col2:
         {total} / {goal} ml ({int(progress*100)}%)
     </div>
     """, unsafe_allow_html=True)
-st.caption("💡 Tip: Aim for at least 2 liters (2000 ml) per day!")
+def get_personalized_tip(daily_goal, last_7_days_data):
+    # Default tip
+    tip = "💡 Tip: Aim for at least 2 liters (2000 ml) per day!"
+
+    if not last_7_days_data:
+        return "💡 Tip: Start logging your water intake to get personalized tips!"
+
+    # Calculate average intake and consistency
+    total_intake = sum(day[1] for day in last_7_days_data)
+    days_logged = len(last_7_days_data)
+    average_intake = total_intake / days_logged if days_logged > 0 else 0
+    
+    days_met_goal = sum(1 for day in last_7_days_data if day[1] >= daily_goal)
+
+    # Provide tips based on user's recent performance
+    if days_logged < 3:
+        tip = "💡 Tip: Keep logging for a few more days to unlock more insightful tips!"
+    elif days_met_goal >= 5:
+        tip = "🏆 You're doing great! Keep up the consistent hydration to maintain your energy levels."
+    elif average_intake < daily_goal / 2:
+        tip = "💧 Tip: Try starting your day with a large glass of water to kickstart your hydration."
+    elif average_intake < daily_goal:
+        tip = "📈 You're getting close! Try carrying a reusable water bottle as a visual reminder to drink more."
+    elif days_met_goal == 7:
+        tip = "🥇 Perfect week! You've mastered the art of staying hydrated. Keep it up!"
+
+    return tip
+
+# ... (rest of the app)
+
+st.markdown(f"""
+...
+<div style='text-align:center; margin-top: 0.5rem; font-weight: 600; font-size: 1.1rem; color: #0d47a1;'>
+    {total} / {goal} ml ({int(progress*100)}%)
+</div>
+""", unsafe_allow_html=True)
+
+# Personalized Hydration Tip
+last_7_days_data = get_last_n_days_totals(7)
+personalized_tip = get_personalized_tip(goal, last_7_days_data)
+st.caption(personalized_tip)
+
 
 # 2. Detailed Log View with Edit/Delete
 with st.expander("📜 Today's Log", expanded=False):
