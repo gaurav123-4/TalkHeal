@@ -9,6 +9,8 @@ from collections import Counter, defaultdict
 from components.analytics import analyze_mood_trends, analyze_activity_mood_correlation
 from components.predictive_analytics import predict_mood_trends
 from components.weather_correlation import render_weather_mood_analysis
+from components.physio_correlation import correlate_mood_with_physio
+from core.wearable_store import load_user_wearables
 
 class MoodTracker:
     def __init__(self):
@@ -314,7 +316,7 @@ def render_mood_dashboard():
             st.success("✅ Mood entry saved successfully!")
     
     # Dashboard tabs
-    tab1, tab2, tab3 = st.tabs(["📈 Mood History", "📊 Analytics", "💡 Insights"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📈 Mood History", "📊 Analytics", "💡 Insights", "⌚ Physiology Correlation"])
     
     with tab1:
         render_mood_history(tracker)
@@ -324,6 +326,9 @@ def render_mood_dashboard():
     
     with tab3:
         render_mood_insights(tracker)
+    
+    with tab4:
+        render_physio_correlation(tracker)
 
 def render_mood_history(tracker):
     """Render mood history with charts and filters"""
@@ -1099,6 +1104,7 @@ def render_mood_insights(tracker):
         • Set new wellness goals
         """)
 
+
 def render_mood_dashboard_button():
     """Render a button to show/hide the mood dashboard"""
     if "show_mood_dashboard" not in st.session_state:
@@ -1109,3 +1115,29 @@ def render_mood_dashboard_button():
         st.rerun()
     
     return st.session_state.show_mood_dashboard
+
+
+def render_physio_correlation(tracker):
+    st.markdown("### ⌚ Physiology ↔ Mood Correlation")
+    # Build mood df (30 days)
+    df = tracker.get_mood_dataframe(30)
+    if df.empty:
+        st.info("Add some mood entries to enable correlation analysis.")
+        return
+    df['mood_numeric'] = df['mood_level'].apply(tracker.get_mood_numeric)
+    # Load wearable data for user
+    email = st.session_state.get("user_profile", {}).get("email")
+    wearable = load_user_wearables(email)
+    records = wearable.get("records", [])
+    results = correlate_mood_with_physio(df[['date', 'mood_numeric']], records)
+    if results['insights']:
+        st.markdown("**Insights:**")
+        for i in results['insights']:
+            st.info(i)
+    if results['alerts']:
+        st.markdown("**Proactive Alerts:**")
+        for a in results['alerts']:
+            st.warning(a)
+    if results['charts']:
+        for fig in results['charts']:
+            st.plotly_chart(fig, use_container_width=True)
