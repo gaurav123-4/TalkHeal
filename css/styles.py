@@ -284,6 +284,15 @@ def apply_custom_css():
             border-left: 4px solid #f97316; /* A bright orange */
         }}
 
+        /* Water and Wearables card accents */
+        .water-card {{
+            border-left: 4px solid #06b6d4; /* cyan/teal for water */
+        }}
+
+        .wearables-card {{
+            border-left: 4px solid #7c3aed; /* indigo/purple for wearables */
+        }}
+
         .community-card {{
             border-left: 4px solid #ec4899; /* Secondary pink */
         }}
