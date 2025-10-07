@@ -204,7 +204,7 @@ def render_feature_cards():
             "title": "Breathing Exercises",
             "action": lambda: st.switch_page("pages/Breathing_Exercise.py"),
             "key": "breathing_btn",
-            "button_text": "🌬 Start Breathing",
+            "button_text": "🌬 Excercises",
             "css_class": "breathing-card"
         },
         {
@@ -256,7 +256,23 @@ def render_feature_cards():
             "css_class": "wellness-card"
         },
         {
-            "icon": "💬",
+            "icon": "💧",
+            "title": "Water Tracking",
+            "action": lambda: st.switch_page("pages/WaterIntakeTracker.py"),
+            "key": "water_btn",
+            "button_text": "💧 Track Water",
+            "css_class": "water-card"
+        },
+        {
+            "icon": "⌚",
+            "title": "Wearables",
+            "action": lambda: st.switch_page("pages/Wearables.py"),
+            "key": "wearables_btn",
+            "button_text": "⌚ View Wearables",
+            "css_class": "wearables-card"
+        },
+        {
+            "icon": "�💬",
             "title": "Community Forum",
             "action": lambda: st.switch_page("pages/CommunityForum.py"),
             "key": "forum_btn",
@@ -274,7 +290,7 @@ def render_feature_cards():
     ]
 
     # Use Streamlit's native columns to create the grid layout
-    num_columns = 5 # You can change this to 6 for a more compact layout
+    num_columns = 6 # switched to 6 columns to accommodate new cards
     
     # Check if the number of cards is a multiple of the number of columns
     # and adjust the number of columns if necessary
@@ -285,10 +301,17 @@ def render_feature_cards():
     
     for i, card in enumerate(cards_data):
         with cols[i % num_columns]:
-            # Use the new CSS class from the cards_data dictionary
+            # Render all feature cards with the same CSS and markup (icon + title only)
+            # Add an explicit inline left-border style for water and wearables to ensure visibility
+            inline_border = ''
+            if card.get('css_class') == 'water-card':
+                inline_border = 'border-left: 4px solid #06b6d4;'
+            elif card.get('css_class') == 'wearables-card':
+                inline_border = 'border-left: 4px solid #7c3aed;'
+
             st.markdown(f"""
-            <div class="feature-card primary-card {card['css_class']}">
-                <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">{card['icon']}</div>
+            <div class="feature-card primary-card {card['css_class']}" style="{inline_border}">
+                <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">{card.get('icon','')}</div>
                 <h3 style="margin-bottom: 1rem; color: white; font-size: 1.1rem;">{card['title']}</h3>
             </div>
             """, unsafe_allow_html=True)
