@@ -1,3 +1,16 @@
+def get_personality_list():
+    """Return a list of available chatbot personalities."""
+    return [
+        "Compassionate Listener",
+        "Motivating Coach",
+        "Wise Friend",
+        "Neutral Therapist",
+        "Mindfulness Guide"
+    ]
+
+def generate_response(user_input, personality):
+    """Stub for generating a response. In production, this would call the AI model."""
+    return f"[{personality}] Response to: {user_input}"
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
