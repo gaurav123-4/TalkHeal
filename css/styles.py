@@ -16,7 +16,7 @@ def apply_custom_css():
         'secondary': '#ec4899',
         'success': '#10b981',
         'warning': '#f59e0b',
-        'danger': '#ef4444',
+    'danger': '#ff9fb6',
         'surface': 'rgba(255,255,255,0.14)',
         'surface_alt': 'rgba(25,25,46,0.23)',
         'text_primary': '#fff',
@@ -110,7 +110,8 @@ def apply_custom_css():
 
         p {{
             font-weight: 400;
-            color: var(--text-secondary);
+            /* Explicitly use the requested color instead of the CSS variable */
+            color: #C2185B;
             line-height: 1.68;
             margin-bottom: 1.1em;
         }}
@@ -902,22 +903,22 @@ def apply_custom_css():
             transform: translateX(8px) scale(1.02) !important;
         }}
         
-        /* Dedicated style for the red emergency button */
+        /* Dedicated style for the emergency/secondary button: use a light, subtle pink (no harsh red) */
         .stButton > button[kind="secondary"] {{
-            background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
-            color: white !important;
-            border: 1px solid #ef4444 !important;
+            background: linear-gradient(135deg, #fff0f6, #ffd6e8) !important; /* subtle pink */
+            color: #4b1133 !important; /* dark pink/purple text for readability */
+            border: 1px solid rgba(75,17,51,0.12) !important;
             font-weight: 600 !important;
             transform: none !important; /* Reset transform from other rules */
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(75,17,51,0.06) !important;
         }}
 
         .stButton > button[kind="secondary"]:hover {{
-            background: linear-gradient(135deg, #dc2626, #991b1b) !important;
-            border-color: #dc2626 !important;
-            color: white !important;
+            background: linear-gradient(135deg, #ffe6f2, #ffcbe6) !important; /* slightly warmer hover */
+            border-color: rgba(75,17,51,0.16) !important;
+            color: #4b1133 !important;
             transform: translateY(-2px) !important; /* Add a nice hover effect */
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+            box-shadow: 0 8px 20px rgba(75,17,51,0.09) !important;
         }}
         
         /* Sidebar toggle button */

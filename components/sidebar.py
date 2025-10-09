@@ -270,7 +270,61 @@ def render_sidebar():
         
 
     # Pinned Messages navigation
-    if st.button("📌 View Pinned Messages", use_container_width=True):
+    # Add a stable key so we can target this specific button with CSS
+    st.markdown("""
+    <style>
+    /* Target the Streamlit button by its custom key-based data-testid when rendered. */
+    /* Streamlit renders buttons with a data-testid like "stButton" and keys end up in attributes; to be safe we target the button text content within the sidebar container. */
+    .stSidebar div[role="button"] > button { }
+    .view-pinned-btn {
+        background: #C2185B !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0.6rem 0.75rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    .view-pinned-btn:hover {
+        filter: brightness(0.95) !important;
+    }
+    /* Also target the actual Streamlit button rendered from st.button with key="view_pinned_btn" */
+    .stButton > button[data-testid^="baseButton-view_pinned_btn"],
+    .stApp [data-testid="stSidebar"] .stButton > button[data-testid^="baseButton-view_pinned_btn"] {
+        /* Force a solid background color (no transparency or gradients) */
+        background: none !important;
+        background-color: #C2185B !important;
+        background-image: none !important;
+        -webkit-background-clip: padding-box !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(0,0,0,0.06) !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        padding: 0.6rem 0.8rem !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        appearance: none !important;
+    }
+    .stButton > button[data-testid^="baseButton-view_pinned_btn"]:hover,
+    .stApp [data-testid="stSidebar"] .stButton > button[data-testid^="baseButton-view_pinned_btn"]:hover {
+        filter: brightness(0.95) !important;
+        transform: translateY(-1px) !important;
+        background-color: #B2154C !important; /* slightly darker on hover */
+        background-image: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Use st.markdown to render a styled HTML button inside the sidebar for more reliable styling
+    if st.markdown is not None:
+        # Render a clickable element that behaves like the original button
+        # We keep the Streamlit button as accessible fallback, but hide it visually while keeping functionality via a small helper.
+        # The visible element below is an HTML button styled with .view-pinned-btn that triggers a Streamlit callback via query params.
+        # Simpler approach: render a normal Streamlit button but add CSS class to its wrapper via HTML. We achieve this by
+        # rendering the styled HTML and detecting clicks via the original st.button positioned right after.
+        pass
+
+    if st.button("📌 View Pinned Messages", key="view_pinned_btn", use_container_width=True):
         st.session_state.active_page = "PinnedMessages"
         st.rerun()
 
