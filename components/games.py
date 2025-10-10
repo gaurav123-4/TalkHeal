@@ -290,94 +290,134 @@ def mood_color_matching_game():
         <p>Express your emotions through colors and learn about color psychology!</p>
     </div>
     """, unsafe_allow_html=True)
-    
+
     mood_colors = {
         "😊 Happy": "🟡",
-        "😢 Sad": "🔵", 
+        "😢 Sad": "🔵",
         "😠 Angry": "🔴",
         "😌 Calm": "🟢",
         "💜 Loving": "🟣",
         "🧡 Energetic": "🟠"
     }
-    
+
+    # Initialize score and history
     if 'color_score' not in st.session_state:
         st.session_state.color_score = 0
-    
-    st.write("**Match the emotion with the color that represents it:**")
-    
-    # Randomize the mood for the question
-    current_mood = random.choice(list(mood_colors.keys()))
+    if 'color_history' not in st.session_state:
+        st.session_state.color_history = []  # list of (mood, chosen, correct)
+    if 'mood_locked' not in st.session_state:
+        st.session_state.mood_locked = False
+    if 'mood_hint_shown' not in st.session_state:
+        st.session_state.mood_hint_shown = False
+
+    st.markdown("**Match the emotion with the color that represents it:**")
+
+    # Pick or keep current mood in session state so hints and 'next' work predictably
+    if 'mood_current' not in st.session_state or st.button("Next Mood", key="mood_next"):
+        st.session_state.mood_current = random.choice(list(mood_colors.keys()))
+        # build options once per mood
+        correct_color = mood_colors[st.session_state.mood_current]
+        all_colors = list(set(mood_colors.values()))
+        wrong_colors = [c for c in all_colors if c != correct_color]
+        options = [correct_color] + random.sample(wrong_colors, min(3, len(wrong_colors)))
+        random.shuffle(options)
+        st.session_state.mood_options = options
+        st.session_state.mood_locked = False
+        st.session_state.mood_hint_shown = False
+
+    current_mood = st.session_state.mood_current
+    options = st.session_state.get('mood_options')
     correct_color = mood_colors[current_mood]
-    
-    st.write(f"### Current Emotion: {current_mood}")
-    
-    # Create color options (correct + 3 random wrong ones)
-    all_colors = list(set(mood_colors.values()))
-    wrong_colors = [c for c in all_colors if c != correct_color]
-    options = [correct_color] + random.sample(wrong_colors, min(3, len(wrong_colors)))
-    random.shuffle(options)
-    
-    # Add responsive CSS for mood color selection  
+
+    # Header row with hint and quick stats
+    c1, c2, c3 = st.columns([3, 1, 1])
+    with c1:
+        st.write(f"### Current Emotion: {current_mood}")
+    with c2:
+        if st.button("Hint", key="mood_hint"):
+            st.session_state.mood_hint_shown = True
+    with c3:
+        st.write(f"Streak: {sum(1 for h in st.session_state.color_history if h[2])}")
+
+    # Show hint if requested
+    if st.session_state.mood_hint_shown:
+        fact_map = {
+            "🟡": "Yellow is associated with happiness, optimism, and mental clarity!",
+            "🔵": "Blue represents calmness and can help reduce anxiety and stress.",
+            "🔴": "Red is linked to strong emotions like passion, energy, and sometimes anger.",
+            "🟢": "Green promotes balance, harmony, and has a calming effect on the mind.",
+            "🟣": "Purple is often associated with creativity, spirituality, and compassion.",
+            "🟠": "Orange represents enthusiasm, creativity, and positive energy!"
+        }
+        st.info("💡 Hint: " + fact_map.get(correct_color, "Colors have powerful psychological effects!"))
+
+    # Add improved CSS for larger circular buttons
     st.markdown("""
     <style>
-    @media (max-width: 768px) {
-        .mood-color-selection {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: center;
-            margin: 1rem 0;
-        }
-        .mood-color-selection .stButton {
-            flex: 1 1 45%;
-            min-width: 70px;
-            max-width: 100px;
-        }
-        .mood-color-selection .stButton > button {
-            font-size: 2rem !important;
-            min-height: 60px !important;
-            width: 100% !important;
-        }
-    }
+    .mood-color-selection { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin: 12px 0; }
+    .mood-color-selection .stButton > button { font-size: 2.4rem !important; min-height: 84px !important; width: 84px !important; border-radius: 999px !important; }
+    .mood-color-selection .stButton > button:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(11,22,55,0.08); }
+    @media (max-width: 640px) { .mood-color-selection .stButton > button { font-size: 2rem !important; min-height: 64px !important; width: 64px !important; } }
     </style>
     """, unsafe_allow_html=True)
-    
+
     st.markdown('<div class="mood-color-selection">', unsafe_allow_html=True)
-    
-    # Use 2 columns per row for better mobile layout
-    for row in range(0, len(options), 2):
-        row_options = options[row:row+2]
-        cols = st.columns(len(row_options))
-        
-        for j, color in enumerate(row_options):
-            with cols[j]:
-                button_index = row + j
-                if st.button(color, key=f"color_choice_{button_index}", use_container_width=True):
-                    if color == correct_color:
-                        st.session_state.color_score += 10
-                        st.success("🎉 Perfect match! Colors can really reflect our emotions!")
-                        
-                        # Show color psychology fact
-                        facts = {
-                            "🟡": "Yellow is associated with happiness, optimism, and mental clarity!",
-                            "🔵": "Blue represents calmness and can help reduce anxiety and stress.",
-                            "🔴": "Red is linked to strong emotions like passion, energy, and sometimes anger.",
-                            "🟢": "Green promotes balance, harmony, and has a calming effect on the mind.",
-                            "🟣": "Purple is often associated with creativity, spirituality, and compassion.",
-                            "🟠": "Orange represents enthusiasm, creativity, and positive energy!"
-                        }
-                        st.info(f"💡 **Did you know?** {facts.get(correct_color, 'Colors have powerful psychological effects!')}")
-                    else:
-                        st.error("Try again! Think about what this emotion feels like.")
-                        st.rerun()
-    
+
+    # Render options (disable after a choice until Next Mood)
+    for i, color in enumerate(options):
+        disabled = st.session_state.mood_locked
+        if st.button(color, key=f"color_choice_{i}", use_container_width=False, disabled=disabled):
+            # process choice
+            chosen = color
+            correct = chosen == correct_color
+            st.session_state.color_history.insert(0, (current_mood, chosen, correct))
+            if correct:
+                st.session_state.color_score += 10
+                st.success("🎉 Perfect match! Colors can really reflect our emotions!")
+                # show fact after correct
+                facts = {
+                    "🟡": "Yellow is associated with happiness, optimism, and mental clarity!",
+                    "🔵": "Blue represents calmness and can help reduce anxiety and stress.",
+                    "🔴": "Red is linked to strong emotions like passion, energy, and sometimes anger.",
+                    "🟢": "Green promotes balance, harmony, and has a calming effect on the mind.",
+                    "🟣": "Purple is often associated with creativity, spirituality, and compassion.",
+                    "🟠": "Orange represents enthusiasm, creativity, and positive energy!"
+                }
+                st.info(f"💡 {facts.get(correct_color)}")
+            else:
+                st.error("😕 That's not the typical match — try the next one or read the hint.")
+            st.session_state.mood_locked = True
+
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="score-display">
-        Color Wisdom Score: {st.session_state.color_score} 🎨
-    </div>
-    """, unsafe_allow_html=True)
+
+    # Right column: score and recent history
+    hist_col1, hist_col2 = st.columns([1, 2])
+    with hist_col1:
+        st.markdown(f"""
+        <div class="score-display">
+            Color Wisdom Score: {st.session_state.color_score} 🎨
+        </div>
+        """, unsafe_allow_html=True)
+    with hist_col2:
+        st.markdown("**Recent choices**")
+        if st.session_state.color_history:
+            for mood, chosen, correct in st.session_state.color_history[:6]:
+                icon = "✅" if correct else "❌"
+                st.write(f"{icon} {mood} → {chosen}")
+        else:
+            st.write("No rounds played yet. Try one!")
+
+    # Next Mood control (also reset lock/hint)
+    if st.button("Next Mood", key="mood_next_bottom"):
+        st.session_state.mood_current = random.choice(list(mood_colors.keys()))
+        correct_color = mood_colors[st.session_state.mood_current]
+        all_colors = list(set(mood_colors.values()))
+        wrong_colors = [c for c in all_colors if c != correct_color]
+        options = [correct_color] + random.sample(wrong_colors, min(3, len(wrong_colors)))
+        random.shuffle(options)
+        st.session_state.mood_options = options
+        st.session_state.mood_locked = False
+        st.session_state.mood_hint_shown = False
 
 def stress_relief_clicker():
     """Simple clicking game for stress relief"""
