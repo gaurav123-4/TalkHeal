@@ -9,7 +9,7 @@ ML_TO_OZ = 0.033814
 
 # --- UI Styling ---
 st.set_page_config(
-    page_title="daily water tracker",
+    page_title="Daily Water Tracker",
     page_icon="💧",
     layout="centered",
     initial_sidebar_state="auto",
@@ -18,79 +18,173 @@ st.set_page_config(
 # Custom CSS for a beautiful, interactive, and mobile-friendly look
 st.markdown("""
 <style>
-    /* Main background with a beautiful gradient */
-    .main {
-        background-image: linear-gradient(to right top, #6dd5ed, #2193b0);
-        background-attachment: fixed;
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    /* --- General Body & Background --- */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f0f8ff; /* Fallback */
     }
-    /* Main content card with frosted glass effect */
+
+    .main {
+        background-image: linear-gradient(to right top, #84fab0, #8fd3f4);
+        background-attachment: fixed;
+        color: #0a2540;
+    }
+
+    /* --- Main App Container (the "card") --- */
     .st-emotion-cache-1y4p8pa {
-        padding-top: 2rem;
+        padding-top: 1rem; /* Reduce top padding */
     }
     .st-emotion-cache-16txtl3 {
-        padding: 2rem 1.5rem;
-        background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent card */
-        border-radius: 20px;
-        backdrop-filter: blur(10px); /* Frosted glass effect */
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        padding: 2rem;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 25px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
         border: 1px solid rgba(255, 255, 255, 0.18);
     }
-    /* Button styling for a modern look */
-    .stButton>button {
-        border-radius: 50px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 12px 28px;
-        font-size: 16px;
-        font-weight: bold;
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+
+    /* --- Typography --- */
+    h1 {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 2.5rem;
+        color: #004080;
+        text-align: center;
+        padding-bottom: 0.5rem;
     }
-    .stButton>button:hover {
-        background-color: #0056b3;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0,123,255,0.4);
+    .st-subheader {
+        font-family: 'Poppins', sans-serif;
+        color: #005f9e;
+        text-align: center;
+        font-weight: 600;
     }
-    .stButton>button:active {
-        transform: translateY(1px);
-    }
-    /* Progress circle styling */
+
+    /* --- Progress Circle --- */
     .progress-circle {
         position: relative;
-        width: 220px;
-        height: 220px;
+        width: 210px;
+        height: 210px;
         border-radius: 50%;
-        background: conic-gradient(var(--fill-color) calc(var(--progress) * 1%), #dfeff7 0);
+        background: conic-gradient(var(--fill-color) calc(var(--progress) * 1%), #eaf6ff 0);
         display: grid;
         place-items: center;
         margin: 1rem auto 2rem auto;
-        transition: background 0.5s;
-        box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        transition: background 0.6s ease-out;
+        box-shadow: 0 0 30px rgba(143, 211, 244, 0.5);
     }
     .progress-circle::before {
         content: '';
         position: absolute;
-        width: 85%;
-        height: 85%;
-        background: #fff;
+        width: 84%;
+        height: 84%;
+        background: #ffffff;
         border-radius: 50%;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.07);
     }
     .progress-text {
         position: relative;
         text-align: center;
-        font-size: 2.2rem;
-        font-weight: bold;
-        color: #333;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #004a7c;
     }
     .progress-subtext {
         position: relative;
         font-size: 1rem;
         color: #555;
+        font-weight: 400;
+        margin-top: -5px;
     }
-    /* Header styling */
-    h1 {
-        color: #004080;
+
+    /* --- Quick Add Buttons --- */
+    .stButton>button {
+        border-radius: 18px;
+        background-image: linear-gradient(to right, #63a4ff, #8ed6ff);
+        color: white;
+        border: none;
+        padding: 14px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(99, 164, 255, 0.3);
+        width: 100%;
+    }
+    .stButton>button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 7px 20px rgba(99, 164, 255, 0.4);
+        filter: brightness(1.05);
+    }
+    .stButton>button:active {
+        transform: translateY(0px);
+        box-shadow: 0 4px 10px rgba(99, 164, 255, 0.3);
+    }
+
+    /* --- Custom Amount Form --- */
+    .st-form {
+        border: none;
+        border-radius: 18px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        background-color: rgba(234, 246, 255, 0.6);
+    }
+    /* Style for the "Add Custom Amount" button specifically */
+    .st-form .stButton>button {
+        background-image: linear-gradient(to right, #56ab2f, #a8e063);
+    }
+
+    /* --- Log Expander & Entries --- */
+    .st-expander {
+        border-radius: 18px;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.4);
+        margin-top: 2rem;
+    }
+    .st-expander header {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #005f9e;
+    }
+    /* This targets the container created by st.container() inside the expander */
+    .st-expander div[data-testid="stVerticalBlock"] {
+        border-bottom: 1px solid #e0e7ff;
+        padding: 0.8rem 0;
+    }
+     .st-expander > div:last-of-type > div[data-testid="stVerticalBlock"] {
+        border-bottom: none;
+    }
+    .log-text {
+        font-size: 1rem;
+        color: #223;
+        font-weight: 600;
+    }
+    .log-time {
+        font-size: 0.85rem;
+        color: #556;
+    }
+    /* Edit/Delete buttons in the log */
+    .st-expander .stButton>button {
+        background: transparent;
+        color: #99a;
+        border: none;
+        padding: 5px;
+        font-size: 16px;
+        box-shadow: none;
+        width: auto;
+        transition: color 0.2s ease;
+    }
+    .st-expander .stButton>button:hover {
+        color: #ff4b4b; /* Red for delete/cancel */
+        transform: none;
+        box-shadow: none;
+        filter: none;
+    }
+    .st-expander .stButton>button[help="Save changes"]:hover {
+        color: #28a745; /* Green for save */
+    }
+    .st-expander .stButton>button[help="Edit this entry"]:hover {
+        color: #007bff; /* Blue for edit */
     }
 </style>
 """, unsafe_allow_html=True)
@@ -193,7 +287,7 @@ def display_progress_circle(today_total_ml, goal_ml):
     if goal_ml > 0:
         progress = min((today_total_ml / goal_ml) * 100, 100)
     
-    fill_color = "#2193b0" if progress < 100 else "#28a745"
+    fill_color = "#63a4ff" if progress < 100 else "#56ab2f"
     
     total_display = get_display_string(today_total_ml)
     goal_display = get_display_string(goal_ml)
@@ -306,8 +400,8 @@ with st.sidebar:
 
 
 # --- Main Page Content ---
-st.title("💧 daily water tracker")
-st.markdown("Your simple and beautiful daily water tracker.")
+st.title("💧 Daily Water Tracker")
+st.markdown("Track your hydration journey, one sip at a time.")
 
 # Check for reminders at the start of the script run
 check_and_show_reminder()
@@ -351,40 +445,44 @@ with st.expander("📜 View Today's Log", expanded=True):
         st.info("No entries yet for today. Time to hydrate!")
     else:
         for entry in reversed(today_log):
-            entry_amount_ml = entry['amount']
-            
-            if st.session_state.editing_timestamp == entry['timestamp']:
-                col1, col2, col3 = st.columns([2, 1, 1])
-                with col1:
-                    current_edit_amount = get_display_amount(entry_amount_ml)
-                    new_amount_display = st.number_input(
-                        f"New amount ({unit})",
-                        min_value=0.1,
-                        value=float(current_edit_amount),
-                        step=0.1,
-                        key=f"input_{entry['timestamp']}",
-                        format="%.1f"
-                    )
-                with col2:
-                    if st.button("💾", key=f"save_{entry['timestamp']}", help="Save changes"):
-                        new_amount_ml = convert_to_ml(new_amount_display, unit)
-                        update_log_entry(entry['timestamp'], new_amount_ml)
-                        st.session_state.editing_timestamp = None
-                        st.rerun()
-                with col3:
-                    if st.button("✖️", key=f"cancel_{entry['timestamp']}", help="Cancel edit"):
-                        st.session_state.editing_timestamp = None
-                        st.rerun()
-            else:
-                col1, col2, col3 = st.columns([3, 1, 1])
-                with col1:
-                    time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
-                    st.markdown(f"- **{get_display_string(entry_amount_ml)}** at `{time_str}`")
-                with col2:
-                    if st.button("✏️", key=f"edit_{entry['timestamp']}", help="Edit this entry"):
-                        st.session_state.editing_timestamp = entry['timestamp']
-                        st.rerun()
-                with col3:
-                    if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
-                        delete_log_entry(entry['timestamp'])
-                        st.rerun()
+            with st.container():
+                entry_amount_ml = entry['amount']
+                
+                if st.session_state.editing_timestamp == entry['timestamp']:
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    with col1:
+                        current_edit_amount = get_display_amount(entry_amount_ml)
+                        new_amount_display = st.number_input(
+                            f"New amount ({unit})",
+                            min_value=0.1,
+                            value=float(current_edit_amount),
+                            step=0.1,
+                            key=f"input_{entry['timestamp']}",
+                            format="%.1f"
+                        )
+                    with col2:
+                        if st.button("💾", key=f"save_{entry['timestamp']}", help="Save changes"):
+                            new_amount_ml = convert_to_ml(new_amount_display, unit)
+                            update_log_entry(entry['timestamp'], new_amount_ml)
+                            st.session_state.editing_timestamp = None
+                            st.rerun()
+                    with col3:
+                        if st.button("✖️", key=f"cancel_{entry['timestamp']}", help="Cancel edit"):
+                            st.session_state.editing_timestamp = None
+                            st.rerun()
+                else:
+                    col1, col2, col3 = st.columns([4, 1, 1])
+                    with col1:
+                        time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
+                        st.markdown(f"""
+                        <div class="log-text">💧 {get_display_string(entry_amount_ml)}</div>
+                        <div class="log-time">at {time_str}</div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        if st.button("✏️", key=f"edit_{entry['timestamp']}", help="Edit this entry"):
+                            st.session_state.editing_timestamp = entry['timestamp']
+                            st.rerun()
+                    with col3:
+                        if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
+                            delete_log_entry(entry['timestamp'])
+                            st.rerun()
