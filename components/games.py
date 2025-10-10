@@ -711,44 +711,94 @@ def breathing_pattern_game():
     
     st.info(f"**{selected_pattern}:** {pattern['description']}")
     
+    # breathing state
     if 'breathing_active' not in st.session_state:
         st.session_state.breathing_active = False
         st.session_state.breathing_cycles = 0
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🌬️ Start Breathing Exercise", key="start_breathing"):
+        st.session_state.breathing_mode = 'Guided'  # Guided | Auto
+        st.session_state.breathing_phase = None
+        st.session_state.breathing_phase_step = 0
+
+    # Mode selector: Guided avoids long blocking sleeps by advancing step-by-step
+    col_mode, _ = st.columns([3, 1])
+    with col_mode:
+        st.session_state.breathing_mode = st.selectbox("Mode:", ["Guided", "Auto"], index=0, key="breath_mode_select")
+
+    # Controls
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if st.button("▶️ Start", key="start_breathing"):
             st.session_state.breathing_active = True
-            st.session_state.breathing_cycles = 0
-    
-    with col2:
+            st.session_state.breathing_phase = 0
+            st.session_state.breathing_phase_step = 0
+            # reset cycles when starting fresh
+            if st.session_state.breathing_cycles == 0:
+                st.session_state.breathing_cycles = 0
+            st.experimental_rerun()
+    with c2:
+        if st.button("⏸️ Pause", key="pause_breathing"):
+            st.session_state.breathing_active = False
+            st.experimental_rerun()
+    with c3:
         if st.button("⏹️ Stop", key="stop_breathing"):
             st.session_state.breathing_active = False
-    
-    if st.session_state.breathing_active:
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        # Breathing cycle simulation
-        cycle_phases = [
-            ("Inhale slowly...", pattern["inhale"], "🌬️➡️"),
-            ("Hold your breath...", pattern["hold"], "⏸️"),
-            ("Exhale gently...", pattern["exhale"], "🌬️⬅️")
-        ]
-        
+            st.session_state.breathing_phase = None
+            st.session_state.breathing_phase_step = 0
+            st.experimental_rerun()
+
+    # A small display area
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+
+    cycle_phases = [
+        ("Inhale slowly...", pattern["inhale"], "🌬️➡️"),
+        ("Hold your breath...", pattern["hold"], "⏸️"),
+        ("Exhale gently...", pattern["exhale"], "🌬️⬅️")
+    ]
+
+    # Auto mode: keep the existing blocking behavior (short waits) for a fully automated session
+    if st.session_state.breathing_mode == 'Auto' and st.session_state.breathing_active:
         for phase_name, duration, emoji in cycle_phases:
             for i in range(duration):
                 progress = (i + 1) / duration
                 progress_bar.progress(progress)
                 status_text.markdown(f"### {emoji} {phase_name} ({i+1}/{duration})")
                 time.sleep(1)
-        
         st.session_state.breathing_cycles += 1
-        
         if st.session_state.breathing_cycles >= 3:
             st.session_state.breathing_active = False
             st.success(f"🎉 Excellent! You completed 3 breathing cycles. Feel the calm energy flowing through you! 🧘‍♀️")
             st.balloons()
+        st.experimental_rerun()
+
+    # Guided mode: advance one second/step per user-visible rerun (no long blocking)
+    if st.session_state.breathing_mode == 'Guided' and st.session_state.breathing_active:
+        # ensure phase index is valid
+        phase_idx = st.session_state.breathing_phase or 0
+        phase_name, duration, emoji = cycle_phases[phase_idx]
+        step = st.session_state.breathing_phase_step
+        # advance current phase by one step
+        progress = (step + 1) / duration
+        progress_bar.progress(progress)
+        status_text.markdown(f"### {emoji} {phase_name} ({step+1}/{duration})")
+
+        # schedule next step: use a small sleep to let UI update, then increment step and rerun
+        time.sleep(1)
+        step += 1
+        if step >= duration:
+            # move to next phase
+            phase_idx = (phase_idx + 1) % len(cycle_phases)
+            step = 0
+            if phase_idx == 0:
+                st.session_state.breathing_cycles += 1
+                # completed one full cycle
+                if st.session_state.breathing_cycles >= 3:
+                    st.session_state.breathing_active = False
+                    st.success(f"🎉 Excellent! You completed 3 breathing cycles. Feel the calm energy flowing through you! 🧘‍♀️")
+                    st.balloons()
+        st.session_state.breathing_phase = phase_idx
+        st.session_state.breathing_phase_step = step
+        st.experimental_rerun()
     
     if st.session_state.breathing_cycles > 0:
         st.markdown(f"""
