@@ -171,6 +171,11 @@ def memory_challenge_game():
         ("blue", "🔵"),
     ]
 
+    # Difficulty setting controls how quickly the sequence shows and starting length
+    difficulty = st.selectbox("Difficulty:", ["Easy", "Normal", "Hard"], key="memory_difficulty")
+    speed_map = {"Easy": 0.8, "Normal": 0.55, "Hard": 0.35}
+    start_length = {"Easy": 1, "Normal": 1, "Hard": 2}
+
     # Initialize session state
     if 'memory_sequence' not in st.session_state:
         st.session_state.memory_sequence = []
@@ -180,11 +185,11 @@ def memory_challenge_game():
         st.session_state.show_sequence = False
         st.session_state.game_over = False
 
-    # Auto-start with a single color if sequence empty
+    # Auto-start with a color if sequence empty
     if not st.session_state.memory_sequence:
-        st.session_state.memory_sequence = [random.choice([c for k, c in color_options])]
+        st.session_state.memory_sequence = [random.choice([c for k, c in color_options]) for _ in range(start_length.get(difficulty, 1))]
         st.session_state.user_sequence = []
-        st.session_state.memory_level = 1
+        st.session_state.memory_level = len(st.session_state.memory_sequence)
         st.session_state.show_sequence = True
 
     # Header / controls
@@ -207,20 +212,22 @@ def memory_challenge_game():
             st.session_state.game_over = False
             st.rerun()
 
-    # Display sequence visually (one color at a time)
+    # Display sequence visually (centered big emoji) without forcing unnecessary reruns
     display = st.empty()
     if st.session_state.show_sequence and not st.session_state.game_over:
         display.markdown("### 🔍 Watch the sequence...")
-        # Show each color briefly
+        big = st.empty()
+        show_speed = speed_map.get(difficulty, 0.55)
         for idx, color in enumerate(st.session_state.memory_sequence):
-            display.markdown(f"<div style='font-size:48px; text-align:center'>{color}</div>", unsafe_allow_html=True)
-            time.sleep(0.6)
-            display.markdown("<div style='font-size:28px; text-align:center'>...</div>", unsafe_allow_html=True)
+            big.markdown(f"<div style='font-size:72px; text-align:center'>{color}</div>", unsafe_allow_html=True)
+            time.sleep(show_speed)
+            big.markdown("<div style='font-size:28px; text-align:center'>...</div>", unsafe_allow_html=True)
             time.sleep(0.15)
-
-    st.session_state.show_sequence = False
-    st.session_state.user_sequence = []
-    st.rerun()
+        # Clear big display and allow player to interact
+        big.empty()
+        display.empty()
+        st.session_state.show_sequence = False
+        st.session_state.user_sequence = []
 
     # If game over, show result and offer restart
     if st.session_state.game_over:
@@ -238,15 +245,16 @@ def memory_challenge_game():
 
     st.write("Click the colors in the same order you saw them:")
 
-    # Render buttons in a 2x2 grid
+    # Render buttons in a 2x2 grid (interactive)
     for r in range(2):
         cols = st.columns(2)
         for c in range(2):
             idx = r * 2 + c
             key_name, emoji = color_options[idx]
             with cols[c]:
-                # When sequence is showing, ignore button presses
-                if st.button(emoji, key=f"mem_btn_{key_name}", use_container_width=True) and not st.session_state.show_sequence:
+                # Disable buttons while sequence is showing
+                disabled = st.session_state.show_sequence or st.session_state.game_over
+                if st.button(emoji, key=f"mem_btn_{key_name}", use_container_width=True, disabled=disabled):
                     # Append and check
                     st.session_state.user_sequence.append(emoji)
                     pos = len(st.session_state.user_sequence) - 1
@@ -254,7 +262,6 @@ def memory_challenge_game():
                     if pos < len(st.session_state.memory_sequence):
                         if st.session_state.user_sequence[pos] != st.session_state.memory_sequence[pos]:
                             st.session_state.game_over = True
-                            st.experimental_rerun()
                         else:
                             # If user completed the sequence correctly
                             if len(st.session_state.user_sequence) == len(st.session_state.memory_sequence):
@@ -265,11 +272,11 @@ def memory_challenge_game():
                                 st.session_state.show_sequence = True
                                 st.session_state.user_sequence = []
                                 st.success(f"✅ Correct! Advancing to level {st.session_state.memory_level}")
-                                st.rerun()
                     else:
-                        # Shouldn't happen, but handle defensively
+                        # Defensive fallback
                         st.session_state.game_over = True
-                        st.rerun()
+                    # update view
+                    st.experimental_rerun()
 
     # Show current typed sequence (for feedback)
     if st.session_state.user_sequence:
