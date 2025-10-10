@@ -60,7 +60,7 @@ def show_games_page():
     
     # Game selection
     games = {
-        "🧠 Memory Challenge": "memory_game",
+        "🎯 Reaction Time": "reaction_game",
         "🎨 Mood Color Match": "color_mood_game", 
         "😌 Stress Relief Clicker": "stress_clicker_game",
         "💭 Positive Word Association": "word_association_game",
@@ -124,8 +124,8 @@ def show_games_page():
     if 'current_game' in st.session_state:
         st.markdown("---")
         
-        if st.session_state.current_game == "memory_game":
-            memory_challenge_game()
+        if st.session_state.current_game == "reaction_game":
+            reaction_time_game()
         elif st.session_state.current_game == "color_mood_game":
             mood_color_matching_game()
         elif st.session_state.current_game == "stress_clicker_game":
@@ -136,27 +136,47 @@ def show_games_page():
             breathing_pattern_game()
 
 def memory_challenge_game():
-    """Simon Says style memory game for cognitive improvement"""
+    """Simplified Simon-style memory game optimized for reliability and clarity.
+
+    Rules:
+    - Press Start to begin (or the sequence will auto-start on first visit).
+    - Watch the shown colors one-by-one.
+    - After the sequence shows, click the colors in the same order.
+    - A wrong click ends the game; correct full sequence advances the level.
+    """
     st.markdown("""
     <div class="game-card">
-        <h3>🧠 Memory Challenge Game</h3>
-        <p>Improve your memory and concentration by following the pattern!</p>
+        <h3>🧠 Memory Challenge (Simple)</h3>
+        <p>Watch the sequence, then repeat it. The sequence grows by one color each level.</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Initialize game state
+
+    # Define colors as (key, emoji) pairs for stable keys and display
+    color_options = [
+        ("red", "🔴"),
+        ("yellow", "🟡"),
+        ("green", "🟢"),
+        ("blue", "🔵"),
+    ]
+
+    # Initialize session state
     if 'memory_sequence' not in st.session_state:
         st.session_state.memory_sequence = []
         st.session_state.user_sequence = []
-        st.session_state.memory_level = 1
+        st.session_state.memory_level = 0
         st.session_state.memory_score = 0
         st.session_state.show_sequence = False
         st.session_state.game_over = False
-    
-    colors = ["🔴", "🟡", "🟢", "🔵"]
-    
+
+    # Auto-start with a single color if sequence empty
+    if not st.session_state.memory_sequence:
+        st.session_state.memory_sequence = [random.choice([c for k, c in color_options])]
+        st.session_state.user_sequence = []
+        st.session_state.memory_level = 1
+        st.session_state.show_sequence = True
+
+    # Header / controls
     col1, col2 = st.columns([1, 1])
-    
     with col1:
         st.markdown(f"""
         <div class="score-display">
@@ -164,92 +184,84 @@ def memory_challenge_game():
             Score: {st.session_state.memory_score}
         </div>
         """, unsafe_allow_html=True)
-    
+
     with col2:
-        if st.button("🚀 Start New Game", key="start_memory"):
-            st.session_state.memory_sequence = [random.choice(colors)]
+        if st.button("🚀 Start New Game", key="start_memory_simple"):
+            st.session_state.memory_sequence = [random.choice([c for k, c in color_options])]
             st.session_state.user_sequence = []
             st.session_state.memory_level = 1
             st.session_state.memory_score = 0
             st.session_state.show_sequence = True
             st.session_state.game_over = False
             st.rerun()
-    
+
+    # Display sequence visually (one color at a time)
+    display = st.empty()
     if st.session_state.show_sequence and not st.session_state.game_over:
-        st.write("🔍 **Watch the sequence carefully!**")
-        sequence_container = st.empty()
-        
-        # Show sequence with delay
-        for i, color in enumerate(st.session_state.memory_sequence):
-            sequence_container.markdown(f"### Sequence: {' '.join(st.session_state.memory_sequence[:i+1])}")
-            time.sleep(0.8)
-        
-        st.session_state.show_sequence = False
-        st.write("🎯 **Now repeat the sequence:**")
-    
-    if not st.session_state.show_sequence and not st.session_state.game_over:
-        st.write("Click the colors in the correct order:")
-        
-        # Add responsive CSS for memory game colors
-        st.markdown("""
-        <style>
-        @media (max-width: 768px) {
-            .memory-colors-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                justify-content: center;
-                margin: 1rem 0;
-            }
-            .memory-colors-container .stButton {
-                flex: 1 1 45%;
-                min-width: 80px;
-                max-width: 120px;
-            }
-            .memory-colors-container .stButton > button {
-                font-size: 2rem !important;
-                min-height: 60px !important;
-                width: 100% !important;
-            }
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="memory-colors-container">', unsafe_allow_html=True)
-        
-        # Use 2x2 grid for mobile compatibility
-        for row in range(2):
-            cols = st.columns(2)
-            for col in range(2):
-                color_index = row * 2 + col
-                if color_index < len(colors):
-                    color = colors[color_index]
-                    with cols[col]:
-                        if st.button(color, key=f"memory_{color}_{len(st.session_state.user_sequence)}", use_container_width=True):
-                            st.session_state.user_sequence.append(color)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-                    
-        # Check if sequence matches
-        if len(st.session_state.user_sequence) == len(st.session_state.memory_sequence):
-            if st.session_state.user_sequence == st.session_state.memory_sequence:
-                st.session_state.memory_score += 10 * st.session_state.memory_level
-                st.session_state.memory_level += 1
-                st.session_state.memory_sequence.append(random.choice(colors))
-                st.session_state.user_sequence = []
-                st.session_state.show_sequence = True
-                st.success(f"🎉 Correct! Level {st.session_state.memory_level}")
-                st.rerun()
-            else:
-                st.session_state.game_over = True
-                st.error("❌ Wrong sequence! Game Over!")
-        
-        elif st.session_state.user_sequence[len(st.session_state.user_sequence)-1] != st.session_state.memory_sequence[len(st.session_state.user_sequence)-1]:
-            st.session_state.game_over = True
-            st.error("❌ Wrong color! Game Over!")
-        
-        if st.session_state.user_sequence:
-            st.write(f"Your sequence: {' '.join(st.session_state.user_sequence)}")
+        display.markdown("### 🔍 Watch the sequence...")
+        # Show each color briefly
+        for idx, color in enumerate(st.session_state.memory_sequence):
+            display.markdown(f"<div style='font-size:48px; text-align:center'>{color}</div>", unsafe_allow_html=True)
+            time.sleep(0.6)
+            display.markdown("<div style='font-size:28px; text-align:center'>...</div>", unsafe_allow_html=True)
+            time.sleep(0.15)
+
+    st.session_state.show_sequence = False
+    st.session_state.user_sequence = []
+    st.rerun()
+
+    # If game over, show result and offer restart
+    if st.session_state.game_over:
+        st.error("❌ Wrong sequence! Game Over!")
+        st.markdown(f"**Final score:** {st.session_state.memory_score} — **Level reached:** {st.session_state.memory_level}")
+        if st.button("🔁 Restart", key="restart_memory_simple"):
+            st.session_state.memory_sequence = []
+            st.session_state.user_sequence = []
+            st.session_state.memory_level = 0
+            st.session_state.memory_score = 0
+            st.session_state.show_sequence = True
+            st.session_state.game_over = False
+            st.experimental_rerun()
+        return
+
+    st.write("Click the colors in the same order you saw them:")
+
+    # Render buttons in a 2x2 grid
+    for r in range(2):
+        cols = st.columns(2)
+        for c in range(2):
+            idx = r * 2 + c
+            key_name, emoji = color_options[idx]
+            with cols[c]:
+                # When sequence is showing, ignore button presses
+                if st.button(emoji, key=f"mem_btn_{key_name}", use_container_width=True) and not st.session_state.show_sequence:
+                    # Append and check
+                    st.session_state.user_sequence.append(emoji)
+                    pos = len(st.session_state.user_sequence) - 1
+                    # Safe comparison
+                    if pos < len(st.session_state.memory_sequence):
+                        if st.session_state.user_sequence[pos] != st.session_state.memory_sequence[pos]:
+                            st.session_state.game_over = True
+                            st.experimental_rerun()
+                        else:
+                            # If user completed the sequence correctly
+                            if len(st.session_state.user_sequence) == len(st.session_state.memory_sequence):
+                                st.session_state.memory_score += 10 * st.session_state.memory_level
+                                st.session_state.memory_level += 1
+                                # Add a new random color
+                                st.session_state.memory_sequence.append(random.choice([c for k, c in color_options]))
+                                st.session_state.show_sequence = True
+                                st.session_state.user_sequence = []
+                                st.success(f"✅ Correct! Advancing to level {st.session_state.memory_level}")
+                                st.rerun()
+                    else:
+                        # Shouldn't happen, but handle defensively
+                        st.session_state.game_over = True
+                        st.rerun()
+
+    # Show current typed sequence (for feedback)
+    if st.session_state.user_sequence:
+        st.write(f"Your sequence: {' '.join(st.session_state.user_sequence)}")
 
 def mood_color_matching_game():
     """Color matching game for mood expression"""
@@ -395,6 +407,67 @@ def stress_relief_clicker():
     if st.session_state.stress_level == 0:
         st.balloons()
         st.success("🎉 Congratulations! You've achieved complete calm! Your mind is now at peace. 🧘‍♀️")
+
+def reaction_time_game():
+    """Simple reaction time tester to replace the unstable memory game."""
+    st.markdown("""
+    <div class="game-card">
+        <h3>🎯 Reaction Time Test</h3>
+        <p>Wait for the green circle, then click as fast as you can. Measure your reaction time!</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if 'reaction_state' not in st.session_state:
+        st.session_state.reaction_state = 'idle'  # idle | waiting | ready | result
+        st.session_state.reaction_start = None
+        st.session_state.reaction_time = None
+        st.session_state.reaction_attempts = []
+
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        if st.button("🔄 Start Test", key="start_reaction"):
+            st.session_state.reaction_state = 'waiting'
+            st.session_state.reaction_start = None
+            st.session_state.reaction_time = None
+            st.rerun()
+
+    with col2:
+        if st.button("📊 Show Results", key="show_reaction_results"):
+            if st.session_state.reaction_attempts:
+                avg = sum(st.session_state.reaction_attempts) / len(st.session_state.reaction_attempts)
+                st.info(f"Average reaction time over {len(st.session_state.reaction_attempts)} attempts: {avg*1000:.0f} ms")
+            else:
+                st.info("No attempts recorded yet.")
+
+    # Waiting state: after pressing Start, wait a random interval then prompt user
+    if st.session_state.reaction_state == 'waiting':
+        wait_sec = random.uniform(1.0, 3.0)
+        st.write("Get ready... Wait for green...")
+        # Use a blocking sleep to simulate wait then set ready state
+        time.sleep(wait_sec)
+        st.session_state.reaction_state = 'ready'
+        st.session_state.reaction_start = time.time()
+        st.rerun()
+
+    if st.session_state.reaction_state == 'ready':
+        # Show green target to click
+        if st.button("🟢 CLICK!", key="reaction_click", use_container_width=True):
+            end = time.time()
+            rt = end - (st.session_state.reaction_start or end)
+            st.session_state.reaction_time = rt
+            st.session_state.reaction_attempts.append(rt)
+            st.session_state.reaction_state = 'result'
+            st.rerun()
+        else:
+            st.write("Click the green button as fast as you can!")
+
+    if st.session_state.reaction_state == 'result':
+        st.success(f"Your reaction time: {st.session_state.reaction_time*1000:.0f} ms")
+        if st.button("Try again", key="reaction_try_again"):
+            st.session_state.reaction_state = 'idle'
+            st.session_state.reaction_start = None
+            st.session_state.reaction_time = None
+            st.rerun()
 
 def positive_word_association():
     """Word association game to promote positive thinking"""
