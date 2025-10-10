@@ -1,6 +1,8 @@
 import streamlit as st
-from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals
+from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals, get_today_entries
 import pandas as pd
+import datetime
+
 st.set_page_config(page_title="Water Intake Tracker", page_icon="💧", layout="centered")
 # Custom CSS for enhanced visuals
 st.markdown("""
@@ -261,6 +263,26 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
 st.caption("💡 Tip: Aim for at least 2 liters (2000 ml) per day!")
+
+# 2. Detailed Log View
+with st.expander("📜 Today's Log", expanded=False):
+    todays_entries = get_today_entries()
+    if not todays_entries:
+        st.info("No water logged yet today. Start tracking!")
+    else:
+        # Sort entries by timestamp descending
+        todays_entries.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        log_df = pd.DataFrame(todays_entries)
+        log_df['Time'] = pd.to_datetime(log_df['timestamp']).dt.strftime('%I:%M %p')
+        log_df.rename(columns={'amount_ml': 'Amount (ml)'}, inplace=True)
+        
+        st.dataframe(
+            log_df[['Time', 'Amount (ml)']],
+            use_container_width=True,
+            hide_index=True
+        )
+
 # 7-day water intake graph with enhanced styling
 st.markdown("""
 <div style='margin: 2rem 0 1rem 0; text-align: center;'>
