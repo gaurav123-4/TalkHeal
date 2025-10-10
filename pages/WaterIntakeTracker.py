@@ -223,6 +223,21 @@ with col1:
                 🎉 Congratulations! You've reached your daily goal! 🎉
             </div>
             """, unsafe_allow_html=True)
+
+    st.markdown("<h4 style='text-align: center; margin-top: 1rem; color: #0d47a1;'>Or use a quick-add button:</h4>", unsafe_allow_html=True)
+    q1, q2, q3 = st.columns(3)
+    if q1.button("Glass (250ml)", use_container_width=True):
+        log_water_intake(250)
+        st.success("✨ Logged 250 ml of water!")
+
+    if q2.button("Bottle (500ml)", use_container_width=True):
+        log_water_intake(500)
+        st.success("✨ Logged 500 ml of water!")
+
+    if q3.button("Bottle (1L)", use_container_width=True):
+        log_water_intake(1000)
+        st.success("✨ Logged 1000 ml of water!")
+
 with col2:
     st.markdown("<h3 style='text-align: center; margin-bottom: 1rem;'>Today's Total</h3>", unsafe_allow_html=True)
     total = get_today_total()
