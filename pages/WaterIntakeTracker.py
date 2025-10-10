@@ -95,10 +95,12 @@ st.markdown("""
             color: #e0e0e0 !important;
         }
     }
+
     /* Additional styles for Streamlit's dark mode UI */
     body.streamlit-dark .stNumberInput label {
         color: #64b5f6 !important;
     }
+
     body.streamlit-dark .stSuccess {
         background: linear-gradient(135deg, #66bb6a, #43a047) !important;
         color: white !important;
@@ -107,9 +109,11 @@ st.markdown("""
         font-weight: 600;
         box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     }
+
     body.streamlit-dark .stSuccess * {
         color: white !important;  /* Ensure all child elements have white text */
     }
+
     body.streamlit-dark .stCaption,
     body.streamlit-dark .stCaption p {
         color: #e0e0e0 !important;
@@ -181,7 +185,21 @@ st.markdown("""
     <span style='color: #1976d2;'>Staying hydrated is key to wellness!</span>
 </div>
 """, unsafe_allow_html=True)
-goal = 2000
+
+# 1. Customizable Daily Goal
+if "daily_water_goal" not in st.session_state:
+    st.session_state.daily_water_goal = 2000  # Default goal
+
+goal = st.number_input(
+    "🎯 Set Your Daily Goal (ml)",
+    min_value=100,
+    max_value=10000,
+    value=st.session_state.daily_water_goal,
+    step=100,
+    help="Set your personal daily water intake goal."
+)
+st.session_state.daily_water_goal = goal  # Update session state
+
 col1, col2 = st.columns([2, 1], gap="large")
 with col1:
     st.markdown("<div style='margin-bottom: 1rem;'>", unsafe_allow_html=True)
