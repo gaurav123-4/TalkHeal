@@ -431,16 +431,25 @@ def stress_relief_clicker():
     if 'stress_clicks' not in st.session_state:
         st.session_state.stress_clicks = 0
         st.session_state.stress_level = 100
+    if 'calm_streak' not in st.session_state:
+        st.session_state.calm_streak = 0
     
-    # Visual stress ball
-    stress_ball_size = max(50, 150 - (st.session_state.stress_clicks // 10))
-    
+    # Visual stress ball (rendered as a circle whose size shrinks as you calm down)
+    stress_ball_size = max(48, 150 - (st.session_state.stress_clicks * 3))
+
+    st.markdown(f"""
+    <div style='text-align:center; margin: 8px 0 16px;'>
+      <div style='display:inline-block; width:{stress_ball_size}px; height:{stress_ball_size}px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #ff6b6b, #e04343); box-shadow: 0 8px 24px rgba(224,67,67,0.18);'></div>
+    </div>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button(f"🔴", key="stress_ball", help="Click me to release stress!"):
+        if st.button("Release Stress", key="stress_ball", help="Click me to release stress!"):
             st.session_state.stress_clicks += 1
+            prev_level = st.session_state.stress_level
             st.session_state.stress_level = max(0, st.session_state.stress_level - 2)
-            
+
             # Encouraging messages
             messages = [
                 "Deep breath... you're doing great! 🌟",
@@ -449,7 +458,13 @@ def stress_relief_clicker():
                 "You're stronger than your stress! 💪",
                 "Breathe in calm, breathe out tension... 🫁"
             ]
-            
+
+            # increase calm streak when progress is made, reset if no progress
+            if st.session_state.stress_level < prev_level:
+                st.session_state.calm_streak += 1
+            else:
+                st.session_state.calm_streak = 0
+
             if st.session_state.stress_clicks % 5 == 0:
                 st.success(random.choice(messages))
     
@@ -466,6 +481,30 @@ def stress_relief_clicker():
     if st.session_state.stress_level == 0:
         st.balloons()
         st.success("🎉 Congratulations! You've achieved complete calm! Your mind is now at peace. 🧘‍♀️")
+    
+    # Small controls and tips
+    c1, c2, c3 = st.columns([1, 1, 2])
+    with c1:
+        if st.button("Reset", key="stress_reset"):
+            st.session_state.stress_clicks = 0
+            st.session_state.stress_level = 100
+            st.session_state.calm_streak = 0
+            st.experimental_rerun()
+    with c2:
+        if st.button("Tip", key="stress_tip"):
+            tips = [
+                "Try inhaling for 4 seconds, hold 2, exhale for 6.",
+                "Close your eyes and imagine a peaceful place for 20 seconds.",
+                "Place both feet flat on the floor and feel the support beneath you.",
+            ]
+            st.info(random.choice(tips))
+        with c3:
+                st.markdown(f"""
+                <div style='text-align:right'>
+                    <strong>Calm streak:</strong> {st.session_state.calm_streak}  <br>
+                    <strong>Clicks:</strong> {st.session_state.stress_clicks}
+                </div>
+                """, unsafe_allow_html=True)
 
 def reaction_time_game():
     """Simple reaction time tester to replace the unstable memory game."""
@@ -481,6 +520,7 @@ def reaction_time_game():
         st.session_state.reaction_start = None
         st.session_state.reaction_time = None
         st.session_state.reaction_attempts = []
+        st.session_state.reaction_best = None
 
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -494,9 +534,18 @@ def reaction_time_game():
         if st.button("📊 Show Results", key="show_reaction_results"):
             if st.session_state.reaction_attempts:
                 avg = sum(st.session_state.reaction_attempts) / len(st.session_state.reaction_attempts)
-                st.info(f"Average reaction time over {len(st.session_state.reaction_attempts)} attempts: {avg*1000:.0f} ms")
+                best = min(st.session_state.reaction_attempts)
+                last = st.session_state.reaction_attempts[-1]
+                st.metric("Last", f"{last*1000:.0f} ms")
+                st.metric("Best", f"{best*1000:.0f} ms")
+                st.metric("Average", f"{avg*1000:.0f} ms")
             else:
                 st.info("No attempts recorded yet.")
+        if st.button("Clear Results", key="clear_reaction_results"):
+            st.session_state.reaction_attempts = []
+            st.session_state.reaction_best = None
+            st.session_state.reaction_time = None
+            st.experimental_rerun()
 
     # Waiting state: after pressing Start, wait a random interval then prompt user
     if st.session_state.reaction_state == 'waiting':
@@ -521,7 +570,18 @@ def reaction_time_game():
             st.write("Click the green button as fast as you can!")
 
     if st.session_state.reaction_state == 'result':
-        st.success(f"Your reaction time: {st.session_state.reaction_time*1000:.0f} ms")
+        # Display last result and update best
+        rt = st.session_state.reaction_time or 0.0
+        st.success(f"Your reaction time: {rt*1000:.0f} ms")
+        # update best/attempts safely
+        if rt > 0:
+            if 'reaction_attempts' not in st.session_state:
+                st.session_state.reaction_attempts = [rt]
+            else:
+                st.session_state.reaction_attempts.append(rt)
+            if st.session_state.reaction_best is None or rt < st.session_state.reaction_best:
+                st.session_state.reaction_best = rt
+
         if st.button("Try again", key="reaction_try_again"):
             st.session_state.reaction_state = 'idle'
             st.session_state.reaction_start = None
