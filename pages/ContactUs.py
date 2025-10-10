@@ -1,10 +1,36 @@
 import streamlit as st
 import base64
 
-def set_background(image_path):
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
+def get_base64_of_bin_file(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
+def set_background_for_theme(selected_palette="pink"):
+    from core.theme import get_current_theme
+
+    # --- Get current theme info ---
+    current_theme = st.session_state.get("current_theme", None)
+    if not current_theme:
+        current_theme = get_current_theme()
+    
+    is_dark = current_theme["name"] == "Dark"
+
+    # --- Map light themes to background images ---
+    palette_color = {
+        "light": "static_files/pink.png",
+        "calm blue": "static_files/blue.png",
+        "mint": "static_files/mint.png",
+        "lavender": "static_files/lavender.png",
+        "pink": "static_files/pink.png"
+    }
+
+    # --- Select background based on theme ---
+    if is_dark:
+        background_image_path = "static_files/dark.png"
+    else:
+        background_image_path = palette_color.get(selected_palette.lower(), "static_files/pink.png")
+
+    encoded_string = get_base64_of_bin_file(background_image_path)
     st.markdown(
         f"""
         <style>
@@ -25,7 +51,12 @@ def set_background(image_path):
         /* Sidebar: brighter translucent background */
         [data-testid="stSidebar"] {{
             background-color: rgba(255, 255, 255, 0.6);  /* Brighter and translucent */
-            color: black;  /* Adjusted for light background */
+            color: {'black' if is_dark else 'rgba(49, 51, 63, 0.8)'} ;  /* Adjusted for light background */
+        }}
+
+        span {{
+            color: {'#f0f0f0' if is_dark else 'rgba(49, 51, 63, 0.8)'} !important;
+            transition: color 0.3s ease;
         }}
 
         /* Header bar: fully transparent */
@@ -44,7 +75,8 @@ def set_background(image_path):
     )
 
 # ✅ Set your background image
-set_background("static_files/pink.png")
+selected_palette = st.session_state.get("palette_name", "Pink")
+set_background_for_theme(selected_palette)
 
 
 def show():
