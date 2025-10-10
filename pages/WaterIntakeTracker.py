@@ -165,6 +165,53 @@ st.markdown("""
         padding: 1.5rem;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     }
+
+    /* --- Dark Mode Enhancements --- */
+    body.streamlit-dark .stApp {
+        background: linear-gradient(135deg, #1e2a38 0%, #273443 100%);
+    }
+
+    body.streamlit-dark h1 {
+        color: #e1eef9 !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    body.streamlit-dark h2, body.streamlit-dark h3, body.streamlit-dark h4 {
+        color: #8ab4f8; /* A lighter, more vibrant blue for dark mode */
+    }
+
+    body.streamlit-dark [data-testid="stMetricValue"] {
+        color: #8ab4f8;
+    }
+
+    body.streamlit-dark [data-testid="stMetricLabel"] {
+        color: #b0c4de;
+    }
+
+    body.streamlit-dark [data-testid="stColumn"] {
+        background: #2c3e50; /* Darker, muted blue-gray */
+        border: 1px solid #3a4b5c;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    body.streamlit-dark [data-testid="stArrowVegaLiteChart"] {
+        background: #2c3e50;
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid #3a4b5c;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Making chart text readable in dark mode */
+    body.streamlit-dark .vega-embed .mark-text text {
+        fill: #e1eef9;
+    }
+    body.streamlit-dark .vega-embed .axis-title {
+        fill: #b0c4de;
+    }
+    body.streamlit-dark .vega-embed .axis-label {
+        fill: #b0c4de;
+    }
 </style>
 """, unsafe_allow_html=True)
 # Header with animated water drop
