@@ -79,66 +79,58 @@ def show_games_page():
     """, unsafe_allow_html=True)
     
     # Game selection
-    games = {
-        "🎯 Reaction Time": "reaction_game",
-        "🎨 Mood Color Match": "color_mood_game", 
-        "😌 Stress Relief Clicker": "stress_clicker_game",
-        "💭 Positive Word Association": "word_association_game",
-        "🫁 Breathing Pattern Game": "breathing_game"
-    }
-    
-    st.subheader("Choose Your Wellness Game:")
-    
-    # Add responsive game selection CSS
+    games = [
+        ("🎯 Reaction Time", "reaction_game", "Test and improve your reflexes with a quick reaction timer."),
+        ("🎨 Mood Color Match", "color_mood_game", "Express and explore emotions using color choices."),
+        ("😌 Stress Relief Clicker", "stress_clicker_game", "Release tension with a simple, calming clicker."),
+        ("💭 Positive Word Association", "word_association_game", "Build a chain of uplifting words to boost positivity."),
+        ("🫁 Breathing Pattern Game", "breathing_game", "Guided breathing exercises to relax and center yourself.")
+    ]
+
+    st.markdown(
+        """
+    <div style='text-align:center; margin-top: 12px; margin-bottom: 8px;'>
+        <h2 style='margin:0; font-weight:800; letter-spacing: -0.01em; color: #4a2b3a;'>Choose Your Wellness Game</h2>
+        <p style='margin:4px 0 0; color: rgba(74,43,58,0.7);'>Pick a short activity to feel better right now</p>
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+    # Beautified selection CSS
     st.markdown("""
     <style>
-    @media (max-width: 768px) {
-        .game-selection-container {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .game-selection-container .stButton {
-            width: 100%;
-        }
-        .game-selection-container .stButton > button {
-            width: 100% !important;
-            min-height: 50px !important;
-            font-size: 0.9rem !important;
-            text-align: center !important;
-        }
-    }
-    @media (min-width: 769px) {
-        .game-selection-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: center;
-        }
-        .game-selection-row .stButton {
-            flex: 1 1 200px;
-            max-width: 250px;
-        }
-    }
+    .game-selection-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; align-items: stretch; }
+    .game-card-select { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)); border-radius: 12px; padding: 14px; text-align:center; box-shadow: 0 8px 24px rgba(11,22,55,0.06); transition: transform .18s ease, box-shadow .18s ease; }
+    .game-card-select:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(11,22,55,0.10); }
+    .game-card-title { font-size:1.15rem; font-weight:800; margin-bottom:6px; }
+    .game-card-desc { font-size:0.9rem; color: rgba(11,22,55,0.65); margin-bottom: 10px; min-height: 44px; }
+    .play-btn { background: linear-gradient(90deg, #ff7aa2, #ffb3c7); color: white; border: none; padding: 10px 14px; border-radius: 999px; font-weight:700; cursor:pointer; }
+    .play-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 26px rgba(122,43,107,0.12); }
+    @media (max-width: 640px) { .game-card-desc { min-height: auto; } .game-card-title { font-size:1rem; } }
     </style>
     """, unsafe_allow_html=True)
-    
-    # Responsive layout for game buttons - max 2 per row on desktop, stack on mobile
-    games_list = list(games.items())
-    
-    st.markdown('<div class="game-selection-container">', unsafe_allow_html=True)
-    
-    # Group games into rows of 2 for better mobile compatibility
-    for i in range(0, len(games_list), 2):
-        row_games = games_list[i:i+2]
-        cols = st.columns(len(row_games))
-        
-        for j, (game_name, game_key) in enumerate(row_games):
-            with cols[j]:
-                if st.button(game_name, key=f"select_{game_key}", use_container_width=True):
-                    st.session_state.current_game = game_key
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Render cards using Streamlit columns so we can center the Play button inside each card
+    ncols = min(3, len(games))  # up to 3 columns on wide screens
+    for i in range(0, len(games), ncols):
+        row = games[i:i+ncols]
+        cols = st.columns(len(row), gap="large")
+        for col, (name, key, desc) in zip(cols, row):
+            with col:
+                card_html = f"""
+                <div class='game-card-select'>
+                    <div class='game-card-title'>{name}</div>
+                    <div class='game-card-desc'>{desc}</div>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
+                # Create inner columns to center the Play button visually
+                inner = st.columns([1, 2, 1])
+                with inner[1]:
+                    if st.button("Play", key=f"select_{key}"):
+                        st.session_state.current_game = key
     
     # Display selected game
     if 'current_game' in st.session_state:
