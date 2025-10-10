@@ -1,5 +1,5 @@
 import streamlit as st
-from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals, get_today_entries, load_water_log
+from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals, get_today_entries, load_water_log, edit_water_intake_entry
 import pandas as pd
 import datetime
 
@@ -279,7 +279,7 @@ with col2:
     """, unsafe_allow_html=True)
 st.caption("💡 Tip: Aim for at least 2 liters (2000 ml) per day!")
 
-# 2. Detailed Log View
+# 2. Detailed Log View with Edit
 with st.expander("📜 Today's Log", expanded=False):
     todays_entries = get_today_entries()
     if not todays_entries:
@@ -288,15 +288,29 @@ with st.expander("📜 Today's Log", expanded=False):
         # Sort entries by timestamp descending
         todays_entries.sort(key=lambda x: x['timestamp'], reverse=True)
         
-        log_df = pd.DataFrame(todays_entries)
-        log_df['Time'] = pd.to_datetime(log_df['timestamp']).dt.strftime('%I:%M %p')
-        log_df.rename(columns={'amount_ml': 'Amount (ml)'}, inplace=True)
-        
-        st.dataframe(
-            log_df[['Time', 'Amount (ml)']],
-            use_container_width=True,
-            hide_index=True
-        )
+        for entry in todays_entries:
+            ts = entry['timestamp']
+            amount = entry['amount_ml']
+            
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                st.markdown(f"**{pd.to_datetime(ts).strftime('%I:%M %p')}**: {amount} ml")
+
+            with col2:
+                edit_key = f"edit_{ts}"
+                if edit_key not in st.session_state:
+                    st.session_state[edit_key] = False
+
+                if st.button("Edit", key=f"edit_btn_{ts}"):
+                    st.session_state[edit_key] = not st.session_state[edit_key]
+
+            if st.session_state[edit_key]:
+                new_amount = st.number_input("New Amount (ml)", value=amount, key=f"num_{ts}")
+                if st.button("Save", key=f"save_{ts}"):
+                    edit_water_intake_entry(ts, new_amount)
+                    st.session_state[edit_key] = False
+                    st.rerun()
 
 # 7-day water intake graph with enhanced styling
 st.markdown("""
