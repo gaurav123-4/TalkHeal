@@ -317,21 +317,31 @@ with st.expander("📜 Today's Log", expanded=False):
                     st.session_state[edit_key] = False
                     st.rerun()
 
-# 7-day water intake graph with enhanced styling
-st.markdown("""
-<div style='margin: 2rem 0 1rem 0; text-align: center;'>
-    <div style='font-size: 2rem; font-weight: 700; color: #0d47a1; 
-                background: white; padding: 1rem; border-radius: 15px; 
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);'>
-        📊 Last 7 Days Progress
+# Analytics and Trends
+with st.expander("📈 Analytics and Trends", expanded=False):
+    st.markdown("""
+    <div style='margin: 1rem 0; text-align: center;'>
+        <div style='font-size: 1.5rem; font-weight: 700; color: #0d47a1;'>
+            Last 7 Days Progress (Bar Chart)
+        </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
-days_data = get_last_n_days_totals(7)
-df = pd.DataFrame(days_data, columns=["Date", "Water (ml)"])
-st.bar_chart(df.set_index("Date"), height=250, use_container_width=True)
+    """, unsafe_allow_html=True)
+    days_data_7 = get_last_n_days_totals(7)
+    df_7 = pd.DataFrame(days_data_7, columns=["Date", "Water (ml)"])
+    st.bar_chart(df_7.set_index("Date"), height=250, use_container_width=True)
 
-# 7. Data Export Functionality
+    st.markdown("""
+    <div style='margin: 2rem 0 1rem 0; text-align: center;'>
+        <div style='font-size: 1.5rem; font-weight: 700; color: #0d47a1;'>
+            Last 30 Days Trend (Line Chart)
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    days_data_30 = get_last_n_days_totals(30)
+    df_30 = pd.DataFrame(days_data_30, columns=["Date", "Water (ml)"])
+    st.line_chart(df_30.set_index("Date"), height=250, use_container_width=True)
+
+# Data Export Functionality
 with st.expander("📥 Export Your Data", expanded=False):
     st.markdown("""
     <p style='font-size: 1.1rem; color: #424242;'>
