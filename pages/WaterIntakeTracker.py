@@ -1,5 +1,5 @@
 import streamlit as st
-from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals, get_today_entries
+from core.water_tracker import log_water_intake, get_today_total, get_last_n_days_totals, get_today_entries, load_water_log
 import pandas as pd
 import datetime
 
@@ -311,6 +311,45 @@ st.markdown("""
 days_data = get_last_n_days_totals(7)
 df = pd.DataFrame(days_data, columns=["Date", "Water (ml)"])
 st.bar_chart(df.set_index("Date"), height=250, use_container_width=True)
+
+# 7. Data Export Functionality
+with st.expander("📥 Export Your Data", expanded=False):
+    st.markdown("""
+    <p style='font-size: 1.1rem; color: #424242;'>
+        Download your entire water intake history as a CSV file. This can be useful for personal records or for sharing with a healthcare provider.
+    </p>
+    """, unsafe_allow_html=True)
+
+    if st.button("Generate CSV for Download", key="export_data"):
+        water_data = load_water_log()
+        if not water_data:
+            st.warning("No water intake data found to export.")
+        else:
+            all_entries = []
+            for date, entries in water_data.items():
+                for entry in entries:
+                    all_entries.append({
+                        "Date": date,
+                        "Time": pd.to_datetime(entry['timestamp']).strftime('%I:%M:%S %p'),
+                        "Amount (ml)": entry['amount_ml']
+                    })
+            
+            if all_entries:
+                export_df = pd.DataFrame(all_entries)
+                # Sort by date and time
+                export_df = export_df.sort_values(by=["Date", "Time"], ascending=[False, False])
+                
+                csv = export_df.to_csv(index=False).encode('utf-8')
+                
+                st.download_button(
+                    label="📥 Download CSV",
+                    data=csv,
+                    file_name=f"water_intake_history_{datetime.date.today().isoformat()}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+            else:
+                st.warning("No entries found to export.")
 # Footer with encouraging message
 st.markdown("""
 <div style='text-align: center; margin-top: 2rem; padding: 1.5rem; 
