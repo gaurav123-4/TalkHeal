@@ -606,6 +606,8 @@ def positive_word_association():
     if 'word_chain' not in st.session_state:
         st.session_state.word_chain = []
         st.session_state.word_score = 0
+    if 'saved_chains' not in st.session_state:
+        st.session_state.saved_chains = []  # list of lists
     
     if not st.session_state.word_chain:
         starter_word = random.choice(positive_words)
@@ -614,27 +616,60 @@ def positive_word_association():
     st.write("**Build a chain of positive words! Each word should relate to the previous one:**")
     st.write(f"### Current chain: {' → '.join(st.session_state.word_chain)}")
     
-    # Input for next word
+    # Suggestion chips to inspire the next word
+    st.markdown("**Suggestions:**")
+    sugg_cols = st.columns(6)
+    suggestions = random.sample(positive_words, min(6, len(positive_words)))
+    for i, word in enumerate(suggestions):
+        with sugg_cols[i % 6]:
+            if st.button(word, key=f"suggest_{i}"):
+                # push suggestion into input by appending directly
+                st.session_state.word_chain.append(word)
+                st.session_state.word_score += 5
+                st.success(f"Nice! '{word}' fits beautifully.")
+
+    # Input for next word with add/undo/save controls
     next_word = st.text_input("Add the next positive word:", key="word_input")
-    
-    col1, col2 = st.columns(2)
+
+    col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
         if st.button("✅ Add Word", key="add_word") and next_word:
-            st.session_state.word_chain.append(next_word.title())
-            st.session_state.word_score += 5
-            
-            encouragements = [
-                f"Beautiful connection! '{next_word}' adds wonderful energy! ✨",
-                f"Perfect! '{next_word}' brings such positive vibes! 🌟", 
-                f"Excellent! Your mind is creating beautiful associations! 💫",
-                f"Amazing! '{next_word}' flows perfectly with positive energy! 🌈"
-            ]
-            st.success(random.choice(encouragements))
+            candidate = next_word.strip().title()
+            if candidate and candidate not in st.session_state.word_chain:
+                st.session_state.word_chain.append(candidate)
+                st.session_state.word_score += 5
+                encouragements = [
+                    f"Beautiful connection! '{candidate}' adds wonderful energy! ✨",
+                    f"Perfect! '{candidate}' brings such positive vibes! 🌟", 
+                    f"Excellent! Your mind is creating beautiful associations! 💫",
+                    f"Amazing! '{candidate}' flows perfectly with positive energy! 🌈"
+                ]
+                st.success(random.choice(encouragements))
+            else:
+                st.warning("That word is already in the chain or empty. Try a new one or pick a suggestion.")
+            # clear input by resetting the widget key
+            st.session_state['word_input'] = ''
             st.rerun()
-    
+
     with col2:
-        if st.button("🔄 New Chain", key="new_chain"):
-            st.session_state.word_chain = [random.choice(positive_words)]
+        if st.button("↩️ Undo Last", key="undo_word"):
+            if len(st.session_state.word_chain) > 1:
+                removed = st.session_state.word_chain.pop()
+                st.info(f"Removed '{removed}' from the chain.")
+                st.session_state.word_score = max(0, st.session_state.word_score - 5)
+            else:
+                st.warning("Can't remove the starter word.")
+            st.rerun()
+
+    with col3:
+        if st.button("💾 Save Chain", key="save_chain"):
+            # save a copy, avoid duplicates
+            snapshot = st.session_state.word_chain.copy()
+            if snapshot not in st.session_state.saved_chains:
+                st.session_state.saved_chains.insert(0, snapshot)
+                st.success("Chain saved! You can view saved chains below.")
+            else:
+                st.info("This chain is already saved.")
             st.rerun()
     
     st.markdown(f"""
@@ -646,6 +681,15 @@ def positive_word_association():
     
     if len(st.session_state.word_chain) >= 10:
         st.success("🎉 Amazing! You've created a beautiful chain of positivity! Your mind is becoming more attuned to positive thoughts! 🌟")
+
+    # Display saved chains (recent first)
+    if st.session_state.saved_chains:
+        st.markdown("### Saved chains")
+        for i, chain in enumerate(st.session_state.saved_chains[:6]):
+            st.write(f"{i+1}. {' → '.join(chain)}")
+        if st.button("Clear saved chains", key="clear_saved_chains"):
+            st.session_state.saved_chains = []
+            st.experimental_rerun()
 
 def breathing_pattern_game():
     """Interactive breathing exercise game"""
