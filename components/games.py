@@ -53,9 +53,29 @@ def show_games_page():
     
     st.markdown("""
     <div class="game-header">
-        <h1>🎮 Mental Wellness Games</h1>
-        <p>Interactive games designed to boost your mental health and well-being</p>
+        <div class="game-header-inner">
+            <div class="game-title">🎮 TalkHeal Games</div>
+            <div class="game-sub">Interactive, bite-sized activities to boost focus, reduce stress, and build positive habits.</div>
+            <div class="game-badges">
+                <span class="badge">✨ Quick</span>
+                <span class="badge">🌈 Fun</span>
+                <span class="badge">💚 Therapeutic</span>
+            </div>
+        </div>
     </div>
+
+    <style>
+    /* header visuals */
+    .game-header { background: linear-gradient(120deg, #ffd1e6 0%, #ffb6c1 60%, #ffc0cb 100%); padding: 1.8rem; border-radius: 16px; color: #4a2b3a; margin-bottom: 1rem; box-shadow: 0 10px 30px rgba(14,21,47,0.06); position:relative; overflow:hidden; }
+    .game-header:before { content:""; position:absolute; inset:0; background: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.03), transparent 8%), radial-gradient(circle at 90% 80%, rgba(255,255,255,0.02), transparent 8%); pointer-events:none; }
+    .game-header-inner { max-width: 980px; margin: 0 auto; text-align: center; position:relative; z-index:1; }
+    .game-title { font-size: 3.6rem; font-weight: 900; margin-bottom: 6px; background: linear-gradient(90deg,#7a2b6b,#ff6b9a); -webkit-background-clip:text; color:transparent; letter-spacing: -0.03em; text-shadow: 0 6px 18px rgba(122,43,107,0.12); font-family: 'Inter', 'Segoe UI', Roboto, -apple-system, 'Helvetica Neue', Arial, sans-serif; }
+    .game-sub { color: rgba(74,43,58,0.85); margin-bottom: 12px; font-size: 1rem; }
+    .game-badges { display:flex; gap:10px; justify-content:center; margin-bottom:12px; }
+    .badge { background: rgba(255, 255, 255, 0.12); padding:8px 14px; border-radius:999px; font-weight:700; box-shadow: 0 6px 18px rgba(11,22,55,0.08); transition: transform 160ms ease, box-shadow 160ms ease; }
+    .badge:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(11,22,55,0.12); }
+    @media (max-width: 600px) { .game-title { font-size:2rem; } .game-sub { font-size:0.95rem; } .badge{padding:6px 10px;} }
+    </style>
     """, unsafe_allow_html=True)
     
     # Game selection
