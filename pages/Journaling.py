@@ -88,7 +88,7 @@ def save_entry(email, entry, sentiment, tags):
     conn.commit()
     conn.close()
 
-def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None, tag_filter=None):
+def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None, tag_filter=None, search_query=None):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     query = """
@@ -105,6 +105,8 @@ def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None, 
     if tag_filter:
         for tag in tag_filter:
             query += f" AND tags LIKE '%{tag}%'"
+    if search_query:
+        query += f" AND (entry LIKE '%{search_query}%' OR tags LIKE '%{search_query}%')"
 
     query += " ORDER BY date ASC"
     rows = cursor.execute(query, params).fetchall()
@@ -212,8 +214,9 @@ def journaling_app():
     all_tags = list(set(",".join([entry[4] for entry in all_entries if entry[4]]).split(',')))
 
     tag_filter = st.multiselect("Filter by Tags", all_tags)
+    search_query = st.text_input("Search Entries")
 
-    entries = fetch_entries(email, start_date=start_date, end_date=end_date, tag_filter=tag_filter)
+    entries = fetch_entries(email, start_date=start_date, end_date=end_date, tag_filter=tag_filter, search_query=search_query)
 
     chart = create_mood_trend_chart(entries)
     if chart:
