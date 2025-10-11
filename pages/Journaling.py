@@ -86,7 +86,7 @@ def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     query = """
-        SELECT entry, sentiment, date FROM journal_entries
+        SELECT id, entry, sentiment, date FROM journal_entries
         WHERE email = ?
     """
     params = [email]
@@ -100,6 +100,14 @@ def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None):
     rows = cursor.execute(query, params).fetchall()
     conn.close()
     return rows
+
+def update_entry(entry_id, new_text):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    new_sentiment = analyze_sentiment(new_text)
+    cursor.execute("UPDATE journal_entries SET entry = ?, sentiment = ? WHERE id = ?", (new_text, new_sentiment, entry_id))
+    conn.commit()
+    conn.close()
 
 def journaling_app():
     set_background("static_files/mint.png")
@@ -145,9 +153,20 @@ def journaling_app():
     if not entries:
         st.info("No entries found for selected filters.")
     else:
-        for entry, sentiment, entry_date in entries:
+        for entry_id, entry, sentiment, entry_date in entries:
             with st.expander(f"{entry_date} - Mood: {sentiment}"):
                 st.write(entry)
+                
+                if st.button("Edit", key=f"edit_{entry_id}"):
+                    st.session_state.edit_id = entry_id
+
+                if st.session_state.get("edit_id") == entry_id:
+                    with st.form(key=f"edit_form_{entry_id}"):
+                        new_text = st.text_area("Edit your entry", value=entry, height=200)
+                        if st.form_submit_button("Save"):
+                            update_entry(entry_id, new_text)
+                            st.session_state.edit_id = None
+                            st.rerun()
 
 init_journal_db()
 journaling_app()
