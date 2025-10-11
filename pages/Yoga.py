@@ -38,7 +38,29 @@ try:
 except FileNotFoundError:
     yoga_data = {}
 
-background_image_path = "static_files/lavender.png"
+# --- Detect Theme & Palette ---
+current_theme = st.session_state.get("current_theme", None)
+if not current_theme:
+    from core.theme import get_current_theme  
+    current_theme = get_current_theme()
+
+is_dark = current_theme["name"] == "Dark"
+
+# --- Detect selected theme from session state ---
+selected_palette = st.session_state.get("palette_name", "Pink").lower()
+
+if is_dark:
+    background_image_path = "static_files/dark.png"
+else:
+    palette_color = {
+        "light": "static_files/pink.png",
+        "calm blue": "static_files/blue.png",
+        "mint": "static_files/mint.png",
+        "lavender": "static_files/lavender.png",
+        "pink": "static_files/pink.png"
+    }
+    background_image_path = palette_color.get(selected_palette, "static_files/pink.png") # Pick corresponding background file; default to pink if not found
+
 base64_background_image = get_base64_of_bin_file(background_image_path)
 
 st.markdown(f"""
@@ -62,7 +84,7 @@ html::before, body::before {{
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.3);
+    background: {'rgba(0,0,0,0.5)' if is_dark else 'rgba(255,255,255,0.3)'};
     z-index: -1;
 }}
 
@@ -80,8 +102,13 @@ div[style*="background:"]
     border: none !important;
 }}
 
-h1, h2, h3, h4, h5, h6, p, span, strong, div, label {{
-    color: #4a148c !important;
+h1 {{
+    color: rgb(214, 51, 108) !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}}
+
+h2, h3, h4, h5, h6, p, span, strong, div, label {{
+    color: {'#f0f0f0' if is_dark else 'rgba(49, 51, 63, 0.8)'} !important;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }}
 
@@ -157,7 +184,7 @@ div[data-baseweb="popover"] > div > ul {{
 }}
 
 div[data-baseweb="popover"] li {{
-    color: #4a148c !important;
+    color: rgba(49, 51, 63, 0.8) !important;
     font-weight: 500;
     transition: background-color 0.2s ease;
 }}
@@ -231,7 +258,7 @@ button[data-testid="stExpanderToggle"]:hover {{
 
 div[data-testid="stButton"] > button {{
     background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-    color: #4a148c !important; 
+    color: rgba(49, 51, 63, 0.8) !important; 
     border: 1px solid #cccccc !important; 
     border-radius: 12px !important;
     font-weight: bold !important;
@@ -326,7 +353,19 @@ if lottie_yoga:
     st_lottie(lottie_yoga, height=220, key="yoga")
 st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align: center; color: #b833a2; margin-top: -15px;'>Yoga for Mental Wellness</h1>", unsafe_allow_html=True)
+st.markdown("""
+<h1 style="
+  text-align: center;
+  background: linear-gradient(90deg, #b833a2, #ff69b4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+  margin-top: -15px;
+">
+🧘 Yoga for Mental Wellness
+</h1>
+""", unsafe_allow_html=True)
+
 st.markdown("<p style='text-align: center; font-size: 17px;'>Tell me how you're feeling, and I'll suggest few calming yoga poses.</p>", unsafe_allow_html=True)
 
 user_mood_input = st.text_area("How are you feeling today?", height=100, placeholder="e.g., I'm feeling really stressed and overwhelmed with work.", key="mood_input")

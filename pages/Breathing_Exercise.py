@@ -1,8 +1,92 @@
 import streamlit as st
+import base64
 import time
 import datetime
 import json
 from streamlit_lottie import st_lottie
+
+def get_base64_of_bin_file(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+def set_background_for_theme(selected_palette="pink"):
+    from core.theme import get_current_theme
+
+    # --- Get current theme info ---
+    current_theme = st.session_state.get("current_theme", None)
+    if not current_theme:
+        current_theme = get_current_theme()
+    
+    is_dark = current_theme["name"] == "Dark"
+
+    # --- Map light themes to background images ---
+    palette_color = {
+        "light": "static_files/pink.png",
+        "calm blue": "static_files/blue.png",
+        "mint": "static_files/mint.png",
+        "lavender": "static_files/lavender.png",
+        "pink": "static_files/pink.png"
+    }
+
+    # --- Select background based on theme ---
+    if is_dark:
+        background_image_path = "static_files/dark.png"
+    else:
+        background_image_path = palette_color.get(selected_palette.lower(), "static_files/pink.png")
+
+    encoded_string = get_base64_of_bin_file(background_image_path)
+    st.markdown(
+        f"""
+        <style>
+        /* Entire app background */
+        html, body, [data-testid="stApp"] {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+
+        /* Main content transparency */
+        .block-container {{
+            background-color: rgba(255, 255, 255, 0);
+        }}
+
+        /* Sidebar: brighter translucent background */
+        [data-testid="stSidebar"] {{
+            background-color: rgba(255, 255, 255, 0.6);  /* Brighter and translucent */
+            color: {'black' if is_dark else 'rgba(49, 51, 63, 0.8)'} ;  /* Adjusted for light background */
+        }}
+        
+        h1 {{
+            color: rgb(214, 51, 108) !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }}
+
+        h2, h3, h4, h5, h6,
+        p, span, strong, div, label {{
+            color: {'#f0f0f0' if is_dark else 'rgba(49, 51, 63, 0.8)'} !important;
+            transition: color 0.3s ease;
+        }}
+
+        /* Header bar: fully transparent */
+        [data-testid="stHeader"] {{
+            background-color: rgba(0, 0, 0, 0);
+        }}
+
+        /* Hide left/right arrow at sidebar bottom */
+        button[title="Close sidebar"],
+        button[title="Open sidebar"] {{
+            display: none !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ✅ Set your background image
+selected_palette = st.session_state.get("palette_name", "Pink")
+set_background_for_theme(selected_palette)
 
 # --- CONFIG & CONSTANTS ---
 TECHNIQUES = {
@@ -55,7 +139,7 @@ def calculate_weekly_minutes(log):
 
 # --- UI VIEWS ---
 def show_setup_view():
-    st.markdown("<h2 style='text-align: center; color: teal;'>🧘 Breathing Exercise</h2>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: teal;'>🧘 Breathing Exercise</h2>", unsafe_allow_html=True)
     st.markdown("Use this guided exercise to relax. Select a technique, then start your session.")
 
     st.markdown("### 📊 Your Progress")
@@ -79,7 +163,7 @@ def run_session_view():
     inhale, hold1, exhale, hold2 = params['inhale'], params['hold1'], params['exhale'], params['hold2']
     cycle_length = sum(params.values())
 
-    st.markdown(f"<h2 style='text-align: center; color: teal;'>🧘 {st.session_state.breathing_technique}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='text-align: center; color: teal;'>🧘 {st.session_state.breathing_technique}</h1>", unsafe_allow_html=True)
     
     lottie_animation = load_lottie_animation(LOTTIE_ANIMATION_PATH)
     if lottie_animation:

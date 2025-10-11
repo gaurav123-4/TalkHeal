@@ -382,6 +382,7 @@ def render_sidebar():
                     key="palette_selector",
                 )
                 if selected_palette != st.session_state.get("palette_name", "Light"):
+                    st.session_state["palette_name"] = selected_palette
                     set_palette(selected_palette)
 
             # Current theme display

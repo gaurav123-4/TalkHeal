@@ -11,10 +11,36 @@ from streamlit_js_eval import streamlit_js_eval
 import requests
 import base64
 
-def set_background(image_path):
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
+def get_base64_of_bin_file(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
+def set_background_for_theme(selected_palette="pink"):
+    from core.theme import get_current_theme
+
+    # --- Get current theme info ---
+    current_theme = st.session_state.get("current_theme", None)
+    if not current_theme:
+        current_theme = get_current_theme()
+    
+    is_dark = current_theme["name"] == "Dark"
+
+    # --- Map light themes to background images ---
+    palette_color = {
+        "light": "static_files/pink.png",
+        "calm blue": "static_files/blue.png",
+        "mint": "static_files/mint.png",
+        "lavender": "static_files/lavender.png",
+        "pink": "static_files/pink.png"
+    }
+
+    # --- Select background based on theme ---
+    if is_dark:
+        background_image_path = "static_files/dark.png"
+    else:
+        background_image_path = palette_color.get(selected_palette.lower(), "static_files/pink.png")
+
+    encoded_string = get_base64_of_bin_file(background_image_path)
     css = """
     <style>
     /* Entire app background */
@@ -41,6 +67,11 @@ def set_background(image_path):
     [data-testid="stHeader"] {
         background-color: rgba(0, 0, 0, 0);
     }
+    
+    h1 {
+            color: rgb(214, 51, 108) !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
 
     /* Hide left/right arrow at sidebar bottom */
     button[title="Close sidebar"],
@@ -65,7 +96,8 @@ def set_background(image_path):
 
 
 # ✅ Set your background image
-set_background("static_files/lavender.png")
+selected_palette = st.session_state.get("palette_name", "Pink")
+set_background_for_theme(selected_palette)
 
 
 # --- Structured Emergency Resources ---
