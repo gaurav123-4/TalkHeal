@@ -109,6 +109,13 @@ def update_entry(entry_id, new_text):
     conn.commit()
     conn.close()
 
+def delete_entry(entry_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM journal_entries WHERE id = ?", (entry_id,))
+    conn.commit()
+    conn.close()
+
 def journaling_app():
     set_background("static_files/mint.png")
     st.markdown(
@@ -157,8 +164,14 @@ def journaling_app():
             with st.expander(f"{entry_date} - Mood: {sentiment}"):
                 st.write(entry)
                 
-                if st.button("Edit", key=f"edit_{entry_id}"):
-                    st.session_state.edit_id = entry_id
+                col1, col2 = st.columns([1,1])
+                with col1:
+                    if st.button("Edit", key=f"edit_{entry_id}"):
+                        st.session_state.edit_id = entry_id
+                with col2:
+                    if st.button("Delete", key=f"delete_{entry_id}"):
+                        delete_entry(entry_id)
+                        st.rerun()
 
                 if st.session_state.get("edit_id") == entry_id:
                     with st.form(key=f"edit_form_{entry_id}"):
