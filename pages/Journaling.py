@@ -9,6 +9,10 @@ import altair as alt
 import csv
 from io import StringIO
 from fpdf import FPDF
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+
 
 # Centralized Authentication Check
 if "authenticated" not in st.session_state:
@@ -54,11 +58,14 @@ def set_background(main_bg_path, sidebar_bg_path=None):
     )
 
 def analyze_sentiment(entry: str) -> str:
-    if any(word in entry.lower() for word in ['sad', 'tired', 'upset', 'angry']):
-        return "Negative"
-    elif any(word in entry.lower() for word in ['happy', 'grateful', 'joy']):
+    sia = SentimentIntensityAnalyzer()
+    sentiment_score = sia.polarity_scores(entry)['compound']
+    if sentiment_score >= 0.05:
         return "Positive"
-    return "Neutral"
+    elif sentiment_score <= -0.05:
+        return "Negative"
+    else:
+        return "Neutral"
 
 DB_PATH = "journals.db"
 
