@@ -35,19 +35,30 @@ def show_blog_list():
         </div>
     """, unsafe_allow_html=True)
 
-    # --- Search Bar ---
-    search_query = st.text_input("Search articles by keyword:", placeholder="e.g., mindfulness, habits...")
+    # --- Filtering and Search UI ---
+    all_categories = sorted(list(set(p.get("category", "Uncategorized") for p in BLOG_POSTS)))
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        search_query = st.text_input("Search articles by keyword:", placeholder="e.g., mindfulness, habits...")
+    with col2:
+        category_options = ["All Categories"] + all_categories
+        selected_category = st.selectbox("Filter by category:", category_options)
 
     # --- Filtering Logic ---
     posts_to_show = sorted(BLOG_POSTS, key=lambda x: x["date"], reverse=True)
+    
     if search_query:
         posts_to_show = [
             p for p in posts_to_show
             if search_query.lower() in p['title'].lower() or search_query.lower() in p['excerpt'].lower()
         ]
+        
+    if selected_category != "All Categories":
+        posts_to_show = [p for p in posts_to_show if p.get("category") == selected_category]
 
     if not posts_to_show:
-        st.info(f'No articles found for "{search_query}". Please try another keyword.')
+        st.info('No articles found. Please adjust your search or filter.')
         return
 
     # --- Display Posts ---
