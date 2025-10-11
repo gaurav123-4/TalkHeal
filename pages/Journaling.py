@@ -4,6 +4,8 @@ import base64
 from uuid import uuid4
 from datetime import date
 from core.utils import require_authentication
+import pandas as pd
+import altair as alt
 
 # Centralized Authentication Check
 if "authenticated" not in st.session_state:
@@ -96,7 +98,7 @@ def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None):
     if start_date and end_date:
         query += " AND date BETWEEN ? AND ?"
         params.extend([start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")])
-    query += " ORDER BY date DESC"
+    query += " ORDER BY date ASC"
     rows = cursor.execute(query, params).fetchall()
     conn.close()
     return rows
@@ -115,6 +117,28 @@ def delete_entry(entry_id):
     cursor.execute("DELETE FROM journal_entries WHERE id = ?", (entry_id,))
     conn.commit()
     conn.close()
+
+def create_mood_trend_chart(entries):
+    if not entries:
+        return None
+
+    df = pd.DataFrame(entries, columns=['id', 'entry', 'sentiment', 'date'])
+    df['date'] = pd.to_datetime(df['date'])
+    
+    sentiment_mapping = {"Positive": 1, "Neutral": 0, "Negative": -1}
+    df['sentiment_score'] = df['sentiment'].map(sentiment_mapping)
+
+    chart = alt.Chart(df).mark_line(
+        point=alt.OverlayMarkDef(color="red")
+    ).encode(
+        x=alt.X('date:T', title='Date'),
+        y=alt.Y('sentiment_score:Q', title='Mood Score'),
+        tooltip=['date', 'sentiment']
+    ).properties(
+        title="Mood Trend Over Time"
+    ).interactive()
+
+    return chart
 
 def journaling_app():
     set_background("static_files/mint.png")
@@ -147,20 +171,36 @@ def journaling_app():
         st.rerun() 
 
     st.markdown("---")
-    st.subheader("📖 Your Journal Entries")
-
-    filter_sentiment = st.selectbox("Filter by Sentiment", ["All", "Positive", "Neutral", "Negative"])
+    st.subheader("Mood Dashboard")
+    
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.date_input("Start Date", value=date.today().replace(day=1))
     with col2:
         end_date = st.date_input("End Date", value=date.today())
-    entries = fetch_entries(email, sentiment_filter=filter_sentiment, start_date=start_date, end_date=end_date)
-        
-    if not entries:
+
+    entries = fetch_entries(email, start_date=start_date, end_date=end_date)
+    
+    chart = create_mood_trend_chart(entries)
+    if chart:
+        st.altair_chart(chart, use_container_width=True)
+    else:
+        st.info("Not enough data to display mood trend. Write some journal entries first!")
+
+
+    st.markdown("---")
+    st.subheader("📖 Your Journal Entries")
+
+    filter_sentiment = st.selectbox("Filter by Sentiment", ["All", "Positive", "Neutral", "Negative"])
+    
+    filtered_entries = entries
+    if filter_sentiment != "All":
+        filtered_entries = [entry for entry in entries if entry[2] == filter_sentiment]
+
+    if not filtered_entries:
         st.info("No entries found for selected filters.")
     else:
-        for entry_id, entry, sentiment, entry_date in entries:
+        for entry_id, entry, sentiment, entry_date in reversed(filtered_entries):
             with st.expander(f"{entry_date} - Mood: {sentiment}"):
                 st.write(entry)
                 
