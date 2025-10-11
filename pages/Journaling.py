@@ -11,6 +11,7 @@ from io import StringIO
 from fpdf import FPDF
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import random
 
 
 
@@ -274,8 +275,29 @@ def journaling_app():
     st.markdown("Write about your day, thoughts, or anything you'd like to reflect on.")
     email = st.session_state.user_profile.get("email")
 
+    # Journaling Prompts Feature
+    journal_prompts = [
+        "What are you grateful for today?",
+        "What's one thing you want to remember from today?",
+        "Describe a challenge you faced today and how you handled it.",
+        "What's on your mind right now?",
+        "Write about something that made you smile today.",
+        "What is one thing you can do to make tomorrow better?",
+        "Describe a recent dream you had.",
+        "What are your goals for the upcoming week?",
+        "Write about a person who has had a positive impact on your life.",
+        "What is a skill you would like to learn and why?"
+    ]
+
+    if 'current_prompt' not in st.session_state:
+        st.session_state.current_prompt = "How are you feeling today?"
+
+    if st.button("Get a Journaling Prompt"):
+        st.session_state.current_prompt = random.choice(journal_prompts)
+        st.rerun()
+
     with st.form("journal_form"):
-        journal_text = st.text_area("How are you feeling today?", height=200)
+        journal_text = st.text_area(st.session_state.current_prompt, height=200)
         tags = st.text_input("Tags (comma-separated)")
         submitted = st.form_submit_button("Submit Entry")
 
