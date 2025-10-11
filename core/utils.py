@@ -10,7 +10,10 @@ import google.generativeai
 
 
 def get_current_time():
-    """Returns the user's local time formatted as HH:MM AM/PM."""
+    """
+    Returns the user's local time formatted as HH:MM AM/PM.
+    Uses Streamlit's timezone offset if available.
+    """
     tz_offset = st.context.timezone_offset
 
     if tz_offset is None:
@@ -23,13 +26,27 @@ def get_current_time():
 
 
 def hash_email(email):
-    """Hash email to a short hex digest for privacy and consistent user identification."""
+    """
+    Hash email to a short hex digest for privacy and consistent user identification.
+    Args:
+        email (str): The user's email address.
+    Returns:
+        str: Shortened SHA-256 hex digest or None if email is empty.
+    """
     if not email:
         return None
     return hashlib.sha256(email.encode()).hexdigest()[:10]  # shorten for readability
 
 
 def create_new_conversation(initial_message=None):
+    """
+    Create a new conversation for the current user or IP.
+    Optionally adds an initial user message.
+    Args:
+        initial_message (str, optional): The first message in the conversation.
+    Returns:
+        int: The new conversation ID.
+    """
     user_email = st.session_state.get("user_profile", {}).get("email", None)
     ip = cached_user_ip()
 
@@ -60,6 +77,13 @@ def create_new_conversation(initial_message=None):
 
 
 def clean_ai_response(response_text):
+    """
+    Clean AI response by removing HTML tags and extra whitespace.
+    Args:
+        response_text (str): The raw AI response.
+    Returns:
+        str: Cleaned response text.
+    """
     if not response_text:
         return response_text
     response_text = re.sub(r'<[^>]+>', '', response_text)
@@ -72,6 +96,15 @@ def clean_ai_response(response_text):
 
 
 def get_ai_response(user_message, model):
+    """
+    Generate an AI response to the user's message using the provided model.
+    Handles errors and ensures a supportive, plain-text reply.
+    Args:
+        user_message (str): The user's message.
+        model: The AI model instance.
+    Returns:
+        str: The AI's response.
+    """
     if model is None:
         return "I'm sorry, I can't connect right now. Please check the API configuration."
 
@@ -108,6 +141,11 @@ def get_ai_response(user_message, model):
 
 
 def cached_user_ip():
+    """
+    Get the user's IP address, caching it in session state for 1 hour.
+    Returns:
+        str: The user's IP address or a fallback session ID.
+    """
     if hasattr(st.session_state, 'cached_ip') and hasattr(st.session_state, 'ip_cache_time'):
         cache_age = datetime.now() - st.session_state.ip_cache_time
         if cache_age < timedelta(hours=1):
@@ -127,6 +165,11 @@ def cached_user_ip():
 
 
 def get_user_ip():
+    """
+    Get the user's public IP address (no caching).
+    Returns:
+        str: The user's IP address or 'unknown_ip'.
+    """
     try:
         return requests.get("https://api.ipify.org").text
     except:
@@ -134,6 +177,11 @@ def get_user_ip():
 
 
 def get_memory_file():
+    """
+    Get the filename for storing conversation history, based on user email or IP.
+    Returns:
+        str: The path to the memory file.
+    """
     user_email = st.session_state.get("user_profile", {}).get("email")
     if user_email:
         safe_email = user_email.replace("@", "_at_").replace(".", "_dot_")
@@ -146,12 +194,22 @@ def get_memory_file():
 
 
 def save_conversations(conversations):
+    """
+    Save the list of conversations to the user's memory file.
+    Args:
+        conversations (list): List of conversation dicts.
+    """
     memory_file = get_memory_file()
     with open(memory_file, 'w', encoding="utf-8") as f:
         json.dump(conversations, f, indent=4)
 
 
 def load_conversations():
+    """
+    Load the user's conversation history from file.
+    Returns:
+        list: List of conversation dicts, or empty list if none exist.
+    """
     memory_file = get_memory_file()
     if not os.path.exists(memory_file):
         return []
@@ -160,6 +218,14 @@ def load_conversations():
 
 
 def save_feedback(convo_id, message, feedback, comment=None):
+    """
+    Save user feedback for a specific message in a conversation.
+    Args:
+        convo_id (int): Conversation ID.
+        message (str): The message being rated.
+        feedback (str): The feedback value.
+        comment (str, optional): Optional user comment.
+    """
     user_email = st.session_state.get("user_profile", {}).get("email")
     hashed_email = hash_email(user_email) if user_email else "unknown"
 
@@ -208,6 +274,14 @@ def save_feedback(convo_id, message, feedback, comment=None):
 
 
 def get_feedback(convo_id, message):
+    """
+    Retrieve feedback for a specific message in a conversation.
+    Args:
+        convo_id (int): Conversation ID.
+        message (str): The message to look up.
+    Returns:
+        str or None: The feedback value, or None if not found.
+    """
     user_email = st.session_state.get("user_profile", {}).get("email")
     if not user_email:
         print("[get_feedback] No user email found in session. Cannot retrieve feedback.")
@@ -234,6 +308,13 @@ def get_feedback(convo_id, message):
 
 
 def get_feedback_per_message(convo_id=None):
+    """
+    Retrieve all feedback entries, optionally filtered by conversation ID.
+    Args:
+        convo_id (int, optional): Conversation ID to filter by.
+    Returns:
+        list: List of feedback dicts.
+    """
     conn = sqlite3.connect("feedback.db")
     c = conn.cursor()
 
@@ -268,9 +349,19 @@ def get_feedback_per_message(convo_id=None):
     
 #Centralize Authentication
 def is_authenticated():
+    """
+    Check if the user is authenticated in the current session.
+    Returns:
+        bool: True if authenticated, False otherwise.
+    """
     return st.session_state.get("authenticated", False)
 
 def set_authenticated_user(user):
+    """
+    Set the authenticated user in session state.
+    Args:
+        user (dict): User profile data.
+    """
     st.session_state["authenticated"] = True
     st.session_state["user_profile"] = {
         "name": user.get("name", ""),
@@ -279,11 +370,17 @@ def set_authenticated_user(user):
     }
 
 def require_authentication():
+    """
+    Require the user to be authenticated, otherwise stop execution and show a warning.
+    """
     if "authenticated" not in st.session_state or not st.session_state.authenticated:
         st.warning("⚠️ Please login from the main page to access this section.")
         st.stop()
 
 def logout_user():
+    """
+    Log out the user by clearing authentication-related session state keys.
+    """
     keys_to_remove = ["authenticated", "user_email", "user_name", "profile_picture", "join_date", "font_size"]
     for key in keys_to_remove:
         if key in st.session_state:
@@ -291,6 +388,15 @@ def logout_user():
 
 
 def create_responsive_columns(num_columns, min_width="120px", mobile_stack_breakpoint=480):
+    """
+    Create responsive columns that stack vertically on mobile devices.
+    Args:
+        num_columns (int): Number of columns for desktop layout.
+        min_width (str): Minimum width for each column before stacking.
+        mobile_stack_breakpoint (int): Screen width (px) below which to stack.
+    Returns:
+        list: List of Streamlit column objects.
+    """
     """
     Create responsive columns that stack vertically on mobile devices.
     
@@ -312,6 +418,15 @@ def create_responsive_columns(num_columns, min_width="120px", mobile_stack_break
 
 
 def render_responsive_buttons(buttons_data, columns_per_row=None, mobile_stack=True):
+    """
+    Render buttons in a responsive layout that stacks on mobile.
+    Args:
+        buttons_data (list): List of dictionaries with button data.
+        columns_per_row (int, optional): Number of buttons per row on desktop.
+        mobile_stack (bool): Whether to stack buttons on mobile.
+    Returns:
+        None (renders buttons directly to Streamlit)
+    """
     """
     Render buttons in a responsive layout that stacks on mobile.
     
@@ -371,6 +486,14 @@ def render_responsive_buttons(buttons_data, columns_per_row=None, mobile_stack=T
                         
                         
 def get_mobile_friendly_columns(desktop_ratios, mobile_threshold=768):
+    """
+    Convert desktop column ratios to mobile-friendly layout.
+    Args:
+        desktop_ratios (list): List of column width ratios for desktop.
+        mobile_threshold (int): Screen width threshold for mobile layout.
+    Returns:
+        list: Mobile-optimized column ratios.
+    """
     """
     Convert desktop column ratios to mobile-friendly layout.
     
