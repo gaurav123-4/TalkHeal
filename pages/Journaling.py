@@ -6,6 +6,9 @@ from datetime import date
 from core.utils import require_authentication
 import pandas as pd
 import altair as alt
+import csv
+from io import StringIO
+from fpdf import FPDF
 
 # Centralized Authentication Check
 if "authenticated" not in st.session_state:
@@ -140,6 +143,25 @@ def create_mood_trend_chart(entries):
 
     return chart
 
+def get_csv_export(entries):
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Date', 'Sentiment', 'Entry'])
+    for _, entry, sentiment, entry_date in entries:
+        writer.writerow([entry_date, sentiment, entry])
+    return output.getvalue()
+
+def get_pdf_export(entries):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    for _, entry, sentiment, entry_date in entries:
+        pdf.cell(200, 10, txt=f"Date: {entry_date}", ln=True)
+        pdf.cell(200, 10, txt=f"Sentiment: {sentiment}", ln=True)
+        pdf.multi_cell(0, 10, txt=entry)
+        pdf.ln(10)
+    return pdf.output(dest='S').encode('latin-1')
+
 def journaling_app():
     set_background("static_files/mint.png")
     st.markdown(
@@ -200,6 +222,24 @@ def journaling_app():
     if not filtered_entries:
         st.info("No entries found for selected filters.")
     else:
+        col1, col2 = st.columns(2)
+        with col1:
+            csv_data = get_csv_export(filtered_entries)
+            st.download_button(
+                label="Export as CSV",
+                data=csv_data,
+                file_name="journal_entries.csv",
+                mime="text/csv",
+            )
+        with col2:
+            pdf_data = get_pdf_export(filtered_entries)
+            st.download_button(
+                label="Export as PDF",
+                data=pdf_data,
+                file_name="journal_entries.pdf",
+                mime="application/pdf",
+            )
+
         for entry_id, entry, sentiment, entry_date in reversed(filtered_entries):
             with st.expander(f"{entry_date} - Mood: {sentiment}"):
                 st.write(entry)
