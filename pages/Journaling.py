@@ -148,27 +148,28 @@ def init_journal_db():
         email TEXT,
         entry TEXT,
         sentiment TEXT,
-        date TEXT
+        date TEXT,
+        tags TEXT
     )
     """)
     conn.commit()
     conn.close()
 
-def save_entry(email, entry, sentiment):
+def save_entry(email, entry, sentiment, tags):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    INSERT INTO journal_entries (id, email, entry, sentiment, date)
-    VALUES (?, ?, ?, ?, ?)
-    """, (str(uuid4()), email, entry, sentiment, str(date.today()))) # Use date.today()
+    INSERT INTO journal_entries (id, email, entry, sentiment, date, tags)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, (str(uuid4()), email, entry, sentiment, str(date.today()), tags))
     conn.commit()
     conn.close()
 
-def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None):
+def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None, tag_filter=None):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     query = """
-        SELECT id, entry, sentiment, date FROM journal_entries
+        SELECT id, entry, sentiment, date, tags FROM journal_entries
         WHERE email = ?
     """
     params = [email]
@@ -178,16 +179,20 @@ def fetch_entries(email, sentiment_filter=None, start_date=None, end_date=None):
     if start_date and end_date:
         query += " AND date BETWEEN ? AND ?"
         params.extend([start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")])
+    if tag_filter:
+        for tag in tag_filter:
+            query += f" AND tags LIKE '%{tag}%'"
+
     query += " ORDER BY date ASC"
     rows = cursor.execute(query, params).fetchall()
     conn.close()
     return rows
 
-def update_entry(entry_id, new_text):
+def update_entry(entry_id, new_text, new_tags):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     new_sentiment = analyze_sentiment(new_text)
-    cursor.execute("UPDATE journal_entries SET entry = ?, sentiment = ? WHERE id = ?", (new_text, new_sentiment, entry_id))
+    cursor.execute("UPDATE journal_entries SET entry = ?, sentiment = ?, tags = ? WHERE id = ?", (new_text, new_sentiment, new_tags, entry_id))
     conn.commit()
     conn.close()
 
@@ -202,7 +207,7 @@ def create_mood_trend_chart(entries):
     if not entries:
         return None
 
-    df = pd.DataFrame(entries, columns=['id', 'entry', 'sentiment', 'date'])
+    df = pd.DataFrame(entries, columns=['id', 'entry', 'sentiment', 'date', 'tags'])
     df['date'] = pd.to_datetime(df['date'])
     
     sentiment_mapping = {"Positive": 1, "Neutral": 0, "Negative": -1}
@@ -213,7 +218,7 @@ def create_mood_trend_chart(entries):
     ).encode(
         x=alt.X('date:T', title='Date'),
         y=alt.Y('sentiment_score:Q', title='Mood Score'),
-        tooltip=['date', 'sentiment']
+        tooltip=['date', 'sentiment', 'tags']
     ).properties(
         title="Mood Trend Over Time"
     ).interactive()
@@ -223,18 +228,19 @@ def create_mood_trend_chart(entries):
 def get_csv_export(entries):
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Date', 'Sentiment', 'Entry'])
-    for _, entry, sentiment, entry_date in entries:
-        writer.writerow([entry_date, sentiment, entry])
+    writer.writerow(['Date', 'Sentiment', 'Entry', 'Tags'])
+    for _, entry, sentiment, entry_date, tags in entries:
+        writer.writerow([entry_date, sentiment, entry, tags])
     return output.getvalue()
 
 def get_pdf_export(entries):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    for _, entry, sentiment, entry_date in entries:
+    for _, entry, sentiment, entry_date, tags in entries:
         pdf.cell(200, 10, txt=f"Date: {entry_date}", ln=True)
         pdf.cell(200, 10, txt=f"Sentiment: {sentiment}", ln=True)
+        pdf.cell(200, 10, txt=f"Tags: {tags}", ln=True)
         pdf.multi_cell(0, 10, txt=entry)
         pdf.ln(10)
     return pdf.output(dest='S').encode('latin-1')
@@ -261,11 +267,12 @@ def journaling_app():
 
     with st.form("journal_form"):
         journal_text = st.text_area("How are you feeling today?", height=200)
+        tags = st.text_input("Tags (comma-separated)")
         submitted = st.form_submit_button("Submit Entry")
 
     if submitted and journal_text.strip():
         sentiment = analyze_sentiment(journal_text)
-        save_entry(email, journal_text, sentiment)
+        save_entry(email, journal_text, sentiment, tags)
         st.success(f"Entry saved! Sentiment: **{sentiment}**")
         st.rerun() 
 
@@ -278,8 +285,13 @@ def journaling_app():
     with col2:
         end_date = st.date_input("End Date", value=date.today())
 
-    entries = fetch_entries(email, start_date=start_date, end_date=end_date)
-    
+    all_entries = fetch_entries(email, start_date=start_date, end_date=end_date)
+    all_tags = list(set(",".join([entry[4] for entry in all_entries if entry[4]]).split(',')))
+
+    tag_filter = st.multiselect("Filter by Tags", all_tags)
+
+    entries = fetch_entries(email, start_date=start_date, end_date=end_date, tag_filter=tag_filter)
+
     chart = create_mood_trend_chart(entries)
     if chart:
         st.altair_chart(chart, use_container_width=True)
@@ -317,8 +329,8 @@ def journaling_app():
                 mime="application/pdf",
             )
 
-        for entry_id, entry, sentiment, entry_date in reversed(filtered_entries):
-            with st.expander(f"{entry_date} - Mood: {sentiment}"):
+        for entry_id, entry, sentiment, entry_date, tags in reversed(filtered_entries):
+            with st.expander(f"{entry_date} - Mood: {sentiment} - Tags: {tags}"):
                 st.write(entry)
                 
                 col1, col2 = st.columns([1,1])
@@ -333,8 +345,9 @@ def journaling_app():
                 if st.session_state.get("edit_id") == entry_id:
                     with st.form(key=f"edit_form_{entry_id}"):
                         new_text = st.text_area("Edit your entry", value=entry, height=200)
+                        new_tags = st.text_input("Tags (comma-separated)", value=tags)
                         if st.form_submit_button("Save"):
-                            update_entry(entry_id, new_text)
+                            update_entry(entry_id, new_text, new_tags)
                             st.session_state.edit_id = None
                             st.rerun()
 
