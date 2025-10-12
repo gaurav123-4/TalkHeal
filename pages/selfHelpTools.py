@@ -9,7 +9,7 @@ from components.focus_session import render_focus_session
 from components.quick_coping_cards import render_quick_coping_cards
 from streamlit_js_eval import streamlit_js_eval
 import requests
-import base64 
+import base64
 
 def set_background(image_path):
     with open(image_path, "rb") as image_file:
@@ -487,8 +487,21 @@ elif st.session_state.active_tool == "knowledge":
 
 elif st.session_state.active_tool == "crisis":
     st.header("☎️ Crisis Support")
-    for r in GLOBAL_RESOURCES:
-        st.markdown(f"**{r['name']}**: {r['desc']} [Visit Website]({r['url']})")
+    
+    search_query = st.text_input("Search for a specific resource or helpline:", "")
+    
+    st.subheader("Global Resources")
+    
+    filtered_global_resources = [
+        r for r in GLOBAL_RESOURCES
+        if search_query.lower() in r['name'].lower() or search_query.lower() in r['desc'].lower()
+    ]
+    
+    if not filtered_global_resources:
+        st.info("No global resources found matching your search.")
+    else:
+        for r in filtered_global_resources:
+            st.markdown(f"**{r['name']}**: {r['desc']} [Visit Website]({r['url']})")
     
     st.info("""
     **What to expect when you call a helpline:**
@@ -515,8 +528,17 @@ elif st.session_state.active_tool == "crisis":
 
     if selected_country and selected_country in country_helplines:
         st.markdown(f"**Helplines for {selected_country} ({country_names.get(selected_country, 'Unknown')}):**")
-        for line in country_helplines[selected_country]:
-            st.markdown(f"• {line}")
+        
+        filtered_helplines = [
+            line for line in country_helplines[selected_country]
+            if search_query.lower() in line.lower()
+        ]
+        
+        if not filtered_helplines:
+            st.info(f"No helplines found matching your search for {selected_country}.")
+        else:
+            for line in filtered_helplines:
+                st.markdown(f"• {line}")
     else:
         st.markdown(f"[Find help worldwide via IASP]({IASP_LINK})")
 
