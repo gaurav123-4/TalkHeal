@@ -10,6 +10,7 @@ from components.quick_coping_cards import render_quick_coping_cards
 from streamlit_js_eval import streamlit_js_eval
 import requests
 import base64
+import json
 
 def set_background(image_path):
     with open(image_path, "rb") as image_file:
@@ -126,42 +127,8 @@ def get_user_country():
 
     return None  # final fallback if everything fails
 
-country_helplines = {
-    "US": [
-        "National Suicide Prevention Lifeline: 988",
-        "Crisis Text Line: Text HOME to 741741",
-        "SAMHSA National Helpline: 1-800-662-4357"
-    ],
-    "IN": [
-        "AASRA: 9152987821",
-        "Sneha Foundation: 044-24640050"
-    ],
-    "GB": [
-        "Samaritans: 116 123",
-        "Shout 85258: Text SHOUT to 85258"
-    ],
-    "AU": [
-        "Lifeline: 13 11 14",
-        "Suicide Call Back Service: 1300 659 467"
-    ],
-    "CA": [
-        "Crisis Services Canada: 1-833-456-4566",
-        "Kids Help Phone: 1-800-668-6868"
-    ],
-    "DE": [
-        "Telefonseelsorge: 0800 1110111 or 0800 1110222"
-    ],
-    "FR": [
-        "Suicide Écoute: 01 45 39 40 00"
-    ],
-    "NZ": [
-        "Lifeline Aotearoa: 0800 543 354",
-        "Youthline: 0800 376 633"
-    ],
-    "ZA": [
-        "SADAG (South African Depression and Anxiety Group): 0800 567 567"
-    ]
-}
+with open("data/country_helplines.json", "r") as f:
+    country_helplines = json.load(f)
 
 country_names = {
     "US": "United States",
