@@ -505,8 +505,9 @@ elif page == "🎨 Creative Corner":
     # Import inside the page to avoid dependency issues if not installed
     try:
         from streamlit_drawable_canvas import st_canvas
+        from PIL import Image
     except ImportError:
-        st.error("The Creative Corner requires the `streamlit-drawable-canvas` library. Please install it by running `pip install streamlit-drawable-canvas`")
+        st.error("The Creative Corner requires the `streamlit-drawable-canvas` and `Pillow` libraries. Please install them by running `pip install streamlit-drawable-canvas Pillow`")
         st.stop()
 
     drawing_prompts = [
@@ -557,6 +558,7 @@ elif page == "🎨 Creative Corner":
         stroke_color = st.color_picker("Stroke color: ", "#000000")
 
     bg_color = st.color_picker("Background color: ", "#EEEEEE")
+    bg_image = st.file_uploader("Upload a background image:", type=["png", "jpg"])
 
     # --- Create the Canvas ---
     canvas_result = st_canvas(
@@ -564,6 +566,7 @@ elif page == "🎨 Creative Corner":
         stroke_width=stroke_width,
         stroke_color=stroke_color,
         background_color=bg_color,
+        background_image=Image.open(bg_image) if bg_image else None,
         height=400,
         width=600,
         drawing_mode=st.session_state.drawing_mode,
