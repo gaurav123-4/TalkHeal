@@ -380,6 +380,22 @@ elif page == "📓 Journaling Prompts":
         - Write a letter to your future self, five years from now.
     ''')
 
+    st.subheader("😥 For Managing Difficult Emotions")
+    st.markdown('''
+        - What is a feeling you are currently struggling with? Describe it without judgment.
+        - Write a letter to your anxiety or stress. What do you want to say to it?
+        - What does support look like for you right now? Who or what can provide it?
+        - Describe a time you felt resilient. What did that feel like in your body?
+    ''')
+
+    st.subheader("🧘‍♀️ For Mind-Body Connection")
+    st.markdown('''
+        - How does your body feel today? Scan from head to toe and notice any sensations.
+        - What is one thing your body does for you that you're grateful for?
+        - Describe an activity that makes you feel strong and capable in your body.
+        - What is one way you can be kinder to your body this week?
+    ''')
+
 # --- Page 7: Wellness Resources ---
 elif page == "📚 Wellness Resources":
     st.title("📚 Wellness Resources")
