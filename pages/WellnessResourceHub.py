@@ -177,14 +177,19 @@ elif page == "✅ Quick Self-Check":
 
     if st.button("Log and Get My Wellness Tip"):
         # --- Tip Logic ---
+        tips = []
         if stress > 7:
-            st.warning("😟 You seem stressed. Try deep breathing or take a short walk.")
-        elif sleep < 6:
-            st.warning("😴 You need more rest. Try to get at least 7–8 hours of sleep.")
-        elif mood < 5:
-            st.info("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
-        else:
+            tips.append("😟 You seem stressed. Try deep breathing or take a short walk.")
+        if sleep < 6:
+            tips.append("😴 You seem to have slept less. Try to get at least 7–8 hours of sleep.")
+        if mood < 5:
+            tips.append("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
+
+        if not tips:
             st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
+        else:
+            for tip in tips:
+                st.warning(tip)
         
         # --- Store Data ---
         st.session_state.self_check_history.append({
