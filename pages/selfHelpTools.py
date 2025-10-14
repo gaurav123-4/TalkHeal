@@ -224,6 +224,7 @@ if "active_tool" not in st.session_state:
 if "recent_tools" not in st.session_state:
     st.session_state.recent_tools = []
 
+
 if "favorite_tools" not in st.session_state:
     st.session_state.favorite_tools = []
 
