@@ -9,7 +9,7 @@ from components.focus_session import render_focus_session
 from components.quick_coping_cards import render_quick_coping_cards
 from streamlit_js_eval import streamlit_js_eval
 import requests
-import base64 
+import base64
 
 def set_background(image_path):
     with open(image_path, "rb") as image_file:
