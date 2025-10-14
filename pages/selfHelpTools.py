@@ -565,6 +565,17 @@ elif st.session_state.active_tool == "grounding_exercise":
         st.session_state.grounding_responses = {
             "see": [], "feel": [], "hear": [], "smell": [], "taste": []
         }
+    if "selected_audio" not in st.session_state:
+        st.session_state.selected_audio = "None"
+
+    audio_files = ["None", "forest_ambience.wav", "gentle_piano.wav", "ocean_waves.wav", "rain_sounds.wav", "silent_soft_music.wav", "tibetan_bowls.wav"]
+    st.session_state.selected_audio = st.selectbox("Select background audio:", options=audio_files, index=audio_files.index(st.session_state.selected_audio))
+
+    if st.session_state.selected_audio != "None":
+        try:
+            st.audio(f"audio_files/{st.session_state.selected_audio}")
+        except FileNotFoundError:
+            st.warning(f"Audio file {st.session_state.selected_audio} not found.")
 
     steps = [
         {"prompt": "5 things you can SEE", "key": "see", "count": 5, "icon": "👀"},
@@ -609,6 +620,7 @@ elif st.session_state.active_tool == "grounding_exercise":
     else:
         st.subheader("🎉 Grounding Exercise Complete!")
         st.success("You've completed the 5-4-3-2-1 grounding exercise. Take a deep breath.")
+
         st.markdown("### Your Responses:")
         for key, value in st.session_state.grounding_responses.items():
             st.markdown(f"**{step_icons[key]} {key.capitalize()}:**")
