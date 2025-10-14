@@ -449,6 +449,9 @@ elif st.session_state.active_tool == "mental_check":
 elif st.session_state.active_tool == "knowledge":
     st.header("📚 Resources & Knowledge Base")
 
+    if "link_to_share" not in st.session_state:
+        st.session_state.link_to_share = None
+
     all_tags = sorted(list(set(tag for data in mental_health_resources_full.values() for tag in data.get("tags", []))))
     selected_tags = st.multiselect("Filter by Tags:", options=all_tags, placeholder="Select tags to filter resources")
 
@@ -479,11 +482,20 @@ elif st.session_state.active_tool == "knowledge":
                 st.markdown("Tags: " + ", ".join([f"`{tag}`" for tag in data.get("tags", [])]))
 
                 for link in data['links']:
-                    st.markdown(f"**[{link['label']}]({link['url']})**")
-                    # Extract domain for context
-                    domain = link['url'].split('/')[2]
-                    st.caption(f"🔗 {domain}")
-                st.markdown("---")
+                    col1, col2 = st.columns([0.8, 0.2])
+                    with col1:
+                        st.markdown(f"**[{link['label']}]({link['url']})**")
+                        # Extract domain for context
+                        domain = link['url'].split('/')[2]
+                        st.caption(f"🔗 {domain}")
+                    with col2:
+                        if st.button("Share", key=f"share_{link['url']}"):
+                            st.session_state.link_to_share = link['url']
+
+    if st.session_state.link_to_share:
+        st.text_input("Copy this link:", value=st.session_state.link_to_share, key="share_input")
+        if st.button("Close", key="close_share"):
+            st.session_state.link_to_share = None
 
 elif st.session_state.active_tool == "crisis":
     st.header("☎️ Crisis Support")
