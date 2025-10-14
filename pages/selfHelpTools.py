@@ -11,36 +11,10 @@ from streamlit_js_eval import streamlit_js_eval
 import requests
 import base64
 
-def get_base64_of_bin_file(image_path):
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
+def set_background(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
 
-def set_background_for_theme(selected_palette="pink"):
-    from core.theme import get_current_theme
-
-    # --- Get current theme info ---
-    current_theme = st.session_state.get("current_theme", None)
-    if not current_theme:
-        current_theme = get_current_theme()
-    
-    is_dark = current_theme["name"] == "Dark"
-
-    # --- Map light themes to background images ---
-    palette_color = {
-        "light": "static_files/pink.png",
-        "calm blue": "static_files/blue.png",
-        "mint": "static_files/mint.png",
-        "lavender": "static_files/lavender.png",
-        "pink": "static_files/pink.png"
-    }
-
-    # --- Select background based on theme ---
-    if is_dark:
-        background_image_path = "static_files/dark.png"
-    else:
-        background_image_path = palette_color.get(selected_palette.lower(), "static_files/pink.png")
-
-    encoded_string = get_base64_of_bin_file(background_image_path)
     css = """
     <style>
     /* Entire app background */
@@ -67,11 +41,6 @@ def set_background_for_theme(selected_palette="pink"):
     [data-testid="stHeader"] {
         background-color: rgba(0, 0, 0, 0);
     }
-    
-    h1 {
-            color: rgb(214, 51, 108) !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-        }
 
     /* Hide left/right arrow at sidebar bottom */
     button[title="Close sidebar"],
@@ -96,8 +65,7 @@ def set_background_for_theme(selected_palette="pink"):
 
 
 # ✅ Set your background image
-selected_palette = st.session_state.get("palette_name", "Pink")
-set_background_for_theme(selected_palette)
+set_background("static_files/lavender.png")
 
 
 # --- Structured Emergency Resources ---
@@ -271,41 +239,57 @@ mental_health_resources_full = {
 }
 st.title("🧰 Self Help Tools")
 
-# Button states
+tools = {
+    "focus": {"name": "Focus Session", "icon": "🧘"},
+    "mood_dashboard": {"name": "Mood Dashboard", "icon": "📊"},
+    "mental_check": {"name": "Mental Health Check", "icon": "🧠"},
+    "knowledge": {"name": "Knowledge Base", "icon": "📚"},
+    "crisis": {"name": "Crisis Support", "icon": "☎️"},
+    "quizzes": {"name": "PsyToolkit Quizzes", "icon": "🧪"},
+    "quick_coping": {"name": "Quick Coping Cards", "icon": "🃏"},
+    "grounding_exercise": {"name": "Grounding Exercise", "icon": "🌳"},
+}
+
+# --- Initialize session state for favorites and recents ---
 if "active_tool" not in st.session_state:
     st.session_state.active_tool = ""
+if "favorite_tools" not in st.session_state:
+    st.session_state.favorite_tools = []
 
-col1, col2 = st.columns(3)[0:2]
-with col1:
-    if st.button("🧘 Focus Session", use_container_width=True):
-        st.session_state.active_tool = "focus"
-with col2:
-    if st.button("📊 Mood Dashboard", use_container_width=True):
-        st.session_state.active_tool = "mood_dashboard"
+# --- Display Favorite Tools ---
+if st.session_state.favorite_tools:
+    st.subheader("⭐ Favorites")
+    # Limit to 4 columns for favorites
+    fav_cols = st.columns(min(len(st.session_state.favorite_tools), 4))
+    for i, tool_id in enumerate(st.session_state.favorite_tools):
+        with fav_cols[i % 4]:
+            if st.button(f"{tools[tool_id]['icon']} {tools[tool_id]['name']}", key=f"fav_{tool_id}", use_container_width=True):
+                st.session_state.active_tool = tool_id
+                st.rerun()
 
-col3, col4 = st.columns(3)[0:2]
-with col3:
-    if st.button("🧠 Mental Health Check", use_container_width=True):
-        st.session_state.active_tool = "mental_check"
-with col4:
-    if st.button("📚 Knowledge Base", use_container_width=True):
-        st.session_state.active_tool = "knowledge"
+# --- Display All Tools with Favorite Toggles ---
+st.subheader("All Tools")
+# Use 2 columns for the main tool list
+cols = st.columns(2)
+for i, (tool_id, tool_info) in enumerate(tools.items()):
+    with cols[i % 2]:
+        # Create a layout with the main button and a smaller favorite button
+        col1, col2 = st.columns([0.8, 0.2])
+        with col1:
+            if st.button(f"{tool_info['icon']} {tool_info['name']}", use_container_width=True, key=f"tool_{tool_id}"):
+                st.session_state.active_tool = tool_id
+                st.rerun()
 
-col5, col6 = st.columns(3)[0:2]
-with col5:
-    if st.button("☎️ Crisis Support", use_container_width=True):
-        st.session_state.active_tool = "crisis"
-with col6:
-    if st.button("🧪 PsyToolkit Quizzes", use_container_width=True):
-        st.session_state.active_tool = "quizzes"
-
-col7, col8 = st.columns(3)[0:2]
-with col7:
-    if st.button("🃏 Quick Coping Cards", use_container_width=True):
-        st.session_state.active_tool = "quick_coping"
-with col8:
-    if st.button("🌳 Grounding Exercise", use_container_width=True):
-        st.session_state.active_tool = "grounding_exercise"
+        with col2:
+            # Check if the tool is already a favorite
+            is_favorited = tool_id in st.session_state.favorite_tools
+            # Use a star icon to indicate favorite status
+            if st.button("⭐" if is_favorited else "☆", key=f"fav_toggle_{tool_id}", use_container_width=True):
+                if is_favorited:
+                    st.session_state.favorite_tools.remove(tool_id)
+                else:
+                    st.session_state.favorite_tools.append(tool_id)
+                st.rerun()
 
 st.markdown("---")
 
