@@ -253,6 +253,8 @@ tools = {
 # --- Initialize session state for favorites and recents ---
 if "active_tool" not in st.session_state:
     st.session_state.active_tool = ""
+if "recent_tools" not in st.session_state:
+    st.session_state.recent_tools = []
 if "favorite_tools" not in st.session_state:
     st.session_state.favorite_tools = []
 
@@ -264,6 +266,23 @@ if st.session_state.favorite_tools:
     for i, tool_id in enumerate(st.session_state.favorite_tools):
         with fav_cols[i % 4]:
             if st.button(f"{tools[tool_id]['icon']} {tools[tool_id]['name']}", key=f"fav_{tool_id}", use_container_width=True):
+                st.session_state.active_tool = tool_id
+                # Add to recents when a favorite is clicked
+                if tool_id not in st.session_state.recent_tools:
+                    st.session_state.recent_tools.insert(0, tool_id)
+                    # Keep recents list to a max of 4
+                    if len(st.session_state.recent_tools) > 4:
+                        st.session_state.recent_tools.pop()
+                st.rerun()
+
+# --- Display Recent Tools ---
+if st.session_state.recent_tools:
+    st.subheader("🕓 Recents")
+    # Limit to 4 columns for recents
+    rec_cols = st.columns(min(len(st.session_state.recent_tools), 4))
+    for i, tool_id in enumerate(st.session_state.recent_tools):
+        with rec_cols[i % 4]:
+            if st.button(f"{tools[tool_id]['icon']} {tools[tool_id]['name']}", key=f"rec_{tool_id}", use_container_width=True):
                 st.session_state.active_tool = tool_id
                 st.rerun()
 
@@ -278,6 +297,12 @@ for i, (tool_id, tool_info) in enumerate(tools.items()):
         with col1:
             if st.button(f"{tool_info['icon']} {tool_info['name']}", use_container_width=True, key=f"tool_{tool_id}"):
                 st.session_state.active_tool = tool_id
+                # Add to recents when a tool is clicked
+                if tool_id not in st.session_state.recent_tools:
+                    st.session_state.recent_tools.insert(0, tool_id)
+                    # Keep recents list to a max of 4
+                    if len(st.session_state.recent_tools) > 4:
+                        st.session_state.recent_tools.pop()
                 st.rerun()
 
         with col2:
