@@ -588,32 +588,37 @@ elif st.session_state.active_tool == "grounding_exercise":
         }
 
     steps = [
-        {"prompt": "5 things you can SEE", "key": "see", "count": 5},
-        {"prompt": "4 things you can FEEL", "key": "feel", "count": 4},
-        {"prompt": "3 things you can HEAR", "key": "hear", "count": 3},
-        {"prompt": "2 things you can SMELL", "key": "smell", "count": 2},
-        {"prompt": "1 thing you can TASTE", "key": "taste", "count": 1}
+        {"prompt": "5 things you can SEE", "key": "see", "count": 5, "icon": "👀"},
+        {"prompt": "4 things you can FEEL", "key": "feel", "count": 4, "icon": "🖐️"},
+        {"prompt": "3 things you can HEAR", "key": "hear", "count": 3, "icon": "👂"},
+        {"prompt": "2 things you can SMELL", "key": "smell", "count": 2, "icon": "👃"},
+        {"prompt": "1 thing you can TASTE", "key": "taste", "count": 1, "icon": "👅"}
     ]
+    
+    step_icons = {step['key']: step['icon'] for step in steps}
+
+    progress = st.session_state.grounding_step / len(steps)
+    st.progress(progress)
 
     if st.session_state.grounding_step < len(steps):
         current_step_info = steps[st.session_state.grounding_step]
-        st.subheader(f"Step {st.session_state.grounding_step + 1}: {current_step_info['prompt']}")
-        st.write(f"List {current_step_info['count']} items, one per line.")
-
-        # Use a unique key for the text area to prevent issues on re-renders
-        input_key = f"grounding_input_{current_step_info['key']}"
-        user_input = st.text_area("Your observations:", key=input_key, height=150)
+        st.subheader(f"Step {st.session_state.grounding_step + 1}: {current_step_info['icon']} {current_step_info['prompt']}")
+        
+        responses = []
+        for i in range(current_step_info["count"]):
+            response = st.text_input(f"Item {i+1}", key=f"grounding_input_{current_step_info['key']}_{i}")
+            responses.append(response)
 
         col_next, col_reset = st.columns([1, 1])
         with col_next:
             if st.button("Next Step", use_container_width=True):
-                responses = [item.strip() for item in user_input.split('\n') if item.strip()]
-                if len(responses) < current_step_info['count']:
+                # Filter out empty responses
+                filled_responses = [r.strip() for r in responses if r.strip()]
+                if len(filled_responses) < current_step_info['count']:
                     st.warning(f"Please list at least {current_step_info['count']} items.")
                 else:
-                    st.session_state.grounding_responses[current_step_info['key']] = responses
+                    st.session_state.grounding_responses[current_step_info['key']] = filled_responses
                     st.session_state.grounding_step += 1
-                    # Clear the text area for the next step
                     st.rerun()
         with col_reset:
             if st.button("Start Over", use_container_width=True):
@@ -623,11 +628,11 @@ elif st.session_state.active_tool == "grounding_exercise":
                 }
                 st.rerun()
     else:
-        st.subheader("Grounding Exercise Complete!")
+        st.subheader("🎉 Grounding Exercise Complete!")
         st.success("You've completed the 5-4-3-2-1 grounding exercise. Take a deep breath.")
         st.markdown("### Your Responses:")
         for key, value in st.session_state.grounding_responses.items():
-            st.markdown(f"**{key.capitalize()}:**")
+            st.markdown(f"**{step_icons[key]} {key.capitalize()}:**")
             for item in value:
                 st.write(f"- {item}")
         
