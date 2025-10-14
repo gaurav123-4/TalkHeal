@@ -509,6 +509,29 @@ elif page == "🎨 Creative Corner":
         st.error("The Creative Corner requires the `streamlit-drawable-canvas` library. Please install it by running `pip install streamlit-drawable-canvas`")
         st.stop()
 
+    drawing_prompts = [
+        "Draw your happy place.",
+        "Doodle your favorite animal.",
+        "Illustrate a feeling without using words.",
+        "Draw a pattern that represents your current mood.",
+        "Create a character from your imagination.",
+        "Draw something that makes you feel calm.",
+        "Doodle a collection of your favorite things.",
+        "Illustrate a dream you remember.",
+        "Draw a plant or a flower from memory.",
+        "Create an abstract design using only lines and shapes."
+    ]
+
+    if 'drawing_prompt' not in st.session_state:
+        st.session_state.drawing_prompt = random.choice(drawing_prompts)
+
+    if st.button("Get a New Prompt"):
+        st.session_state.drawing_prompt = random.choice(drawing_prompts)
+
+    st.info(f"**Drawing Prompt:** {st.session_state.drawing_prompt}")
+    st.markdown("---")
+
+
     # --- Canvas Controls ---
     if 'drawing_mode' not in st.session_state:
         st.session_state.drawing_mode = "freedraw"
