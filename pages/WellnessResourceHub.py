@@ -167,6 +167,25 @@ elif page == "✅ Quick Self-Check":
     st.title("✅ Quick Wellness Self-Check")
     st.write("Track your well-being over time. Answer a few quick questions to get simple wellness advice and see your progress.")
 
+    # --- Wellness Tip Collections ---
+    stress_tips = [
+        "Try a 5-minute guided meditation to calm your mind.",
+        "Step away from your screen for 10 minutes and stretch.",
+        "Listen to some calming music or nature sounds."
+    ]
+
+    sleep_tips = [
+        "Avoid caffeine or large meals close to bedtime.",
+        "Create a relaxing bedtime routine, like reading a book.",
+        "Ensure your bedroom is dark, quiet, and cool."
+    ]
+
+    mood_tips = [
+        "Journal your thoughts to understand your feelings better.",
+        "Reach out to a friend or loved one to talk.",
+        "Engage in a hobby that you enjoy."
+    ]
+
     # Initialize session state for self-check history
     if "self_check_history" not in st.session_state:
         st.session_state.self_check_history = []
@@ -177,14 +196,19 @@ elif page == "✅ Quick Self-Check":
 
     if st.button("Log and Get My Wellness Tip"):
         # --- Tip Logic ---
+        tips = []
         if stress > 7:
-            st.warning("😟 You seem stressed. Try deep breathing or take a short walk.")
-        elif sleep < 6:
-            st.warning("😴 You need more rest. Try to get at least 7–8 hours of sleep.")
-        elif mood < 5:
-            st.info("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
-        else:
+            tips.append(f"😟 High stress noted. Here's a tip: {random.choice(stress_tips)}")
+        if sleep < 6:
+            tips.append(f"😴 Low sleep detected. Here's a tip: {random.choice(sleep_tips)}")
+        if mood < 5:
+            tips.append(f"💙 Low mood today. Here's a tip: {random.choice(mood_tips)}")
+
+        if not tips:
             st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
+        else:
+            for tip in tips:
+                st.warning(tip)
         
         # --- Store Data ---
         st.session_state.self_check_history.append({
