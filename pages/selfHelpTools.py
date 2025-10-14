@@ -220,8 +220,10 @@ tools = {
 # --- Initialize session state for favorites and recents ---
 if "active_tool" not in st.session_state:
     st.session_state.active_tool = ""
+
 if "recent_tools" not in st.session_state:
     st.session_state.recent_tools = []
+
 if "favorite_tools" not in st.session_state:
     st.session_state.favorite_tools = []
 
@@ -234,6 +236,7 @@ if st.session_state.favorite_tools:
         with fav_cols[i % 4]:
             if st.button(f"{tools[tool_id]['icon']} {tools[tool_id]['name']}", key=f"fav_{tool_id}", use_container_width=True):
                 st.session_state.active_tool = tool_id
+
                 # Add to recents when a favorite is clicked
                 if tool_id not in st.session_state.recent_tools:
                     st.session_state.recent_tools.insert(0, tool_id)
@@ -271,6 +274,23 @@ for i, (tool_id, tool_info) in enumerate(tools.items()):
                     if len(st.session_state.recent_tools) > 4:
                         st.session_state.recent_tools.pop()
                 st.rerun()
+
+
+                st.rerun()
+
+# --- Display All Tools with Favorite Toggles ---
+st.subheader("All Tools")
+# Use 2 columns for the main tool list
+cols = st.columns(2)
+for i, (tool_id, tool_info) in enumerate(tools.items()):
+    with cols[i % 2]:
+        # Create a layout with the main button and a smaller favorite button
+        col1, col2 = st.columns([0.8, 0.2])
+        with col1:
+            if st.button(f"{tool_info['icon']} {tool_info['name']}", use_container_width=True, key=f"tool_{tool_id}"):
+                st.session_state.active_tool = tool_id
+                st.rerun()
+
 
         with col2:
             # Check if the tool is already a favorite

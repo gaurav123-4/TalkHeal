@@ -4,63 +4,57 @@ import time
 from datetime import datetime
 import json
 
+
+# Small compatibility helper for triggering a rerun across Streamlit versions
+def safe_rerun():
+    """Trigger a Streamlit rerun in a way that works across versions.
+
+    Prefer `st.rerun()` when available; fall back to `st.experimental_rerun()`.
+    If neither exists, raise a clear error so callers can handle it.
+    """
+    # Try st.rerun() first (newer API), then fall back to st.experimental_rerun().
+    try:
+        return st.rerun()
+    except Exception:
+        # either rerun doesn't exist or failed; try experimental_rerun
+        try:
+            return st.experimental_rerun()
+        except Exception:
+            # Give a clear error for callers to handle (rare on well-formed Streamlit)
+            raise RuntimeError('Unable to trigger Streamlit rerun: update Streamlit or restart the app')
+
 def show_games_page():
     """Main games page with various mental health focused mini-games"""
     
     st.markdown("""
     <style>
     .game-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 15px;
-        text-align: center;
-        color: white;
-        margin-bottom: 2rem;
+        background: linear-gradient(120deg, #ffd1e6 0%, #ffb6c1 60%, #ffc0cb 100%);
+        padding: 1.8rem;
+        border-radius: 16px;
+        color: #4a2b3a;
+        margin-bottom: 1rem;
+        box-shadow: 0 10px 30px rgba(14,21,47,0.06);
+        position:relative; overflow:hidden;
     }
-    .game-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin: 1rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .game-button {
-        background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 25px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    .game-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-    }
-    .score-display {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        padding: 1rem;
-        border-radius: 10px;
-        text-align: center;
-        color: white;
-        font-weight: bold;
-        margin: 1rem 0;
-    }
+    .game-header-inner { max-width: 980px; margin: 0 auto; text-align:center; }
+    .quick-access { display:flex; gap:10px; justify-content:center; margin-bottom:12px; }
+    .qa-btn { background: linear-gradient(90deg,#ff7aa2,#ffb3c7); color:white; padding:10px 16px; border-radius:999px; font-weight:700; }
+    .game-card-select { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)); border-radius: 12px; padding: 14px; text-align:center; box-shadow: 0 8px 24px rgba(11,22,55,0.06); transition: transform .18s ease, box-shadow .18s ease; }
+    .game-card-select:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(11,22,55,0.10); }
+    .game-card-title { font-size:1.15rem; font-weight:800; margin-bottom:6px; }
+    .game-card-desc { font-size:0.95rem; color: rgba(11,22,55,0.65); margin-bottom: 10px; min-height: 44px; }
+    .play-btn { background: linear-gradient(90deg,#ff7aa2,#ffb3c7); color:white; border:none; padding:10px 18px; border-radius:999px; font-weight:800; }
+    .back-link { text-decoration:none; font-weight:700; color:#4a2b3a; }
+    @media (max-width: 640px) { .game-card-desc { min-height:auto; } }
     </style>
     """, unsafe_allow_html=True)
     
     st.markdown("""
     <div class="game-header">
         <div class="game-header-inner">
-            <div class="game-title">🎮 TalkHeal Games</div>
-            <div class="game-sub">Interactive, bite-sized activities to boost focus, reduce stress, and build positive habits.</div>
-            <div class="game-badges">
-                <span class="badge">✨ Quick</span>
-                <span class="badge">🌈 Fun</span>
-                <span class="badge">💚 Therapeutic</span>
-            </div>
+            <div class="game-title">TalkHeal Games</div>
+            <div class="game-sub">Interactive, bite-sized activities to boost focus and reduce stress.</div>
         </div>
     </div>
 
@@ -92,6 +86,10 @@ def show_games_page():
     <div style='text-align:center; margin-top: 12px; margin-bottom: 8px;'>
         <h2 style='margin:0; font-weight:800; letter-spacing: -0.01em; color: #4a2b3a;'>Choose Your Wellness Game</h2>
         <p style='margin:4px 0 0; color: rgba(74,43,58,0.7);'>Pick a short activity to feel better right now</p>
+        <div class='quick-access'>
+            <a class='qa-btn' href='#' onclick="window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});">Explore All</a>
+            <a class='qa-btn' href='#' onclick="document.querySelectorAll('.game-card-select')[0].scrollIntoView({behavior:'smooth'});">Play Reaction</a>
+        </div>
     </div>
     """,
         unsafe_allow_html=True,
@@ -111,31 +109,51 @@ def show_games_page():
     </style>
     """, unsafe_allow_html=True)
 
-    # Render cards using Streamlit columns so we can center the Play button inside each card
-    ncols = min(3, len(games))  # up to 3 columns on wide screens
+    # Render cards using Streamlit columns with improved visuals
+    st.markdown("""
+    <style>
+    .game-icon { font-size: 48px; margin-bottom: 6px; }
+    .play-btn-centered { display:flex; justify-content:center; }
+    .play-btn-centered .stButton>button { font-size:1rem; padding:12px 20px; min-width:140px; border-radius:999px; }
+    .game-card-select:focus { outline: 3px solid rgba(122,43,107,0.16); }
+    </style>
+    """, unsafe_allow_html=True)
+
+    ncols = min(3, len(games))
     for i in range(0, len(games), ncols):
         row = games[i:i+ncols]
         cols = st.columns(len(row), gap="large")
         for col, (name, key, desc) in zip(cols, row):
             with col:
+                # Extract emoji/icon if present at start of name
+                icon = name.split()[0]
+                title = ' '.join(name.split()[1:])
                 card_html = f"""
-                <div class='game-card-select'>
-                    <div class='game-card-title'>{name}</div>
+                <div class='game-card-select' role='group' aria-label='{title}'>
+                    <div class='game-icon'>{icon}</div>
+                    <div class='game-card-title'>{title}</div>
                     <div class='game-card-desc'>{desc}</div>
                 </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
 
-                # Create inner columns to center the Play button visually
-                inner = st.columns([1, 2, 1])
-                with inner[1]:
+                # Centered Play button
+                with st.container():
+                    st.markdown("<div class='play-btn-centered'></div>", unsafe_allow_html=True)
                     if st.button("Play", key=f"select_{key}"):
                         st.session_state.current_game = key
     
-    # Display selected game
+    # Display selected game (show a small toolbar to go back)
     if 'current_game' in st.session_state:
         st.markdown("---")
-        
+        back_col, title_col = st.columns([1, 4])
+        with back_col:
+            if st.button("← All Games", key="back_to_games"):
+                del st.session_state['current_game']
+                safe_rerun()
+        with title_col:
+            st.markdown(f"### Playing: {next((g[0] for g in games if g[1]==st.session_state.current_game), '')}")
+
         if st.session_state.current_game == "reaction_game":
             reaction_time_game()
         elif st.session_state.current_game == "color_mood_game":
@@ -240,7 +258,7 @@ def memory_challenge_game():
             st.session_state.memory_score = 0
             st.session_state.show_sequence = True
             st.session_state.game_over = False
-            st.experimental_rerun()
+            safe_rerun()
         return
 
     st.write("Click the colors in the same order you saw them:")
@@ -276,7 +294,7 @@ def memory_challenge_game():
                         # Defensive fallback
                         st.session_state.game_over = True
                     # update view
-                    st.experimental_rerun()
+                    safe_rerun()
 
     # Show current typed sequence (for feedback)
     if st.session_state.user_sequence:
@@ -489,7 +507,7 @@ def stress_relief_clicker():
             st.session_state.stress_clicks = 0
             st.session_state.stress_level = 100
             st.session_state.calm_streak = 0
-            st.experimental_rerun()
+            safe_rerun()
     with c2:
         if st.button("Tip", key="stress_tip"):
             tips = [
@@ -545,7 +563,7 @@ def reaction_time_game():
             st.session_state.reaction_attempts = []
             st.session_state.reaction_best = None
             st.session_state.reaction_time = None
-            st.experimental_rerun()
+            safe_rerun()
 
     # Waiting state: after pressing Start, wait a random interval then prompt user
     if st.session_state.reaction_state == 'waiting':
@@ -616,40 +634,45 @@ def positive_word_association():
     st.write("**Build a chain of positive words! Each word should relate to the previous one:**")
     st.write(f"### Current chain: {' → '.join(st.session_state.word_chain)}")
     
-    # Suggestion chips to inspire the next word
+    # Suggestion chips to inspire the next word (avoid duplicates)
     st.markdown("**Suggestions:**")
     sugg_cols = st.columns(6)
     suggestions = random.sample(positive_words, min(6, len(positive_words)))
     for i, word in enumerate(suggestions):
         with sugg_cols[i % 6]:
             if st.button(word, key=f"suggest_{i}"):
-                # push suggestion into input by appending directly
-                st.session_state.word_chain.append(word)
-                st.session_state.word_score += 5
-                st.success(f"Nice! '{word}' fits beautifully.")
+                if word not in st.session_state.word_chain:
+                    st.session_state.word_chain.append(word)
+                    st.session_state.word_score += 5
+                    st.success(f"Nice! '{word}' fits beautifully.")
+                else:
+                    st.info(f"'{word}' is already in your chain.")
 
     # Input for next word with add/undo/save controls
     next_word = st.text_input("Add the next positive word:", key="word_input")
 
+    # Use a callback to modify and clear the widget value safely
+    encouragements = [
+        "Beautiful connection! adds wonderful energy! ✨",
+        "Perfect! That brings such positive vibes! 🌟",
+        "Excellent! Creating beautiful associations! 💫",
+        "Amazing! That flows perfectly with positive energy! 🌈"
+    ]
+
+    def _add_word_callback():
+        candidate = st.session_state.get('word_input', '').strip().title()
+        if candidate and candidate not in st.session_state.word_chain:
+            st.session_state.word_chain.append(candidate)
+            st.session_state.word_score = st.session_state.get('word_score', 0) + 5
+            st.session_state['_word_feedback'] = random.choice(encouragements).replace('Beautiful connection!', f"Beautiful connection! '{candidate}'")
+        else:
+            st.session_state['_word_feedback'] = "That word is already in the chain or empty. Try a new one or pick a suggestion."
+        # clear the input safely within the callback
+        st.session_state['word_input'] = ''
+
     col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
-        if st.button("✅ Add Word", key="add_word") and next_word:
-            candidate = next_word.strip().title()
-            if candidate and candidate not in st.session_state.word_chain:
-                st.session_state.word_chain.append(candidate)
-                st.session_state.word_score += 5
-                encouragements = [
-                    f"Beautiful connection! '{candidate}' adds wonderful energy! ✨",
-                    f"Perfect! '{candidate}' brings such positive vibes! 🌟", 
-                    f"Excellent! Your mind is creating beautiful associations! 💫",
-                    f"Amazing! '{candidate}' flows perfectly with positive energy! 🌈"
-                ]
-                st.success(random.choice(encouragements))
-            else:
-                st.warning("That word is already in the chain or empty. Try a new one or pick a suggestion.")
-            # clear input by resetting the widget key
-            st.session_state['word_input'] = ''
-            st.rerun()
+        st.button("✅ Add Word", key="add_word", on_click=_add_word_callback)
 
     with col2:
         if st.button("↩️ Undo Last", key="undo_word"):
@@ -659,7 +682,7 @@ def positive_word_association():
                 st.session_state.word_score = max(0, st.session_state.word_score - 5)
             else:
                 st.warning("Can't remove the starter word.")
-            st.rerun()
+        safe_rerun()
 
     with col3:
         if st.button("💾 Save Chain", key="save_chain"):
@@ -670,7 +693,15 @@ def positive_word_association():
                 st.success("Chain saved! You can view saved chains below.")
             else:
                 st.info("This chain is already saved.")
-            st.rerun()
+            safe_rerun()
+
+    # show feedback if set by callback
+    if '_word_feedback' in st.session_state:
+        fb = st.session_state.pop('_word_feedback')
+        if fb.startswith('That word'):
+            st.warning(fb)
+        else:
+            st.success(fb)
     
     st.markdown(f"""
     <div class="score-display">
@@ -689,7 +720,7 @@ def positive_word_association():
             st.write(f"{i+1}. {' → '.join(chain)}")
         if st.button("Clear saved chains", key="clear_saved_chains"):
             st.session_state.saved_chains = []
-            st.experimental_rerun()
+            safe_rerun()
 
 def breathing_pattern_game():
     """Interactive breathing exercise game"""
@@ -734,17 +765,17 @@ def breathing_pattern_game():
             # reset cycles when starting fresh
             if st.session_state.breathing_cycles == 0:
                 st.session_state.breathing_cycles = 0
-            st.experimental_rerun()
+            safe_rerun()
     with c2:
         if st.button("⏸️ Pause", key="pause_breathing"):
             st.session_state.breathing_active = False
-            st.experimental_rerun()
+            safe_rerun()
     with c3:
         if st.button("⏹️ Stop", key="stop_breathing"):
             st.session_state.breathing_active = False
             st.session_state.breathing_phase = None
             st.session_state.breathing_phase_step = 0
-            st.experimental_rerun()
+            safe_rerun()
 
     # A small display area
     progress_bar = st.progress(0)
@@ -769,7 +800,7 @@ def breathing_pattern_game():
             st.session_state.breathing_active = False
             st.success(f"🎉 Excellent! You completed 3 breathing cycles. Feel the calm energy flowing through you! 🧘‍♀️")
             st.balloons()
-        st.experimental_rerun()
+    safe_rerun()
 
     # Guided mode: advance one second/step per user-visible rerun (no long blocking)
     if st.session_state.breathing_mode == 'Guided' and st.session_state.breathing_active:
@@ -798,7 +829,7 @@ def breathing_pattern_game():
                     st.balloons()
         st.session_state.breathing_phase = phase_idx
         st.session_state.breathing_phase_step = step
-        st.experimental_rerun()
+    safe_rerun()
     
     if st.session_state.breathing_cycles > 0:
         st.markdown(f"""
@@ -823,12 +854,57 @@ def reset_all_games():
 
 def get_games_statistics():
     """Get user's gaming statistics"""
+    # Memory details
+    memory_score = st.session_state.get('memory_score', 0)
+    memory_level = st.session_state.get('memory_level', 0)
+    memory_seq_len = len(st.session_state.get('memory_sequence', []))
+
+    # Reaction details (convert to ms)
+    reaction_attempts = st.session_state.get('reaction_attempts', [])
+    reaction_ms = [int(a * 1000) for a in reaction_attempts]
+    reaction_best = min(reaction_ms) if reaction_ms else None
+    reaction_avg = int(sum(reaction_ms) / len(reaction_ms)) if reaction_ms else None
+    reaction_last = reaction_ms[-1] if reaction_ms else None
+
+    # Color/mood details
+    color_score = st.session_state.get('color_score', 0)
+    color_history_count = len(st.session_state.get('color_history', []))
+
+    # Word association
+    word_score = st.session_state.get('word_score', 0)
+    chain_length = len(st.session_state.get('word_chain', []))
+    saved_chains = len(st.session_state.get('saved_chains', []))
+
+    # Stress/calm
+    stress_clicks = st.session_state.get('stress_clicks', 0)
+    stress_level = st.session_state.get('stress_level', 100)
+    calm_streak = st.session_state.get('calm_streak', 0)
+
+    # Breathing
+    breathing_cycles = st.session_state.get('breathing_cycles', 0)
+    breathing_mode = st.session_state.get('breathing_mode', None)
+    breathing_active = bool(st.session_state.get('breathing_active', False))
+
     stats = {
-        'memory_high_score': st.session_state.get('memory_score', 0),
-        'color_wisdom_score': st.session_state.get('color_score', 0),
-        'stress_relief_clicks': st.session_state.get('stress_clicks', 0),
-        'positive_word_score': st.session_state.get('word_score', 0),
-        'breathing_cycles': st.session_state.get('breathing_cycles', 0)
+        'memory_high_score': memory_score,
+        'memory_level': memory_level,
+        'memory_sequence_length': memory_seq_len,
+        'reaction_attempts_ms': reaction_ms,
+        'reaction_best_ms': reaction_best,
+        'reaction_avg_ms': reaction_avg,
+        'reaction_last_ms': reaction_last,
+        'color_wisdom_score': color_score,
+        'color_history_count': color_history_count,
+        'positive_word_score': word_score,
+        'positive_chain_length': chain_length,
+        'saved_chains_count': saved_chains,
+        'stress_relief_clicks': stress_clicks,
+        'stress_level_percent': stress_level,
+        'calm_streak': calm_streak,
+        'breathing_cycles': breathing_cycles,
+        'breathing_mode': breathing_mode,
+        'breathing_active': breathing_active,
+        'timestamp': datetime.utcnow().isoformat() + 'Z'
     }
     return stats
 
