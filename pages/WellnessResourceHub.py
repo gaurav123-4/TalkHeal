@@ -185,39 +185,89 @@ elif page == "✅ Quick Self-Check":
         "Reach out to a friend or loved one to talk.",
         "Engage in a hobby that you enjoy."
     ]
+    
+    energy_tips = [
+        "Ensure you're getting enough rest and nutrients.",
+        "A short walk can sometimes boost energy more than a nap.",
+        "Stay hydrated to maintain your energy levels."
+    ]
+
+    activity_tips = [
+        "Even a short 10-minute walk can boost your energy and mood.",
+        "Try a quick 7-minute workout routine.",
+        "Dancing to your favorite song is a fun way to get moving."
+    ]
+
+    social_tips = [
+        "Consider calling or messaging a friend or family member.",
+        "Even a brief, positive social interaction can improve your day.",
+        "Plan a social activity for the coming week."
+    ]
 
     # Initialize session state for self-check history
     if "self_check_history" not in st.session_state:
         st.session_state.self_check_history = []
 
-    stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
-    sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
-    mood = st.slider("How is your overall mood today?", 0, 10, 6)
-
-    if st.button("Log and Get My Wellness Tip"):
-        # --- Tip Logic ---
-        tips = []
-        if stress > 7:
-            tips.append(f"😟 High stress noted. Here's a tip: {random.choice(stress_tips)}")
-        if sleep < 6:
-            tips.append(f"😴 Low sleep detected. Here's a tip: {random.choice(sleep_tips)}")
-        if mood < 5:
-            tips.append(f"💙 Low mood today. Here's a tip: {random.choice(mood_tips)}")
-
-        if not tips:
-            st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
-        else:
-            for tip in tips:
-                st.warning(tip)
+    with st.container(border=True):
+        st.subheader("How are you feeling today?")
         
-        # --- Store Data ---
-        st.session_state.self_check_history.append({
-            "Date": datetime.now(),
-            "Stress": stress,
-            "Sleep (hours)": sleep,
-            "Mood": mood
-        })
-        st.rerun()
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            stress = st.slider("🧠 Stress", 0, 10, 5, help="0 = Not Stressed, 10 = Extremely Stressed")
+            sleep = st.slider("😴 Sleep (hours)", 0, 12, 7, help="How many hours of sleep did you get last night?")
+            energy_level = st.slider("⚡️ Energy Level", 0, 10, 6, help="0 = No Energy, 10 = Full of Energy")
+
+        with col2:
+            physical_activity = st.number_input("🏃‍♂️ Physical Activity (minutes)", min_value=0, help="How many minutes did you exercise today?")
+            social_connection = st.radio("🤝 Social Connection", ["Yes", "No"], horizontal=True, help="Did you connect with a friend or loved one today?")
+            
+            mood_options = {"😞": 2, "😐": 5, "😊": 8}
+            selected_emoji = st.radio("😊 Mood", options=list(mood_options.keys()), horizontal=True, help="How is your overall mood today?")
+            mood_score = mood_options[selected_emoji]
+
+        note = st.text_area("Add a note about your day (optional):", placeholder="What's on your mind? Any details about why you feel this way?")
+
+        if st.button("Log and Get My Wellness Tip"):
+            # --- Tip Logic ---
+            tips_to_show = []
+            if stress > 7:
+                tips_to_show.append(("stress", f"It looks like your stress is high. To find some calm, you could try this: *{random.choice(stress_tips)}*"))
+            if sleep < 6:
+                tips_to_show.append(("sleep", f"It seems you had a short night's sleep. To improve your rest, consider this tip: *{random.choice(sleep_tips)}*"))
+            if mood_score < 5:
+                tips_to_show.append(("mood", f"It's okay to have tough days. For a little mood boost, you could try this: *{random.choice(mood_tips)}*"))
+            if energy_level < 4:
+                tips_to_show.append(("energy", f"It looks like your energy is low. To recharge, you might find this helpful: *{random.choice(energy_tips)}*"))
+            if physical_activity < 20:
+                tips_to_show.append(("activity", f"Getting some movement in can really help. Here's a small idea: *{random.choice(activity_tips)}*"))
+            if social_connection == "No":
+                tips_to_show.append(("social", f"Connecting with others can make a big difference. Here's a gentle nudge: *{random.choice(social_tips)}*"))
+
+            st.markdown("---")
+            if not tips_to_show:
+                st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
+            else:
+                st.subheader("💡 Your Personalized Suggestions")
+                for category, tip in tips_to_show:
+                    with st.container(border=True):
+                        st.info(tip)
+                        if category == "stress":
+                            if st.button("🧘 Start a Breathing Exercise"):
+                                st.switch_page("pages/Breathing_Exercise.py")
+            
+            # --- Store Data ---
+            st.session_state.self_check_history.append({
+                "Date": datetime.now(),
+                "Stress": stress,
+                "Sleep (hours)": sleep,
+                "Mood": mood_score,
+                "Energy": energy_level,
+                "Activity (min)": physical_activity,
+                "Social": 1 if social_connection == "Yes" else 0,
+                "Note": note
+            })
+            st.rerun()
 
     # --- History and Visualization ---
     if st.session_state.self_check_history:
@@ -225,10 +275,45 @@ elif page == "✅ Quick Self-Check":
         st.subheader("📈 Your Self-Check History")
         
         history_df = pd.DataFrame(st.session_state.self_check_history)
+        history_df['Date'] = pd.to_datetime(history_df['Date'])
         history_df = history_df.set_index("Date")
+
+        # --- Summary Statistics ---
+        st.subheader("📊 Summary Statistics")
+        time_window = st.selectbox("Select time window:", ["Last 7 days", "Last 30 days", "All time"])
+
+        if time_window == "Last 7 days":
+            summary_df = history_df[history_df.index > datetime.now() - pd.Timedelta(days=7)]
+        elif time_window == "Last 30 days":
+            summary_df = history_df[history_df.index > datetime.now() - pd.Timedelta(days=30)]
+        else:
+            summary_df = history_df
+
+        if not summary_df.empty:
+            avg_metrics = summary_df.drop(columns=['Note'], errors='ignore').mean()
+            cols = st.columns(len(avg_metrics))
+            for i, (metric, value) in enumerate(avg_metrics.items()):
+                with cols[i]:
+                    st.metric(label=f"Avg. {metric}", value=f"{value:.1f}")
+        else:
+            st.info("Not enough data for this time window.")
+
+        # --- Interactive Chart ---
+        st.subheader("📈 Interactive Chart")
         
-        st.line_chart(history_df)
+        available_metrics = [col for col in history_df.columns if col != 'Note']
         
+        selected_metrics = st.multiselect(
+            "Select metrics to display:",
+            options=available_metrics,
+            default=available_metrics[:3]
+        )
+
+        if selected_metrics:
+            st.line_chart(history_df[selected_metrics])
+        else:
+            st.info("Select one or more metrics to display the chart.")
+
         with st.expander("View Raw Data"):
             st.dataframe(history_df)
 
