@@ -478,35 +478,82 @@ elif page == "📊 Mood Tracker":
     st.title("📊 Mood Tracker")
     st.write("Log your daily mood and add a note to track progress and identify patterns.")
 
-    # Initialize or migrate session state for moods
+    # Initialize session state for moods
     if "moods" not in st.session_state:
         st.session_state.moods = []
-    # Simple migration from old format (list of strings) to new format (list of dicts)
-    elif st.session_state.moods and isinstance(st.session_state.moods[0], str):
-        st.session_state.moods = [{"mood": m, "note": ""} for m in st.session_state.moods]
 
-    mood = st.radio("How do you feel today?", ["😊 Happy", "😐 Okay", "😟 Stressed", "😢 Sad"])
-    note = st.text_input("Add a note to remember the context (optional):")
+    # --- Data Migration for backward compatibility ---
+    migrated_moods = []
+    if st.session_state.moods and ("mood" in st.session_state.moods[0]):
+        for m in st.session_state.moods:
+            primary_mood_map = {
+                "😊 Happy": "😊 Positive",
+                "😐 Okay": "😐 Neutral",
+                "😟 Stressed": "😟 Negative",
+                "😢 Sad": "😟 Negative"
+            }
+            migrated_moods.append({
+                "date": m.get("date", datetime.now()),
+                "primary_mood": primary_mood_map.get(m["mood"], "😐 Neutral"),
+                "intensity": 3,
+                "tags": [m["mood"]] if m["mood"] in ["😟 Stressed", "😢 Sad"] else [],
+                "note": m.get("note", "")
+            })
+        st.session_state.moods = migrated_moods
+    
+    # --- Mood Logging UI ---
+    with st.container(border=True):
+        st.subheader("How are you feeling right now?")
+        primary_mood = st.radio(
+            "What's your primary mood today?",
+            ["😊 Positive", "😐 Neutral", "😟 Negative"],
+            horizontal=True
+        )
+        mood_intensity = st.slider(
+            "How strong is this feeling?",
+            1, 5, 3,
+            help="1 = Mild, 5 = Very Strong"
+        )
+        mood_tags = st.multiselect(
+            "You can also select other feelings or activities from today:",
+            ["Grateful", "Tired", "Anxious", "Productive", "Creative", "Relaxed", "Stressed"]
+        )
+        note = st.text_area("Add a note to remember the context (optional):")
 
-    if st.button("Log Mood"):
-        st.session_state.moods.append({"mood": mood, "note": note})
-        st.success(f"Logged mood: {mood}")
-        st.rerun()
+        if st.button("Log Mood"):
+            st.session_state.moods.append({
+                "date": datetime.now(),
+                "primary_mood": primary_mood,
+                "intensity": mood_intensity,
+                "tags": mood_tags,
+                "note": note
+            })
+            st.success(f"Logged mood: {primary_mood}")
+            st.rerun()
 
-    st.subheader("📅 Mood History")
+    st.markdown("---")
+
+    # --- Mood History Display ---
     if st.session_state.moods:
-        # Display moods in reverse chronological order
+        st.subheader("📅 Mood History")
+        # This display is kept simple for now and will be enhanced next.
         for entry in reversed(st.session_state.moods):
-            if entry["note"]:
-                st.markdown(f"- **{entry['mood']}**: *{entry['note']}*")
-            else:
-                st.markdown(f"- **{entry['mood']}**")
+            st.markdown(f"- **{entry.get('date', 'No date').strftime('%Y-%m-%d')}**: {entry.get('primary_mood', 'No mood logged')} (Intensity: {entry.get('intensity', 'N/A')})")
+            if entry.get('note'):
+                st.markdown(f"  - *Note: {entry['note']}*")
+            if entry.get('tags'):
+                st.markdown(f"  - *Tags: { ', '.join(entry['tags']) if entry['tags'] else 'None'}*")
+
 
         st.subheader("📊 Mood Analysis")
         st.write("Here is a summary of your logged moods:")
         df = pd.DataFrame(st.session_state.moods)
-        mood_counts = df['mood'].value_counts()
-        st.bar_chart(mood_counts)
+        
+        if 'primary_mood' in df.columns:
+            mood_counts = df['primary_mood'].value_counts()
+            st.bar_chart(mood_counts)
+        else:
+            st.info("Log your mood to see an analysis here.")
 
     else:
         st.info("No moods logged yet.")
