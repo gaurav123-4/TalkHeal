@@ -170,6 +170,7 @@ elif page == "✅ Quick Self-Check":
     # --- Wellness Tip Collections ---
     stress_tips = [
         "Try a 5-minute guided meditation to calm your mind.",
+        "Try a 5-minute guided meditation to calm your mind.", 
         "Step away from your screen for 10 minutes and stretch.",
         "Listen to some calming music or nature sounds."
     ]
