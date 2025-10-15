@@ -231,6 +231,11 @@ elif page == "✅ Quick Self-Check":
             tips.append(f"🏃‍♂️ Little physical activity logged. Here's a tip: {random.choice(activity_tips)}")
         if social_connection == "No":
             tips.append(f"🤝 Social connection is important. Here's a tip: {random.choice(social_tips)}")
+            tips.append("😟 You seem stressed. Try deep breathing or take a short walk.")
+        if sleep < 6:
+            tips.append("😴 You seem to have slept less. Try to get at least 7–8 hours of sleep.")
+        if mood < 5:
+            tips.append("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
 
         if not tips:
             st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
