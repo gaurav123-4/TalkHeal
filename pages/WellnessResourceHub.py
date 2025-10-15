@@ -565,8 +565,32 @@ elif page == "📊 Mood Tracker":
 
 
         st.subheader("📊 Mood Analysis")
-        st.write("Here is a summary of your logged moods:")
+        st.write("Here are some patterns from your recent mood logs:")
         df = pd.DataFrame(st.session_state.moods)
+        df['date'] = pd.to_datetime(df['date'])
+
+        # Ensure 'primary_mood' column exists before trying to access it
+        if 'primary_mood' in df.columns and not df.empty:
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.write("**Primary Mood Distribution**")
+                mood_counts = df['primary_mood'].value_counts()
+                st.bar_chart(mood_counts)
+
+                st.write("**Mood Intensity Over Time**")
+                intensity_df = df.set_index('date')
+                st.line_chart(intensity_df['intensity'])
+
+            with col2:
+                st.write("**Most Common Feelings & Activities**")
+                all_tags = [tag for tags_list in df['tags'] for tag in tags_list]
+                if all_tags:
+                    tag_counts = pd.Series(all_tags).value_counts()
+                    st.bar_chart(tag_counts)
+                else:
+                    st.info("Add tags to your entries to see which feelings are most common.")
+
         
         if 'primary_mood' in df.columns:
             mood_counts = df['primary_mood'].value_counts()
