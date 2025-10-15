@@ -203,6 +203,11 @@ elif page == "✅ Quick Self-Check":
             tips.append(f"😴 Low sleep detected. Here's a tip: {random.choice(sleep_tips)}")
         if mood < 5:
             tips.append(f"💙 Low mood today. Here's a tip: {random.choice(mood_tips)}")
+            tips.append("😟 You seem stressed. Try deep breathing or take a short walk.")
+        if sleep < 6:
+            tips.append("😴 You seem to have slept less. Try to get at least 7–8 hours of sleep.")
+        if mood < 5:
+            tips.append("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
 
         if not tips:
             st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
