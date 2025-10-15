@@ -169,6 +169,7 @@ elif page == "✅ Quick Self-Check":
 
     # --- Wellness Tip Collections ---
     stress_tips = [
+        "Try a 5-minute guided meditation to calm your mind.",
         "Try a 5-minute guided meditation to calm your mind.", 
         "Step away from your screen for 10 minutes and stretch.",
         "Listen to some calming music or nature sounds."
@@ -185,6 +186,24 @@ elif page == "✅ Quick Self-Check":
         "Reach out to a friend or loved one to talk.",
         "Engage in a hobby that you enjoy."
     ]
+    
+    energy_tips = [
+        "Ensure you're getting enough rest and nutrients.",
+        "A short walk can sometimes boost energy more than a nap.",
+        "Stay hydrated to maintain your energy levels."
+    ]
+
+    activity_tips = [
+        "Even a short 10-minute walk can boost your energy and mood.",
+        "Try a quick 7-minute workout routine.",
+        "Dancing to your favorite song is a fun way to get moving."
+    ]
+
+    social_tips = [
+        "Consider calling or messaging a friend or family member.",
+        "Even a brief, positive social interaction can improve your day.",
+        "Plan a social activity for the coming week."
+    ]
 
     # Initialize session state for self-check history
     if "self_check_history" not in st.session_state:
@@ -193,6 +212,10 @@ elif page == "✅ Quick Self-Check":
     stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
     sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
     mood = st.slider("How is your overall mood today?", 0, 10, 6)
+    energy_level = st.slider("How would you rate your energy level today?", 0, 10, 6)
+    physical_activity = st.number_input("How many minutes did you exercise today?", min_value=0)
+    social_connection = st.radio("Did you connect with a friend or loved one today?", ["Yes", "No"])
+
 
     if st.button("Log and Get My Wellness Tip"):
         # --- Tip Logic ---
@@ -203,6 +226,12 @@ elif page == "✅ Quick Self-Check":
             tips.append(f"😴 Low sleep detected. Here's a tip: {random.choice(sleep_tips)}")
         if mood < 5:
             tips.append(f"💙 Low mood today. Here's a tip: {random.choice(mood_tips)}")
+        if energy_level < 4:
+            tips.append(f"⚡ Low energy noted. Here's a tip: {random.choice(energy_tips)}")
+        if physical_activity < 20:
+            tips.append(f"🏃‍♂️ Little physical activity logged. Here's a tip: {random.choice(activity_tips)}")
+        if social_connection == "No":
+            tips.append(f"🤝 Social connection is important. Here's a tip: {random.choice(social_tips)}")
             tips.append("😟 You seem stressed. Try deep breathing or take a short walk.")
         if sleep < 6:
             tips.append("😴 You seem to have slept less. Try to get at least 7–8 hours of sleep.")
@@ -220,7 +249,10 @@ elif page == "✅ Quick Self-Check":
             "Date": datetime.now(),
             "Stress": stress,
             "Sleep (hours)": sleep,
-            "Mood": mood
+            "Mood": mood,
+            "Energy": energy_level,
+            "Activity (min)": physical_activity,
+            "Social": 1 if social_connection == "Yes" else 0
         })
         st.rerun()
 
