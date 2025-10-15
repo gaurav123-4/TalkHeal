@@ -535,6 +535,25 @@ elif page == "📊 Mood Tracker":
 
     # --- Mood History Display ---
     if st.session_state.moods:
+        st.subheader("📅 Your Mood Log")
+        for entry in reversed(st.session_state.moods):
+            mood_icon = entry.get('primary_mood', '😐')[0]
+            date_str = entry.get('date', datetime.now()).strftime("%B %d, %Y")
+            intensity = entry.get('intensity', 'N/A')
+
+            with st.expander(f"{mood_icon} {date_str} - Intensity: {intensity}"):
+                if entry.get('note'):
+                    st.write(f"**Note:** *{entry['note']}*")
+                
+                if entry.get('tags'):
+                    st.write("**Tags:**")
+                    st.multiselect(
+                        f"tags_display_{entry['date']}",
+                        options=entry['tags'],
+                        default=entry['tags'],
+                        disabled=True,
+                        label_visibility="collapsed"
+                    )
         st.subheader("📅 Mood History")
         # This display is kept simple for now and will be enhanced next.
         for entry in reversed(st.session_state.moods):
