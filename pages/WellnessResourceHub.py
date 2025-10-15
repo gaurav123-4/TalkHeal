@@ -170,6 +170,7 @@ elif page == "✅ Quick Self-Check":
     # --- Wellness Tip Collections ---
     stress_tips = [
         "Try a 5-minute guided meditation to calm your mind.",
+        "Try a 5-minute guided meditation to calm your mind.", 
         "Step away from your screen for 10 minutes and stretch.",
         "Listen to some calming music or nature sounds."
     ]
@@ -213,11 +214,27 @@ elif page == "✅ Quick Self-Check":
     stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
     sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
     mood = st.slider("How is your overall mood today?", 0, 10, 6)
+    energy_level = st.slider("How would you rate your energy level today?", 0, 10, 6)
+    physical_activity = st.number_input("How many minutes did you exercise today?", min_value=0)
+    social_connection = st.radio("Did you connect with a friend or loved one today?", ["Yes", "No"])
+    note = st.text_area("Add a note about your day (optional):")
+
 
     if st.button("Log and Get My Wellness Tip"):
         # --- Tip Logic ---
         tips = []
         if stress > 7:
+            tips.append(f"😟 High stress noted. Here's a tip: {random.choice(stress_tips)}")
+        if sleep < 6:
+            tips.append(f"😴 Low sleep detected. Here's a tip: {random.choice(sleep_tips)}")
+        if mood < 5:
+            tips.append(f"💙 Low mood today. Here's a tip: {random.choice(mood_tips)}")
+        if energy_level < 4:
+            tips.append(f"⚡ Low energy noted. Here's a tip: {random.choice(energy_tips)}")
+        if physical_activity < 20:
+            tips.append(f"🏃‍♂️ Little physical activity logged. Here's a tip: {random.choice(activity_tips)}")
+        if social_connection == "No":
+            tips.append(f"🤝 Social connection is important. Here's a tip: {random.choice(social_tips)}")
             tips.append("😟 You seem stressed. Try deep breathing or take a short walk.")
         if sleep < 6:
             tips.append("😴 You seem to have slept less. Try to get at least 7–8 hours of sleep.")
@@ -287,6 +304,19 @@ elif page == "✅ Quick Self-Check":
                 "Note": note
             })
             st.rerun()
+        # --- Store Data ---
+        st.session_state.self_check_history.append({
+            "Date": datetime.now(),
+            "Stress": stress,
+            "Sleep (hours)": sleep,
+            "Mood": mood,
+            "Energy": energy_level,
+            "Activity (min)": physical_activity,
+            "Social": 1 if social_connection == "Yes" else 0,
+            "Note": note
+            "Social": 1 if social_connection == "Yes" else 0
+        })
+        st.rerun()
 
     # --- History and Visualization ---
     if st.session_state.self_check_history:
@@ -320,12 +350,14 @@ elif page == "✅ Quick Self-Check":
         # --- Interactive Chart ---
         st.subheader("📈 Interactive Chart")
         
+        # Get available metrics, excluding 'Note'
         available_metrics = [col for col in history_df.columns if col != 'Note']
         
         selected_metrics = st.multiselect(
             "Select metrics to display:",
             options=available_metrics,
             default=available_metrics[:3]
+            default=available_metrics[:3] # Default to first 3 metrics
         )
 
         if selected_metrics:
@@ -522,6 +554,14 @@ elif page == "📊 Mood Tracker":
                         disabled=True,
                         label_visibility="collapsed"
                     )
+        st.subheader("📅 Mood History")
+        # This display is kept simple for now and will be enhanced next.
+        for entry in reversed(st.session_state.moods):
+            st.markdown(f"- **{entry.get('date', 'No date').strftime('%Y-%m-%d')}**: {entry.get('primary_mood', 'No mood logged')} (Intensity: {entry.get('intensity', 'N/A')})")
+            if entry.get('note'):
+                st.markdown(f"  - *Note: {entry['note']}*")
+            if entry.get('tags'):
+                st.markdown(f"  - *Tags: { ', '.join(entry['tags']) if entry['tags'] else 'None'}*")
 
 
         st.subheader("📊 Mood Analysis")
@@ -551,6 +591,10 @@ elif page == "📊 Mood Tracker":
                 else:
                     st.info("Add tags to your entries to see which feelings are most common.")
 
+        
+        if 'primary_mood' in df.columns:
+            mood_counts = df['primary_mood'].value_counts()
+            st.bar_chart(mood_counts)
         else:
             st.info("Log your mood to see an analysis here.")
 
