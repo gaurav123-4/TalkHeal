@@ -591,6 +591,52 @@ elif page == "📊 Mood Tracker":
                 else:
                     st.info("Add tags to your entries to see which feelings are most common.")
 
+        else:
+            st.info("Log your mood to see an analysis here.")
+        
+        st.markdown("---")
+        st.subheader("🔍 A Look Back")
+        st.write("Curious about your past self? See your mood from a week or a month ago.")
+
+        def find_closest_entry(target_date):
+            if not st.session_state.moods:
+                return None
+            
+            df = pd.DataFrame(st.session_state.moods)
+            df['date'] = pd.to_datetime(df['date']).dt.date
+            
+            # Find the entry with the minimum difference from the target date
+            time_diffs = abs(df['date'] - target_date)
+            closest_index = time_diffs.idxmin()
+            
+            # Only return if the closest entry is within a reasonable threshold (e.g., 1 day)
+            if time_diffs[closest_index] <= pd.Timedelta(days=1):
+                return df.loc[closest_index].to_dict()
+            return None
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("What was my mood a week ago?"):
+                target = datetime.now().date() - pd.Timedelta(days=7)
+                past_entry = find_closest_entry(target)
+                if past_entry:
+                    mood = past_entry.get('primary_mood', 'N/A')
+                    note = past_entry.get('note', '*No note was left.*')
+                    st.info(f"A week ago, you felt: **{mood}**. You wrote: *'{note}'*")
+                else:
+                    st.warning("No entry found from around a week ago.")
+
+        with col2:
+            if st.button("What was my mood a month ago?"):
+                target = datetime.now().date() - pd.Timedelta(days=30)
+                past_entry = find_closest_entry(target)
+                if past_entry:
+                    mood = past_entry.get('primary_mood', 'N/A')
+                    note = past_entry.get('note', '*No note was left.*')
+                    st.info(f"A month ago, you felt: **{mood}**. You wrote: *'{note}'*")
+                else:
+                    st.warning("No entry found from around a month ago.")
         
         if 'primary_mood' in df.columns:
             mood_counts = df['primary_mood'].value_counts()
