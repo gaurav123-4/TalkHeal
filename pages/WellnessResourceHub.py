@@ -209,6 +209,8 @@ elif page == "✅ Quick Self-Check":
     if "self_check_history" not in st.session_state:
         st.session_state.self_check_history = []
 
+    with st.container(border=True):
+        st.subheader("How are you feeling today?")
     stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
     sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
     mood = st.slider("How is your overall mood today?", 0, 10, 6)
@@ -245,6 +247,63 @@ elif page == "✅ Quick Self-Check":
             for tip in tips:
                 st.warning(tip)
         
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            stress = st.slider("🧠 Stress", 0, 10, 5, help="0 = Not Stressed, 10 = Extremely Stressed")
+            sleep = st.slider("😴 Sleep (hours)", 0, 12, 7, help="How many hours of sleep did you get last night?")
+            energy_level = st.slider("⚡️ Energy Level", 0, 10, 6, help="0 = No Energy, 10 = Full of Energy")
+
+        with col2:
+            physical_activity = st.number_input("🏃‍♂️ Physical Activity (minutes)", min_value=0, help="How many minutes did you exercise today?")
+            social_connection = st.radio("🤝 Social Connection", ["Yes", "No"], horizontal=True, help="Did you connect with a friend or loved one today?")
+            
+            mood_options = {"😞": 2, "😐": 5, "😊": 8}
+            selected_emoji = st.radio("😊 Mood", options=list(mood_options.keys()), horizontal=True, help="How is your overall mood today?")
+            mood_score = mood_options[selected_emoji]
+
+        note = st.text_area("Add a note about your day (optional):", placeholder="What's on your mind? Any details about why you feel this way?")
+
+        if st.button("Log and Get My Wellness Tip"):
+            # --- Tip Logic ---
+            tips_to_show = []
+            if stress > 7:
+                tips_to_show.append(("stress", f"It looks like your stress is high. To find some calm, you could try this: *{random.choice(stress_tips)}*"))
+            if sleep < 6:
+                tips_to_show.append(("sleep", f"It seems you had a short night's sleep. To improve your rest, consider this tip: *{random.choice(sleep_tips)}*"))
+            if mood_score < 5:
+                tips_to_show.append(("mood", f"It's okay to have tough days. For a little mood boost, you could try this: *{random.choice(mood_tips)}*"))
+            if energy_level < 4:
+                tips_to_show.append(("energy", f"It looks like your energy is low. To recharge, you might find this helpful: *{random.choice(energy_tips)}*"))
+            if physical_activity < 20:
+                tips_to_show.append(("activity", f"Getting some movement in can really help. Here's a small idea: *{random.choice(activity_tips)}*"))
+            if social_connection == "No":
+                tips_to_show.append(("social", f"Connecting with others can make a big difference. Here's a gentle nudge: *{random.choice(social_tips)}*"))
+
+            st.markdown("---")
+            if not tips_to_show:
+                st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
+            else:
+                st.subheader("💡 Your Personalized Suggestions")
+                for category, tip in tips_to_show:
+                    with st.container(border=True):
+                        st.info(tip)
+                        if category == "stress":
+                            if st.button("🧘 Start a Breathing Exercise"):
+                                st.switch_page("pages/Breathing_Exercise.py")
+            
+            # --- Store Data ---
+            st.session_state.self_check_history.append({
+                "Date": datetime.now(),
+                "Stress": stress,
+                "Sleep (hours)": sleep,
+                "Mood": mood_score,
+                "Energy": energy_level,
+                "Activity (min)": physical_activity,
+                "Social": 1 if social_connection == "Yes" else 0,
+                "Note": note
+            })
+            st.rerun()
         # --- Store Data ---
         st.session_state.self_check_history.append({
             "Date": datetime.now(),
@@ -297,6 +356,7 @@ elif page == "✅ Quick Self-Check":
         selected_metrics = st.multiselect(
             "Select metrics to display:",
             options=available_metrics,
+            default=available_metrics[:3]
             default=available_metrics[:3] # Default to first 3 metrics
         )
 
