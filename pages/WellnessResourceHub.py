@@ -210,6 +210,25 @@ elif page == "✅ Quick Self-Check":
 
     with st.container(border=True):
         st.subheader("How are you feeling today?")
+    stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
+    sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
+    mood = st.slider("How is your overall mood today?", 0, 10, 6)
+
+    if st.button("Log and Get My Wellness Tip"):
+        # --- Tip Logic ---
+        tips = []
+        if stress > 7:
+            tips.append("😟 You seem stressed. Try deep breathing or take a short walk.")
+        if sleep < 6:
+            tips.append("😴 You seem to have slept less. Try to get at least 7–8 hours of sleep.")
+        if mood < 5:
+            tips.append("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
+
+        if not tips:
+            st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
+        else:
+            for tip in tips:
+                st.warning(tip)
         
         col1, col2 = st.columns(2)
         
