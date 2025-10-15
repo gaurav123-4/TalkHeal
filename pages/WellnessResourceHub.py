@@ -215,6 +215,7 @@ elif page == "✅ Quick Self-Check":
     energy_level = st.slider("How would you rate your energy level today?", 0, 10, 6)
     physical_activity = st.number_input("How many minutes did you exercise today?", min_value=0)
     social_connection = st.radio("Did you connect with a friend or loved one today?", ["Yes", "No"])
+    note = st.text_area("Add a note about your day (optional):")
 
 
     if st.button("Log and Get My Wellness Tip"):
@@ -252,6 +253,8 @@ elif page == "✅ Quick Self-Check":
             "Mood": mood,
             "Energy": energy_level,
             "Activity (min)": physical_activity,
+            "Social": 1 if social_connection == "Yes" else 0,
+            "Note": note
             "Social": 1 if social_connection == "Yes" else 0
         })
         st.rerun()
