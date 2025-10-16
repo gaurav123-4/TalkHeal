@@ -77,21 +77,29 @@ affirmations = [
 ]
 
 # --- Wellness Task Suggestions ---
-wellness_tasks = [
-    "Drink a full glass of water",
-    "Stretch for 5 minutes",
-    "Take 10 deep, slow breaths",
-    "Write down one thing you're grateful for",
-    "Go for a 10-minute walk outside",
-    "Tidy up your workspace for 5 minutes",
-    "Listen to one favorite calming song",
-    "Step away from screens for 5 minutes",
-    "Jot down 3 things you accomplished today, big or small.",
-    "Send a thank you message to a friend or family member.",
-    "Step outside for 2 minutes and take a breath of fresh air.",
-    "Put on a favorite upbeat song and have a mini dance party.",
-    "Look out a window and name 5 different things you can see."
-]
+wellness_tasks_categorized = {
+    "Mindfulness & Reflection": [
+        "Take 10 deep, slow breaths",
+        "Write down one thing you're grateful for",
+        "Listen to one favorite calming song",
+        "Jot down 3 things you accomplished today, big or small."
+    ],
+    "Physical Well-being": [
+        "Drink a full glass of water",
+        "Stretch for 5 minutes",
+        "Go for a 10-minute walk outside",
+        "Put on a favorite upbeat song and have a mini dance party."
+    ],
+    "Environment & Breaks": [
+        "Tidy up your workspace for 5 minutes",
+        "Step away from screens for 5 minutes",
+        "Step outside for 2 minutes and take a breath of fresh air.",
+        "Look out a window and name 5 different things you can see."
+    ],
+    "Social Connection": [
+        "Send a thank you message to a friend or family member."
+    ]
+}
 
 # --- Community Stories Data ---
 community_stories = [
@@ -367,8 +375,15 @@ elif page == "📅 Daily Planner":
             st.rerun()
 
     # --- Wellness Task Suggestion Button ---
-    if st.button("💡 Suggest a Wellness Task"):
-        suggested_task = random.choice(wellness_tasks)
+    st.markdown("--- ")
+    st.subheader("💡 Get a Wellness Task Suggestion")
+    selected_category = st.selectbox(
+        "Choose a category for a task suggestion:",
+        list(wellness_tasks_categorized.keys()),
+        key="wellness_task_category_selector"
+    )
+    if st.button(f"Suggest a {selected_category} Task"):
+        suggested_task = random.choice(wellness_tasks_categorized[selected_category])
         st.session_state.tasks.append({
             "task": suggested_task, 
             "completed": False, 
