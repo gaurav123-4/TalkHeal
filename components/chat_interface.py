@@ -525,9 +525,7 @@ def render_chat_interface():
     Handles both user and bot messages, and manages pinning.
     """
     inject_custom_css()
-    inject_feedback_css()
-
-    if st.session_state.active_conversation >= 0:
+    if st.session_state.active_conversation >= 0 and st.session_state.active_conversation < len(st.session_state.conversations):
         active_convo = st.session_state.conversations[st.session_state.active_conversation]
 
         if not active_convo["messages"]:
@@ -681,7 +679,7 @@ def render_session_controls():
     Render session control buttons (e.g., end chat, session summary).
     """
     """Render session controls and feedback - to be called after chat input"""
-    if st.session_state.active_conversation >= 0:
+    if st.session_state.active_conversation >= 0 and st.session_state.active_conversation < len(st.session_state.conversations):
         active_convo = st.session_state.conversations[st.session_state.active_conversation]
         
         # Show session controls below chat input
@@ -772,7 +770,7 @@ def handle_chat_input(model, system_prompt):
         if 'send_chat_message' in st.session_state:
             st.session_state.send_chat_message = False
 
-        if st.session_state.active_conversation >= 0:
+        if st.session_state.active_conversation >= 0 and st.session_state.active_conversation < len(st.session_state.conversations):
             current_time = get_current_time()
             active_convo = st.session_state.conversations[st.session_state.active_conversation]
 
