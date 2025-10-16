@@ -332,31 +332,37 @@ elif page == "📅 Daily Planner":
     migrated_tasks = []
     for task in st.session_state.tasks:
         if isinstance(task, str): # Very old format
-            migrated_tasks.append({"task": task, "completed": False, "key": str(uuid.uuid4()), "priority": "Medium"})
+            migrated_tasks.append({"task": task, "completed": False, "key": str(uuid.uuid4()), "priority": "Medium", "due_date": None})
         else:
             if "key" not in task:
                 task["key"] = str(uuid.uuid4())
             if "priority" not in task:
-                task["priority"] = "Medium" # Add default priority
+                task["priority"] = "Medium"
+            if "due_date" not in task:
+                task["due_date"] = None # Add default due_date
             migrated_tasks.append(task)
     st.session_state.tasks = migrated_tasks
 
 
     # --- Task Input Form ---
     with st.form("new_task_form", clear_on_submit=True):
-        col1, col2 = st.columns([3, 1])
+        st.write("Add a new task")
+        col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
-            new_task = st.text_input("Add a new task:", placeholder="What do you need to do?")
+            new_task = st.text_input("Task description", label_visibility="collapsed", placeholder="What do you need to do?")
         with col2:
-            priority = st.selectbox("Priority:", ["Low", "Medium", "High"], index=1)
-        
+            priority = st.selectbox("Priority", ["Low", "Medium", "High"], index=1, label_visibility="collapsed")
+        with col3:
+            due_date = st.date_input("Due Date", value=None, label_visibility="collapsed")
+
         submitted = st.form_submit_button("➕ Add Task")
         if submitted and new_task:
             st.session_state.tasks.append({
                 "task": new_task, 
                 "completed": False, 
                 "key": str(uuid.uuid4()),
-                "priority": priority
+                "priority": priority,
+                "due_date": due_date
             })
             st.rerun()
 
@@ -367,16 +373,37 @@ elif page == "📅 Daily Planner":
             "task": suggested_task, 
             "completed": False, 
             "key": str(uuid.uuid4()),
-            "priority": "Medium"
+            "priority": "Medium",
+            "due_date": None
         })
         st.rerun()
 
     st.subheader("✅ Your Tasks")
 
+    # --- Sorting and Filtering ---
+    col1, col2 = st.columns(2)
+    with col1:
+        sort_by = st.radio(
+            "Sort by:",
+            ["Order Added", "Due Date", "Priority"],
+            horizontal=True,
+            key="task_sort"
+        )
+    
+    tasks_to_display = st.session_state.tasks.copy()
+    
+    if sort_by == "Due Date":
+        # Sorts tasks with due dates first, then tasks without
+        tasks_to_display.sort(key=lambda x: (x.get('due_date') is None, x.get('due_date')))
+    elif sort_by == "Priority":
+        priority_map = {"High": 0, "Medium": 1, "Low": 2}
+        tasks_to_display.sort(key=lambda x: priority_map.get(x.get('priority', 'Medium')))
+
+
     # --- Display Progress Bar ---
-    if st.session_state.tasks:
-        completed_count = sum(1 for t in st.session_state.tasks if t["completed"])
-        total_count = len(st.session_state.tasks)
+    if tasks_to_display:
+        completed_count = sum(1 for t in tasks_to_display if t["completed"])
+        total_count = len(tasks_to_display)
         progress_ratio = completed_count / total_count if total_count > 0 else 0
         st.progress(progress_ratio, text=f"{completed_count}/{total_count} Tasks Completed")
 
@@ -387,7 +414,7 @@ elif page == "📅 Daily Planner":
 
     # --- Task Display, Edit, and Deletion Logic ---
     indices_to_delete = []
-    for i, task in enumerate(st.session_state.tasks):
+    for i, task in enumerate(tasks_to_display):
         if st.session_state.editing_task_id == task["key"]:
             # Editing mode
             col_edit_input, col_edit_save, col_edit_cancel = st.columns([0.7, 0.15, 0.15])
@@ -400,9 +427,10 @@ elif page == "📅 Daily Planner":
                 )
             with col_edit_save:
                 if st.button("💾 Save", key=f"save_edit_{task['key']}"):
-                    for t in st.session_state.tasks:
-                        if t["key"] == task["key"]:
-                            t["task"] = st.session_state.edited_task_text
+                    # Find the original task in the main list and update it
+                    for original_task in st.session_state.tasks:
+                        if original_task["key"] == task["key"]:
+                            original_task["task"] = st.session_state.edited_task_text
                             break
                     st.session_state.editing_task_id = None
                     st.session_state.edited_task_text = ""
@@ -418,14 +446,20 @@ elif page == "📅 Daily Planner":
             with col_checkbox:
                 priority_icon = {"Low": "🔹", "Medium": "🔸", "High": "🔥"}.get(task.get("priority", "Medium"), "🔸")
                 
-                base_label = f"{priority_icon} {task['task']}"
+                due_date_str = ""
+                if task.get("due_date"):
+                    due_date_str = f" (Due: {task['due_date'].strftime('%b %d')})"
+
+                base_label = f"{priority_icon} {task['task']}{due_date_str}"
                 label = f"~~{base_label}~~" if task["completed"] else base_label
                 
-                st.session_state.tasks[i]["completed"] = st.checkbox(
-                    label,
-                    value=task["completed"],
-                    key=f"task_{task['key']}"
-                )
+                # Find the original task index to modify its 'completed' status
+                original_task_index = next((idx for idx, t in enumerate(st.session_state.tasks) if t["key"] == task["key"]), None)
+                if original_task_index is not None:
+                    if st.checkbox(label, value=task["completed"], key=f"task_{task['key']}") != task["completed"]:
+                         st.session_state.tasks[original_task_index]["completed"] = not task["completed"]
+                         st.rerun()
+
             with col_edit_btn:
                 if st.button("✏️ Edit", key=f"edit_btn_{task['key']}"):
                     st.session_state.editing_task_id = task["key"]
@@ -433,11 +467,16 @@ elif page == "📅 Daily Planner":
                     st.rerun()
             with col_delete_btn:
                 if st.button("🗑️", key=f"delete_btn_{task['key']}", help=f"Delete task: {task['task']}"):
-                    indices_to_delete.append(i)
+                    # Find the original task to delete it
+                    original_task_index = next((idx for idx, t in enumerate(st.session_state.tasks) if t["key"] == task["key"]), None)
+                    if original_task_index is not None:
+                        indices_to_delete.append(original_task_index)
 
     # Perform deletions after iterating through the list
     if indices_to_delete:
-        st.session_state.tasks = [t for i, t in enumerate(st.session_state.tasks) if i not in indices_to_delete]
+        # Sort indices in reverse to avoid index shifting issues
+        for index in sorted(indices_to_delete, reverse=True):
+            del st.session_state.tasks[index]
         st.rerun()
 
     if not st.session_state.tasks:
