@@ -170,7 +170,6 @@ elif page == "✅ Quick Self-Check":
     # --- Wellness Tip Collections ---
     stress_tips = [
         "Try a 5-minute guided meditation to calm your mind.",
-        "Try a 5-minute guided meditation to calm your mind.", 
         "Step away from your screen for 10 minutes and stretch.",
         "Listen to some calming music or nature sounds."
     ]
@@ -211,41 +210,6 @@ elif page == "✅ Quick Self-Check":
 
     with st.container(border=True):
         st.subheader("How are you feeling today?")
-    stress = st.slider("How stressed are you feeling today?", 0, 10, 5)
-    sleep = st.slider("How many hours did you sleep last night?", 0, 12, 7)
-    mood = st.slider("How is your overall mood today?", 0, 10, 6)
-    energy_level = st.slider("How would you rate your energy level today?", 0, 10, 6)
-    physical_activity = st.number_input("How many minutes did you exercise today?", min_value=0)
-    social_connection = st.radio("Did you connect with a friend or loved one today?", ["Yes", "No"])
-    note = st.text_area("Add a note about your day (optional):")
-
-
-    if st.button("Log and Get My Wellness Tip"):
-        # --- Tip Logic ---
-        tips = []
-        if stress > 7:
-            tips.append(f"😟 High stress noted. Here's a tip: {random.choice(stress_tips)}")
-        if sleep < 6:
-            tips.append(f"😴 Low sleep detected. Here's a tip: {random.choice(sleep_tips)}")
-        if mood < 5:
-            tips.append(f"💙 Low mood today. Here's a tip: {random.choice(mood_tips)}")
-        if energy_level < 4:
-            tips.append(f"⚡ Low energy noted. Here's a tip: {random.choice(energy_tips)}")
-        if physical_activity < 20:
-            tips.append(f"🏃‍♂️ Little physical activity logged. Here's a tip: {random.choice(activity_tips)}")
-        if social_connection == "No":
-            tips.append(f"🤝 Social connection is important. Here's a tip: {random.choice(social_tips)}")
-            tips.append("😟 You seem stressed. Try deep breathing or take a short walk.")
-        if sleep < 6:
-            tips.append("😴 You seem to have slept less. Try to get at least 7–8 hours of sleep.")
-        if mood < 5:
-            tips.append("💙 It’s okay to have tough days. Try journaling or talking to a friend.")
-
-        if not tips:
-            st.success("🌟 You're doing well! Keep maintaining your healthy habits.")
-        else:
-            for tip in tips:
-                st.warning(tip)
         
         col1, col2 = st.columns(2)
         
@@ -304,19 +268,6 @@ elif page == "✅ Quick Self-Check":
                 "Note": note
             })
             st.rerun()
-        # --- Store Data ---
-        st.session_state.self_check_history.append({
-            "Date": datetime.now(),
-            "Stress": stress,
-            "Sleep (hours)": sleep,
-            "Mood": mood,
-            "Energy": energy_level,
-            "Activity (min)": physical_activity,
-            "Social": 1 if social_connection == "Yes" else 0,
-            "Note": note
-            "Social": 1 if social_connection == "Yes" else 0
-        })
-        st.rerun()
 
     # --- History and Visualization ---
     if st.session_state.self_check_history:
@@ -350,14 +301,12 @@ elif page == "✅ Quick Self-Check":
         # --- Interactive Chart ---
         st.subheader("📈 Interactive Chart")
         
-        # Get available metrics, excluding 'Note'
         available_metrics = [col for col in history_df.columns if col != 'Note']
         
         selected_metrics = st.multiselect(
             "Select metrics to display:",
             options=available_metrics,
             default=available_metrics[:3]
-            default=available_metrics[:3] # Default to first 3 metrics
         )
 
         if selected_metrics:
@@ -378,29 +327,48 @@ elif page == "📅 Daily Planner":
         st.session_state.tasks = []
         st.session_state.editing_task_id = None
         st.session_state.edited_task_text = ""
-    # Simple migration from old format (list of strings) to new format (list of dicts)
-    elif st.session_state.tasks and isinstance(st.session_state.tasks[0], str):
-        st.session_state.tasks = [{"task": t, "completed": False, "key": str(uuid.uuid4())} for t in st.session_state.tasks]
-        st.session_state.editing_task_id = None
-        st.session_state.edited_task_text = ""
-
-    # Ensure all existing tasks have a 'key' if they somehow don't (e.g., after a hot reload)
+    
+    # --- Data Migration ---
+    migrated_tasks = []
     for task in st.session_state.tasks:
-        if "key" not in task:
-            task["key"] = str(uuid.uuid4())
+        if isinstance(task, str): # Very old format
+            migrated_tasks.append({"task": task, "completed": False, "key": str(uuid.uuid4()), "priority": "Medium"})
+        else:
+            if "key" not in task:
+                task["key"] = str(uuid.uuid4())
+            if "priority" not in task:
+                task["priority"] = "Medium" # Add default priority
+            migrated_tasks.append(task)
+    st.session_state.tasks = migrated_tasks
+
 
     # --- Task Input Form ---
     with st.form("new_task_form", clear_on_submit=True):
-        new_task = st.text_input("Add a new task:")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            new_task = st.text_input("Add a new task:", placeholder="What do you need to do?")
+        with col2:
+            priority = st.selectbox("Priority:", ["Low", "Medium", "High"], index=1)
+        
         submitted = st.form_submit_button("➕ Add Task")
         if submitted and new_task:
-            st.session_state.tasks.append({"task": new_task, "completed": False, "key": str(uuid.uuid4())})
+            st.session_state.tasks.append({
+                "task": new_task, 
+                "completed": False, 
+                "key": str(uuid.uuid4()),
+                "priority": priority
+            })
             st.rerun()
 
     # --- Wellness Task Suggestion Button ---
     if st.button("💡 Suggest a Wellness Task"):
         suggested_task = random.choice(wellness_tasks)
-        st.session_state.tasks.append({"task": suggested_task, "completed": False})
+        st.session_state.tasks.append({
+            "task": suggested_task, 
+            "completed": False, 
+            "key": str(uuid.uuid4()),
+            "priority": "Medium"
+        })
         st.rerun()
 
     st.subheader("✅ Your Tasks")
@@ -432,7 +400,6 @@ elif page == "📅 Daily Planner":
                 )
             with col_edit_save:
                 if st.button("💾 Save", key=f"save_edit_{task['key']}"):
-                    # Find the task by key and update its text
                     for t in st.session_state.tasks:
                         if t["key"] == task["key"]:
                             t["task"] = st.session_state.edited_task_text
@@ -449,11 +416,15 @@ elif page == "📅 Daily Planner":
             # Normal display mode
             col_checkbox, col_edit_btn, col_delete_btn = st.columns([0.7, 0.15, 0.15])
             with col_checkbox:
-                label = f"~~{task['task']}~~" if task["completed"] else task["task"]
+                priority_icon = {"Low": "🔹", "Medium": "🔸", "High": "🔥"}.get(task.get("priority", "Medium"), "🔸")
+                
+                base_label = f"{priority_icon} {task['task']}"
+                label = f"~~{base_label}~~" if task["completed"] else base_label
+                
                 st.session_state.tasks[i]["completed"] = st.checkbox(
                     label,
                     value=task["completed"],
-                    key=f"task_{task['key']}" # Use task key for unique widget key
+                    key=f"task_{task['key']}"
                 )
             with col_edit_btn:
                 if st.button("✏️ Edit", key=f"edit_btn_{task['key']}"):
@@ -466,7 +437,6 @@ elif page == "📅 Daily Planner":
 
     # Perform deletions after iterating through the list
     if indices_to_delete:
-        # Delete tasks by key to avoid issues with re-indexing
         st.session_state.tasks = [t for i, t in enumerate(st.session_state.tasks) if i not in indices_to_delete]
         st.rerun()
 
@@ -554,14 +524,6 @@ elif page == "📊 Mood Tracker":
                         disabled=True,
                         label_visibility="collapsed"
                     )
-        st.subheader("📅 Mood History")
-        # This display is kept simple for now and will be enhanced next.
-        for entry in reversed(st.session_state.moods):
-            st.markdown(f"- **{entry.get('date', 'No date').strftime('%Y-%m-%d')}**: {entry.get('primary_mood', 'No mood logged')} (Intensity: {entry.get('intensity', 'N/A')})")
-            if entry.get('note'):
-                st.markdown(f"  - *Note: {entry['note']}*")
-            if entry.get('tags'):
-                st.markdown(f"  - *Tags: { ', '.join(entry['tags']) if entry['tags'] else 'None'}*")
 
 
         st.subheader("📊 Mood Analysis")
@@ -637,12 +599,6 @@ elif page == "📊 Mood Tracker":
                     st.info(f"A month ago, you felt: **{mood}**. You wrote: *'{note}'*")
                 else:
                     st.warning("No entry found from around a month ago.")
-        
-        if 'primary_mood' in df.columns:
-            mood_counts = df['primary_mood'].value_counts()
-            st.bar_chart(mood_counts)
-        else:
-            st.info("Log your mood to see an analysis here.")
 
     else:
         st.info("No moods logged yet.")
