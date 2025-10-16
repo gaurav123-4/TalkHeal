@@ -389,9 +389,22 @@ elif page == "📅 Daily Planner":
             horizontal=True,
             key="task_sort"
         )
-    
+    with col2:
+        filter_status = st.selectbox(
+            "Filter by:",
+            ["All", "Incomplete", "Completed"],
+            key="task_filter"
+        )
+
     tasks_to_display = st.session_state.tasks.copy()
+
+    # --- Filtering Logic ---
+    if filter_status == "Incomplete":
+        tasks_to_display = [t for t in tasks_to_display if not t["completed"]]
+    elif filter_status == "Completed":
+        tasks_to_display = [t for t in tasks_to_display if t["completed"]]
     
+    # --- Sorting Logic ---
     if sort_by == "Due Date":
         # Sorts tasks with due dates first, then tasks without
         tasks_to_display.sort(key=lambda x: (x.get('due_date') is None, x.get('due_date')))
