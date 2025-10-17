@@ -334,155 +334,193 @@ def check_and_show_reminder():
 
 # --- Main Application Logic ---
 
-# Initialize session state from file
+# Initialize session state
 if 'app_data' not in st.session_state:
+    # Check for new user BEFORE loading data to set a flag
+    is_new_user = not os.path.exists(DATA_FILE)
     st.session_state.app_data = load_data()
+    if is_new_user:
+        st.session_state.is_new_user = True
+
 if 'editing_timestamp' not in st.session_state:
     st.session_state.editing_timestamp = None
 
-# Get current unit preference
-unit = st.session_state.app_data.get("units", "ml")
+# --- Onboarding UI for New Users ---
+if st.session_state.get('is_new_user', False):
+    st.title("👋 Welcome to the Water Tracker!")
+    st.markdown("Let's get you set up. Please tell us your daily hydration goal.")
 
-# --- Sidebar for Settings ---
-with st.sidebar:
-    st.header("⚙️ Settings")
-    
-    # Unit Selector
-    new_unit = st.radio("Units", ["ml", "oz"], index=["ml", "oz"].index(unit))
-    if new_unit != unit:
-        st.session_state.app_data['units'] = new_unit
-        save_data(st.session_state.app_data)
-        st.rerun()
+    with st.form("onboarding_form"):
+        onboarding_unit = st.radio("First, pick your preferred units:", ["ml", "oz"], horizontal=True)
+        
+        if onboarding_unit == 'ml':
+            step, default_value, format_str = 50.0, 2500.0, "%.0f"
+        else:
+            step, default_value, format_str = 0.5, 84.5, "%.1f"
 
-    # Daily Goal Input
+        onboarding_goal = st.number_input(
+            f"Daily Goal ({onboarding_unit})",
+            min_value=1.0,
+            value=default_value,
+            step=step,
+            format=format_str
+        )
+        
+        submitted = st.form_submit_button("Start Tracking!")
+
+        if submitted:
+            goal_ml = convert_to_ml(onboarding_goal, onboarding_unit)
+            
+            st.session_state.app_data['units'] = onboarding_unit
+            st.session_state.app_data['goal'] = goal_ml
+            
+            save_data(st.session_state.app_data)
+            
+            st.session_state.is_new_user = False
+            st.balloons()
+            st.success("Setup complete! Happy hydrating.")
+            import time
+            time.sleep(2)
+            st.rerun()
+
+# --- Main App UI for Existing Users ---
+else:
+    unit = st.session_state.app_data.get("units", "ml")
     goal_ml = st.session_state.app_data.get("goal", 2500)
-    current_goal_display = get_display_amount(goal_ml)
-    
-    new_goal_display = st.number_input(
-        f"Daily Goal ({unit})",
-        min_value=1.0,
-        value=float(current_goal_display),
-        step=50.0 if unit == 'ml' else 0.5,
-        format="%.0f" if unit == 'ml' else "%.1f"
-    )
-    
-    if new_goal_display != current_goal_display:
-        new_goal_ml = convert_to_ml(new_goal_display, unit)
-        st.session_state.app_data['goal'] = new_goal_ml
-        save_data(st.session_state.app_data)
-        st.rerun()
 
-    st.divider()
-    st.header("⏰ Reminders")
-    
-    reminders_enabled = st.toggle("Enable Reminders", value=st.session_state.app_data.get('reminders_enabled', False))
-    if reminders_enabled != st.session_state.app_data.get('reminders_enabled'):
-        st.session_state.app_data['reminders_enabled'] = reminders_enabled
-        save_data(st.session_state.app_data)
-        st.rerun()
+    # --- Sidebar for Settings ---
+    with st.sidebar:
+        st.header("⚙️ Settings")
+        
+        # Unit Selector
+        new_unit = st.radio("Units", ["ml", "oz"], index=["ml", "oz"].index(unit))
+        if new_unit != unit:
+            st.session_state.app_data['units'] = new_unit
+            save_data(st.session_state.app_data)
+            st.rerun()
 
-    reminder_interval = st.number_input("Interval (minutes)", min_value=1, value=st.session_state.app_data.get('reminder_interval', 60))
-    if reminder_interval != st.session_state.app_data.get('reminder_interval'):
-        st.session_state.app_data['reminder_interval'] = reminder_interval
-        save_data(st.session_state.app_data)
+        # Daily Goal Input
+        current_goal_display = get_display_amount(goal_ml)
+        
+        new_goal_display = st.number_input(
+            f"Daily Goal ({unit})",
+            min_value=1.0,
+            value=float(current_goal_display),
+            step=50.0 if unit == 'ml' else 0.5,
+            format="%.0f" if unit == 'ml' else "%.1f"
+        )
+        
+        if new_goal_display != current_goal_display:
+            new_goal_ml = convert_to_ml(new_goal_display, unit)
+            st.session_state.app_data['goal'] = new_goal_ml
+            save_data(st.session_state.app_data)
+            st.rerun()
 
-    start_time_val = datetime.strptime(st.session_state.app_data.get('reminder_start_time', "09:00"), "%H:%M").time()
-    reminder_start_time = st.time_input("Start Time", value=start_time_val)
-    if reminder_start_time.strftime("%H:%M") != st.session_state.app_data.get('reminder_start_time'):
-        st.session_state.app_data['reminder_start_time'] = reminder_start_time.strftime("%H:%M")
-        save_data(st.session_state.app_data)
+        st.divider()
+        st.header("⏰ Reminders")
+        
+        reminders_enabled = st.toggle("Enable Reminders", value=st.session_state.app_data.get('reminders_enabled', False))
+        if reminders_enabled != st.session_state.app_data.get('reminders_enabled'):
+            st.session_state.app_data['reminders_enabled'] = reminders_enabled
+            save_data(st.session_state.app_data)
+            st.rerun()
 
-    end_time_val = datetime.strptime(st.session_state.app_data.get('reminder_end_time', "21:00"), "%H:%M").time()
-    reminder_end_time = st.time_input("End Time", value=end_time_val)
-    if reminder_end_time.strftime("%H:%M") != st.session_state.app_data.get('reminder_end_time'):
-        st.session_state.app_data['reminder_end_time'] = reminder_end_time.strftime("%H:%M")
-        save_data(st.session_state.app_data)
+        reminder_interval = st.number_input("Interval (minutes)", min_value=1, value=st.session_state.app_data.get('reminder_interval', 60))
+        if reminder_interval != st.session_state.app_data.get('reminder_interval'):
+            st.session_state.app_data['reminder_interval'] = reminder_interval
+            save_data(st.session_state.app_data)
+
+        start_time_val = datetime.strptime(st.session_state.app_data.get('reminder_start_time', "09:00"), "%H:%M").time()
+        reminder_start_time = st.time_input("Start Time", value=start_time_val)
+        if reminder_start_time.strftime("%H:%M") != st.session_state.app_data.get('reminder_start_time'):
+            st.session_state.app_data['reminder_start_time'] = reminder_start_time.strftime("%H:%M")
+            save_data(st.session_state.app_data)
+
+        end_time_val = datetime.strptime(st.session_state.app_data.get('reminder_end_time', "21:00"), "%H:%M").time()
+        reminder_end_time = st.time_input("End Time", value=end_time_val)
+        if reminder_end_time.strftime("%H:%M") != st.session_state.app_data.get('reminder_end_time'):
+            st.session_state.app_data['reminder_end_time'] = reminder_end_time.strftime("%H:%M")
+            save_data(st.session_state.app_data)
 
 
-# --- Main Page Content ---
-st.title("💧 Daily Water Tracker")
-st.markdown("Track your hydration journey, one sip at a time.")
+    # --- Main Page Content ---
+    st.title("💧 Daily Water Tracker")
+    st.markdown("Track your hydration journey, one sip at a time.")
 
-# Check for reminders at the start of the script run
-check_and_show_reminder()
+    check_and_show_reminder()
 
-# Calculate today's total and check against the goal (always in ml)
-total_consumed_ml = get_daily_total()
-goal_reached_before = total_consumed_ml >= goal_ml
+    total_consumed_ml = get_daily_total()
+    goal_reached_before = total_consumed_ml >= goal_ml
 
-# Display the main progress circle
-display_progress_circle(total_consumed_ml, goal_ml)
+    display_progress_circle(total_consumed_ml, goal_ml)
 
-st.subheader("Log Your Intake")
+    st.subheader("Log Your Intake")
 
-# Quick-add buttons for a highly interactive experience
-button_cols = st.columns([1, 1, 1])
-common_amounts_ml = [250, 500, 750]
+    button_cols = st.columns([1, 1, 1])
+    common_amounts_ml = [250, 500, 750]
 
-for i, amount_ml in enumerate(common_amounts_ml):
-    if button_cols[i].button(f"💧 {get_display_string(amount_ml)}"):
-        log_water_intake(amount_ml)
-        if not goal_reached_before and (total_consumed_ml + amount_ml) >= goal_ml:
-            st.balloons()
-        st.rerun()
+    for i, amount_ml in enumerate(common_amounts_ml):
+        if button_cols[i].button(f"💧 {get_display_string(amount_ml)}"):
+            log_water_intake(amount_ml)
+            if not goal_reached_before and (total_consumed_ml + amount_ml) >= goal_ml:
+                st.balloons()
+            st.rerun()
 
-# Custom amount input form
-with st.form("add_water_form", clear_on_submit=True):
-    custom_amount = st.number_input(f"Enter a custom amount ({unit})", min_value=0.1, step=0.1)
-    submitted = st.form_submit_button("✅ Add Custom Amount")
-    
-    if submitted and custom_amount > 0:
-        custom_amount_ml = convert_to_ml(custom_amount, unit)
-        log_water_intake(custom_amount_ml)
-        if not goal_reached_before and (total_consumed_ml + custom_amount_ml) >= goal_ml:
-            st.balloons()
-        st.rerun()
+    with st.form("add_water_form", clear_on_submit=True):
+        custom_amount = st.number_input(f"Enter a custom amount ({unit})", min_value=0.1, step=0.1)
+        submitted = st.form_submit_button("✅ Add Custom Amount")
+        
+        if submitted and custom_amount > 0:
+            custom_amount_ml = convert_to_ml(custom_amount, unit)
+            log_water_intake(custom_amount_ml)
+            if not goal_reached_before and (total_consumed_ml + custom_amount_ml) >= goal_ml:
+                st.balloons()
+            st.rerun()
 
-# Display today's entries with an expander
-with st.expander("📜 View Today's Log", expanded=True):
-    today_log = st.session_state.app_data["log"].get(str(date.today()), [])
-    if not today_log:
-        st.info("No entries yet for today. Time to hydrate!")
-    else:
-        for entry in reversed(today_log):
-            with st.container():
-                entry_amount_ml = entry['amount']
-                
-                if st.session_state.editing_timestamp == entry['timestamp']:
-                    col1, col2, col3 = st.columns([2, 1, 1])
-                    with col1:
-                        current_edit_amount = get_display_amount(entry_amount_ml)
-                        new_amount_display = st.number_input(
-                            f"New amount ({unit})",
-                            min_value=0.1,
-                            value=float(current_edit_amount),
-                            step=0.1,
-                            key=f"input_{entry['timestamp']}",
-                            format="%.1f"
-                        )
-                    with col2:
-                        if st.button("💾", key=f"save_{entry['timestamp']}", help="Save changes"):
-                            new_amount_ml = convert_to_ml(new_amount_display, unit)
-                            update_log_entry(entry['timestamp'], new_amount_ml)
-                            st.session_state.editing_timestamp = None
-                            st.rerun()
-                    with col3:
-                        if st.button("✖️", key=f"cancel_{entry['timestamp']}", help="Cancel edit"):
-                            st.session_state.editing_timestamp = None
-                            st.rerun()
-                else:
-                    col1, col2, col3 = st.columns([4, 1, 1])
-                    with col1:
-                        time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
-                        st.markdown(f"""
-                        <div class="log-text">💧 {get_display_string(entry_amount_ml)}</div>
-                        <div class="log-time">at {time_str}</div>
-                        """, unsafe_allow_html=True)
-                    with col2:
-                        if st.button("✏️", key=f"edit_{entry['timestamp']}", help="Edit this entry"):
-                            st.session_state.editing_timestamp = entry['timestamp']
-                            st.rerun()
-                    with col3:
-                        if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
-                            delete_log_entry(entry['timestamp'])
-                            st.rerun()
+    with st.expander("📜 View Today's Log", expanded=True):
+        today_log = st.session_state.app_data["log"].get(str(date.today()), [])
+        if not today_log:
+            st.info("No entries yet for today. Time to hydrate!")
+        else:
+            for entry in reversed(today_log):
+                with st.container():
+                    entry_amount_ml = entry['amount']
+                    
+                    if st.session_state.editing_timestamp == entry['timestamp']:
+                        col1, col2, col3 = st.columns([2, 1, 1])
+                        with col1:
+                            current_edit_amount = get_display_amount(entry_amount_ml)
+                            new_amount_display = st.number_input(
+                                f"New amount ({unit})",
+                                min_value=0.1,
+                                value=float(current_edit_amount),
+                                step=0.1,
+                                key=f"input_{entry['timestamp']}",
+                                format="%.1f"
+                            )
+                        with col2:
+                            if st.button("💾", key=f"save_{entry['timestamp']}", help="Save changes"):
+                                new_amount_ml = convert_to_ml(new_amount_display, unit)
+                                update_log_entry(entry['timestamp'], new_amount_ml)
+                                st.session_state.editing_timestamp = None
+                                st.rerun()
+                        with col3:
+                            if st.button("✖️", key=f"cancel_{entry['timestamp']}", help="Cancel edit"):
+                                st.session_state.editing_timestamp = None
+                                st.rerun()
+                    else:
+                        col1, col2, col3 = st.columns([4, 1, 1])
+                        with col1:
+                            time_str = datetime.fromisoformat(entry['timestamp']).strftime('%I:%M %p')
+                            st.markdown(f"""
+                            <div class="log-text">💧 {get_display_string(entry_amount_ml)}</div>
+                            <div class="log-time">at {time_str}</div>
+                            """, unsafe_allow_html=True)
+                        with col2:
+                            if st.button("✏️", key=f"edit_{entry['timestamp']}", help="Edit this entry"):
+                                st.session_state.editing_timestamp = entry['timestamp']
+                                st.rerun()
+                        with col3:
+                            if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
+                                delete_log_entry(entry['timestamp'])
+                                st.rerun()
