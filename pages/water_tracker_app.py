@@ -202,7 +202,8 @@ def load_data():
         "reminder_interval": 60,
         "reminder_start_time": "09:00",
         "reminder_end_time": "21:00",
-        "quick_add_amounts": [250, 500, 750]
+        "quick_add_amounts": [250, 500, 750],
+        "reminder_sound_enabled": True
     }
     if not os.path.exists(DATA_FILE):
         return defaults
@@ -323,6 +324,17 @@ def display_progress_circle(today_total_ml, goal_ml):
     </div>
     """, unsafe_allow_html=True)
 
+def play_reminder_sound():
+    """Plays a notification sound if enabled by the user."""
+    if st.session_state.app_data.get("reminder_sound_enabled", False):
+        sound_url = "https://raw.githubusercontent.com/interactivenyc/sounds/master/plink.mp3"
+        audio_html = f"""
+            <audio autoplay hidden>
+                <source src="{sound_url}" type="audio/mpeg">
+            </audio>
+        """
+        st.markdown(audio_html, unsafe_allow_html=True)
+
 def check_and_show_reminder():
     """Checks if a reminder should be shown and displays a toast message."""
     settings = st.session_state.app_data
@@ -352,6 +364,7 @@ def check_and_show_reminder():
             return
 
         st.toast(f"💧 Time to hydrate! It's been about {int(minutes_passed)} minutes.", icon="💧")
+        play_reminder_sound()
         st.session_state.last_toast_time = now
 
 # --- Main Application Logic ---
@@ -465,6 +478,12 @@ else:
         reminders_enabled = st.toggle("Enable Reminders", value=st.session_state.app_data.get('reminders_enabled', False))
         if reminders_enabled != st.session_state.app_data.get('reminders_enabled'):
             st.session_state.app_data['reminders_enabled'] = reminders_enabled
+            save_data(st.session_state.app_data)
+            st.rerun()
+
+        sound_enabled = st.toggle("Enable Reminder Sound", value=st.session_state.app_data.get('reminder_sound_enabled', True))
+        if sound_enabled != st.session_state.app_data.get('reminder_sound_enabled'):
+            st.session_state.app_data['reminder_sound_enabled'] = sound_enabled
             save_data(st.session_state.app_data)
             st.rerun()
 
