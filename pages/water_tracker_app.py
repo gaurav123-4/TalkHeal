@@ -1,7 +1,8 @@
 import streamlit as st
 import json
 import os
-from datetime import datetime, date, time
+import pandas as pd
+from datetime import datetime, date, time, timedelta
 
 # --- Configuration ---
 DATA_FILE = "water_tracker_data.json"
@@ -280,6 +281,26 @@ def convert_to_ml(amount, from_unit):
         return amount / ML_TO_OZ
     return amount
 
+# --- Historical Data Function ---
+def get_historical_data(log_data, num_days):
+    """Processes log data to get total intake for the last num_days."""
+    history = {}
+    today = date.today()
+    for i in range(num_days):
+        current_date = today - timedelta(days=i)
+        date_str = str(current_date)
+        
+        daily_total = sum(entry['amount'] for entry in log_data.get(date_str, []))
+        history[date_str] = daily_total
+        
+    if not history:
+        return pd.DataFrame({'Date': [], 'Intake': []})
+        
+    df = pd.DataFrame(list(history.items()), columns=['Date', 'Intake'])
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.sort_values(by='Date').reset_index(drop=True)
+    return df
+
 # --- UI Components ---
 def display_progress_circle(today_total_ml, goal_ml):
     """Renders the interactive progress circle with preferred units."""
@@ -524,3 +545,23 @@ else:
                             if st.button("❌", key=f"delete_{entry['timestamp']}", help="Delete this entry"):
                                 delete_log_entry(entry['timestamp'])
                                 st.rerun()
+    
+    st.divider()
+    st.subheader("📈 Your Progress (Last 7 Days)")
+
+    log_data = st.session_state.app_data.get("log", {})
+    history_df = get_historical_data(log_data, 7)
+
+    if history_df.empty or history_df['Intake'].sum() == 0:
+        st.info("Log your intake for a few days to see a chart of your progress here!")
+    else:
+        goal_display = get_display_amount(goal_ml)
+
+        # Rename column for chart legend and convert values to display unit
+        chart_df = history_df.copy()
+        chart_df[f'Intake ({unit})'] = chart_df['Intake'].apply(get_display_amount)
+        chart_df = chart_df.drop(columns=['Intake'])
+        chart_df = chart_df.set_index('Date')
+
+        st.bar_chart(chart_df)
+        st.caption(f"Your daily goal is {int(goal_display)} {unit}.")
