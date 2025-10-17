@@ -1,4 +1,5 @@
 import streamlit as st
+st.set_page_config(page_title="Habit Builder Pro", page_icon="🎯", layout="wide")
 import base64
 import datetime
 import random
@@ -602,7 +603,6 @@ def display_achievements_and_stats():
 
 def show():
     """Main application function"""
-    st.set_page_config(page_title="Habit Builder Pro", page_icon="🎯", layout="wide")
     
     # Initialize session state
     initialize_session_state()
