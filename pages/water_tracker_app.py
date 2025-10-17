@@ -8,6 +8,15 @@ from datetime import datetime, date, time, timedelta
 DATA_FILE = "water_tracker_data.json"
 ML_TO_OZ = 0.033814
 
+# --- Achievements Definition ---
+ACHIEVEMENTS = {
+    "first_log": {"name": "First Drop!", "description": "Log your first drink."},
+    "streak_3": {"name": "On a Roll!", "description": "Hit your goal 3 days in a row."},
+    "streak_7": {"name": "Hydration Hero!", "description": "Hit your goal for a full week!"},
+    "total_10l": {"name": "Getting Started", "description": "Log a total of 10 liters."},
+    "total_50l": {"name": "Serious Sipper", "description": "Log a total of 50 liters."},
+}
+
 # --- UI Styling ---
 st.set_page_config(
     page_title="Daily Water Tracker",
@@ -203,7 +212,10 @@ def load_data():
         "reminder_start_time": "09:00",
         "reminder_end_time": "21:00",
         "quick_add_amounts": [250, 500, 750],
-        "reminder_sound_enabled": True
+        "reminder_sound_enabled": True,
+        "achievements": {},
+        "goal_met_dates": [],
+        "total_volume_logged_ml": 0
     }
     if not os.path.exists(DATA_FILE):
         return defaults
@@ -224,6 +236,8 @@ def save_data(data):
 
 def log_water_intake(amount_ml):
     """Logs a new water intake entry (always in ml) and saves it."""
+    total_before = get_daily_total()
+    
     today_str = str(date.today())
     if today_str not in st.session_state.app_data["log"]:
         st.session_state.app_data["log"][today_str] = []
@@ -232,9 +246,13 @@ def log_water_intake(amount_ml):
         "amount": amount_ml,
         "timestamp": datetime.now().isoformat()
     })
-    # Reset reminder snooze when a drink is logged
+    
     if 'last_toast_time' in st.session_state:
         del st.session_state['last_toast_time']
+    
+    # --- Achievement Checks ---
+    check_achievements(total_before, amount_ml)
+    
     save_data(st.session_state.app_data)
 
 def get_daily_total():
@@ -262,6 +280,62 @@ def update_log_entry(timestamp_to_update, new_amount_ml):
             break
     st.session_state.app_data["log"][today_str] = today_log
     save_data(st.session_state.app_data)
+
+# --- Achievement Functions ---
+def unlock_achievement(ach_id):
+    """Unlocks an achievement, saves it, and shows a notification."""
+    if not st.session_state.app_data["achievements"].get(ach_id, {}).get("unlocked", False):
+        st.session_state.app_data["achievements"][ach_id] = {
+            "unlocked": True,
+            "date": str(date.today())
+        }
+        st.toast(f"🏆 Achievement Unlocked: {ACHIEVEMENTS[ach_id]['name']}", icon="🏆")
+
+def update_streak():
+    """Calculates the current goal streak and unlocks achievements."""
+    goal_met_dates = sorted([datetime.strptime(d, "%Y-%m-%d").date() for d in st.session_state.app_data.get("goal_met_dates", [])])
+    if not goal_met_dates:
+        return
+
+    streak = 0
+    # Check from today backwards
+    expected_date = date.today()
+    if expected_date not in goal_met_dates:
+         expected_date = date.today() - timedelta(days=1)
+
+    for d in reversed(goal_met_dates):
+        if d == expected_date:
+            streak += 1
+            expected_date -= timedelta(days=1)
+        else:
+            break
+    
+    if streak >= 3:
+        unlock_achievement("streak_3")
+    if streak >= 7:
+        unlock_achievement("streak_7")
+
+def check_achievements(total_before_log, amount_logged):
+    """Checks all achievement conditions after a log entry."""
+    # 1. First Log
+    unlock_achievement("first_log")
+
+    # 2. Total Volume
+    total_volume = st.session_state.app_data.get("total_volume_logged_ml", 0) + amount_logged
+    st.session_state.app_data["total_volume_logged_ml"] = total_volume
+    if total_volume >= 10000:
+        unlock_achievement("total_10l")
+    if total_volume >= 50000:
+        unlock_achievement("total_50l")
+
+    # 3. Goal-based streaks
+    goal = st.session_state.app_data.get("goal", 2500)
+    total_after_log = total_before_log + amount_logged
+    if total_before_log < goal and total_after_log >= goal:
+        today_str = str(date.today())
+        if today_str not in st.session_state.app_data["goal_met_dates"]:
+            st.session_state.app_data["goal_met_dates"].append(today_str)
+        update_streak()
 
 # --- Unit Conversion and Display Functions ---
 def get_display_amount(ml_value):
@@ -606,3 +680,14 @@ else:
 
         st.bar_chart(chart_df)
         st.caption(f"Your daily goal is {int(goal_display)} {unit}.")
+
+    st.divider()
+    with st.expander("🏆 My Achievements"):
+        unlocked_achs = [k for k, v in st.session_state.app_data.get("achievements", {}).items() if v.get("unlocked")]
+        if not unlocked_achs:
+            st.info("Keep hydrating to unlock achievements!")
+        else:
+            for ach_id in unlocked_achs:
+                ach_details = ACHIEVEMENTS.get(ach_id)
+                if ach_details:
+                    st.markdown(f"**{ach_details['name']}**: {ach_details['description']}")
