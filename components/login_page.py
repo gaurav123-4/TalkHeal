@@ -344,7 +344,7 @@ def show_login_page():
             st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('<div class="auth-button">', unsafe_allow_html=True)
-            if st.button("Forget Password?", key="switch_to_forget_page"):
+            if st.button("Forgot Password?", key="switch_to_forget_page"):
                 st.session_state.show_signup = False
                 st.session_state.show_forget_page = True
                 st.rerun()
