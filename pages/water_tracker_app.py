@@ -234,6 +234,35 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
+def generate_export_data():
+    """Prepares user log data for CSV export."""
+    log_data = st.session_state.app_data.get("log", {})
+    if not log_data:
+        return ""
+
+    export_rows = []
+    current_unit = st.session_state.app_data.get("units", "ml")
+
+    for date_str, entries in log_data.items():
+        for entry in entries:
+            amount_ml = entry['amount']
+            display_amount = get_display_amount(amount_ml)
+            row = {
+                "date": date_str,
+                "timestamp": entry['timestamp'],
+                "amount_ml": int(amount_ml),
+                "amount_display": f"{display_amount:.1f}" if current_unit == "oz" else int(display_amount),
+                "unit_display": current_unit
+            }
+            export_rows.append(row)
+    
+    if not export_rows:
+        return ""
+
+    df = pd.DataFrame(export_rows)
+    df = df.sort_values(by="timestamp", ascending=False)
+    return df.to_csv(index=False).encode('utf-8')
+
 def log_water_intake(amount_ml):
     """Logs a new water intake entry (always in ml) and saves it."""
     total_before = get_daily_total()
@@ -577,6 +606,20 @@ else:
         if reminder_end_time.strftime("%H:%M") != st.session_state.app_data.get('reminder_end_time'):
             st.session_state.app_data['reminder_end_time'] = reminder_end_time.strftime("%H:%M")
             save_data(st.session_state.app_data)
+
+        st.divider()
+        st.header("💾 Data Management")
+
+        csv_data = generate_export_data()
+
+        st.download_button(
+           label="📥 Export Log to CSV",
+           data=csv_data,
+           file_name="water_tracker_log.csv",
+           mime="text/csv",
+           disabled=not csv_data,
+           help="Download all your logged water intake as a CSV file."
+        )
 
 
     # --- Main Page Content ---
