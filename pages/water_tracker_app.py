@@ -201,7 +201,8 @@ def load_data():
         "reminders_enabled": False,
         "reminder_interval": 60,
         "reminder_start_time": "09:00",
-        "reminder_end_time": "21:00"
+        "reminder_end_time": "21:00",
+        "quick_add_amounts": [250, 500, 750]
     }
     if not os.path.exists(DATA_FILE):
         return defaults
@@ -437,6 +438,27 @@ else:
             save_data(st.session_state.app_data)
             st.rerun()
 
+        with st.expander("Edit Quick-Add Buttons"):
+            quick_add_ml = st.session_state.app_data.get("quick_add_amounts", [250, 500, 750])
+            new_quick_add_ml = []
+            
+            for i in range(3):
+                current_val_display = get_display_amount(quick_add_ml[i])
+                new_val_display = st.number_input(
+                    f"Button {i+1} ({unit})",
+                    min_value=1.0,
+                    value=float(current_val_display),
+                    step=10.0 if unit == 'ml' else 0.1,
+                    key=f"quick_add_{i}",
+                    format="%.0f" if unit == 'ml' else "%.1f"
+                )
+                new_quick_add_ml.append(convert_to_ml(new_val_display, unit))
+
+            if new_quick_add_ml != quick_add_ml:
+                st.session_state.app_data['quick_add_amounts'] = [int(v) for v in new_quick_add_ml]
+                save_data(st.session_state.app_data)
+                st.rerun()
+
         st.divider()
         st.header("⏰ Reminders")
         
@@ -478,7 +500,7 @@ else:
     st.subheader("Log Your Intake")
 
     button_cols = st.columns([1, 1, 1])
-    common_amounts_ml = [250, 500, 750]
+    common_amounts_ml = st.session_state.app_data.get("quick_add_amounts", [250, 500, 750])
 
     for i, amount_ml in enumerate(common_amounts_ml):
         if button_cols[i].button(f"💧 {get_display_string(amount_ml)}"):
