@@ -276,23 +276,6 @@ for i, (tool_id, tool_info) in enumerate(tools.items()):
                         st.session_state.recent_tools.pop()
                 st.rerun()
 
-
-                st.rerun()
-
-# --- Display All Tools with Favorite Toggles ---
-st.subheader("All Tools")
-# Use 2 columns for the main tool list
-cols = st.columns(2)
-for i, (tool_id, tool_info) in enumerate(tools.items()):
-    with cols[i % 2]:
-        # Create a layout with the main button and a smaller favorite button
-        col1, col2 = st.columns([0.8, 0.2])
-        with col1:
-            if st.button(f"{tool_info['icon']} {tool_info['name']}", use_container_width=True, key=f"tool_{tool_id}"):
-                st.session_state.active_tool = tool_id
-                st.rerun()
-
-
         with col2:
             # Check if the tool is already a favorite
             is_favorited = tool_id in st.session_state.favorite_tools
