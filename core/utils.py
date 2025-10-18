@@ -1,5 +1,4 @@
-import sqlite3 # ADDED: Keep sqlite3 import for feedback/auth (from >>>>>>>)
-from googletrans import Translator # ADDED: Keep Translator import for multilingual support
+import sqlite3
 import streamlit as st
 import hashlib
 from datetime import datetime, timedelta, timezone
@@ -8,7 +7,6 @@ import re
 import json
 import os
 import google.generativeai
-import google.generativeai as genai
 
 
 def get_current_time():
@@ -212,7 +210,6 @@ def load_conversations():
     Returns:
         list: List of conversation dicts, or empty list if none exist.
     """
-    # MERGED: Uses the correct file path from get_memory_file()
     memory_file = get_memory_file()
     if not os.path.exists(memory_file):
         return []
@@ -435,7 +432,7 @@ def render_responsive_buttons(buttons_data, columns_per_row=None, mobile_stack=T
     
     Args:
         buttons_data (list): List of dictionaries with button data
-                            Each dict should have: {'text': str, 'key': str, 'action': callable, 'type': str}
+                           Each dict should have: {'text': str, 'key': str, 'action': callable, 'type': str}
         columns_per_row (int): Number of buttons per row on desktop (default: len(buttons_data))
         mobile_stack (bool): Whether to stack buttons on mobile
         

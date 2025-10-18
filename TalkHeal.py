@@ -1,19 +1,9 @@
 import streamlit as st
-from googletrans import Translator
-from auth.auth_utils import init_db 
+from auth.auth_utils import init_db
 from components.login_page import show_login_page
-from core.utils import save_conversations, load_conversations, set_authenticated_user
+from core.utils import save_conversations, load_conversations,set_authenticated_user
 from components.mood_dashboard import MoodTracker, render_mood_dashboard
 import plotly.express as px
-
-if "selected_lang_code" not in st.session_state:
-    st.session_state["selected_lang_code"] = "en"
-if "translator" not in st.session_state:
-    try:
-        st.session_state["translator"] = Translator()
-    except Exception:
-        # Fallback if googletrans fails to load resources
-        st.session_state["translator"] = None
 
 st.set_page_config(page_title="TalkHeal", page_icon="💬", layout="wide")
 no_sidebar_style = """

@@ -1,6 +1,4 @@
 import streamlit as st
-# ADDED: Import for language map
-import googletrans 
 from datetime import datetime
 from core.utils import create_new_conversation
 from core.theme import get_current_theme, toggle_theme, set_palette, PALETTES
@@ -258,59 +256,116 @@ def render_ambient_sounds():
             st.markdown("• Enhances mindfulness and focus")
             st.markdown("• Creates a therapeutic environment")
 
+# Renders the sidebar with a pinned messages count and a button to navigate to the Pinned Messages page
+
 def render_sidebar():
     """Renders the left sidebar with organized sections."""
+    if "pinned_messages" in st.session_state and st.session_state.pinned_messages:
+        pin_count = len(st.session_state.pinned_messages)
+        st.markdown(f"""
+        <div style="background-color: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            📌 <strong>{pin_count}</strong> pinned message{'s' if pin_count != 1 else ''}
+        </div>
+        """, unsafe_allow_html=True)
+        
+
+    # Pinned Messages navigation
+    # Add a stable key so we can target this specific button with CSS
+    st.markdown("""
+    <style>
+    /* Target the Streamlit button by its custom key-based data-testid when rendered. */
+    /* Streamlit renders buttons with a data-testid like "stButton" and keys end up in attributes; to be safe we target the button text content within the sidebar container. */
+    .stSidebar div[role="button"] > button { }
+    .view-pinned-btn {
+        background: #C2185B !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0.6rem 0.75rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    .view-pinned-btn:hover {
+        filter: brightness(0.95) !important;
+    }
+    /* Also target the actual Streamlit button rendered from st.button with key="view_pinned_btn" */
+    .stButton > button[data-testid^="baseButton-view_pinned_btn"],
+    .stApp [data-testid="stSidebar"] .stButton > button[data-testid^="baseButton-view_pinned_btn"] {
+        /* Force a solid background color (no transparency or gradients) */
+        background: none !important;
+        background-color: #C2185B !important;
+        background-image: none !important;
+        -webkit-background-clip: padding-box !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(0,0,0,0.06) !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        padding: 0.6rem 0.8rem !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        appearance: none !important;
+    }
+    .stButton > button[data-testid^="baseButton-view_pinned_btn"]:hover,
+    .stApp [data-testid="stSidebar"] .stButton > button[data-testid^="baseButton-view_pinned_btn"]:hover {
+        filter: brightness(0.95) !important;
+        transform: translateY(-1px) !important;
+        background-color: #B2154C !important; /* slightly darker on hover */
+        background-image: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Use st.markdown to render a styled HTML button inside the sidebar for more reliable styling
+    if st.markdown is not None:
+        # Render a clickable element that behaves like the original button
+        # We keep the Streamlit button as accessible fallback, but hide it visually while keeping functionality via a small helper.
+        # The visible element below is an HTML button styled with .view-pinned-btn that triggers a Streamlit callback via query params.
+        # Simpler approach: render a normal Streamlit button but add CSS class to its wrapper via HTML. We achieve this by
+        # rendering the styled HTML and detecting clicks via the original st.button positioned right after.
+        pass
+
+    if st.button("📌 View Pinned Messages", key="view_pinned_btn", use_container_width=True):
+        st.session_state.active_page = "PinnedMessages"
+        st.rerun()
+
     
     with st.sidebar:
-        # --- Multilingual Feature Integration ---
-        st.markdown("### 🌐 Language Settings")
-        
-        language_map = googletrans.LANGUAGES
-        # Map language name to code
-        lang_name_to_code = {v.title(): k for k, v in language_map.items()}
-
-        # Ensure the current selection is available
-        default_lang_code = st.session_state.get("selected_lang_code", "en")
-        default_lang_name = language_map.get(default_lang_code, "English").title()
-
-        # Find the index of the default language for the selectbox
-        try:
-            default_index = sorted(lang_name_to_code.keys()).index(default_lang_name)
-        except ValueError:
-            default_index = 0
-
-        selected_lang_name = st.selectbox(
-            "Select your language",
-            sorted(lang_name_to_code.keys()),
-            index=default_index,
-            key="lang_selector"
-        )
-        
-        selected_lang_code = lang_name_to_code[selected_lang_name]
-
-        # Update session state if selection changes
-        if selected_lang_code != st.session_state.get("selected_lang_code", "en"):
-            st.session_state['selected_lang_code'] = selected_lang_code
-            st.rerun()
-
-        st.markdown("---")
-        
-        # --- Pinned Messages Section ---
-        if "pinned_messages" in st.session_state and st.session_state.pinned_messages:
-            pin_count = len(st.session_state.pinned_messages)
-            st.markdown(f"""
-            <div style="background-color: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
-                📌 <strong>{pin_count}</strong> pinned message{'s' if pin_count != 1 else ''}
-            </div>
+        # --- Water Intake Tracker Section ---
+        with st.expander("💧 Water Intake Tracker", expanded=False):
+            from core.water_tracker import get_today_total, load_water_log
+            import pandas as pd
+            import datetime
+            total = get_today_total()
+            st.markdown("""
+                <div style="display: flex; align-items: center; gap: 0.7em; margin-bottom: 0.5em;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/728/728093.png" width="38" height="38" style="border-radius: 50%; box-shadow: 0 2px 8px #b3e0ff55; background: #e6f7ff;" alt="Water Glass">
+                    <div style="font-size: 1.1em; font-weight: 600; color: #0077b6;">Today's Water</div>
+                </div>
             """, unsafe_allow_html=True)
-            
-            # Pinned Messages navigation button
-            if st.button("📌 View Pinned Messages", key="view_pinned_btn", use_container_width=True):
-                st.session_state.active_page = "PinnedMessages"
+            st.markdown(f"<div style='font-size:2.1em; font-weight:700; color:#0096c7; text-align:center; margin-bottom:0.2em;'>{total} <span style='font-size:0.5em;'>ml</span></div>", unsafe_allow_html=True)
+            st.progress(min(total / 2000, 1.0), text=f"{total}/2000 ml (Goal)")
+            # --- 7-day bar chart ---
+            data = load_water_log()
+            today = datetime.date.today()
+            days = [(today - datetime.timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+            chart_data = {d: sum(e['amount_ml'] for e in data.get(d, [])) for d in days}
+            df = pd.DataFrame({"Date": list(chart_data.keys()), "Water (ml)": list(chart_data.values())})
+            st.markdown("<div style='margin:0.5em 0 0.2em 0; font-size:0.98em; color:#555; text-align:center;'>Last 7 Days</div>", unsafe_allow_html=True)
+            st.bar_chart(df.set_index("Date"), height=120, use_container_width=True)
+            st.markdown("""
+                <div style="font-size:0.98em; color:#555; margin:0.5em 0 0.2em 0; text-align:center;">
+                    <span style="background:#e0f7fa; color:#00796b; border-radius:8px; padding:2px 10px; font-size:0.95em;">Tip: Aim for 2L (2000ml) daily</span>
+                </div>
+                <div style="display:flex; justify-content:center; margin-top:0.7em;">
+                    <button style="background:linear-gradient(90deg,#48c6ef 0%,#6f86d6 100%);color:white;font-weight:600;border:none;border-radius:1.2rem;padding:0.6rem 1.5rem;font-size:1.1em;cursor:pointer;box-shadow:0 2px 8px 0 #48c6ef33;transition:background 0.2s;outline:none;width:100%;max-width:220px;" onclick="window.location.hash='water-intake-tracker'">Go to Water Tracker</button>
+                </div>
+                <div style="margin-top:0.7em; text-align:center;">
+                    <span style="font-size:0.95em; color:#0096c7;">💧 Stay hydrated for better mood & focus!</span>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button("Open Water Tracker", key="sidebar_water_tracker", use_container_width=True, type="primary"):
+                st.session_state.active_page = "WaterIntakeTracker"
                 st.rerun()
-        
-        st.markdown("---")
-
         # Theme Settings Section
         with st.expander("🎨 Appearance Settings", expanded=False):
             current_theme = get_current_theme()
@@ -327,6 +382,7 @@ def render_sidebar():
                     key="palette_selector",
                 )
                 if selected_palette != st.session_state.get("palette_name", "Light"):
+                    st.session_state["palette_name"] = selected_palette
                     set_palette(selected_palette)
 
             # Current theme display
@@ -336,7 +392,7 @@ def render_sidebar():
                 <span class="theme-name">{current_theme['name']} Mode</span>
             </div>
             """, unsafe_allow_html=True)
-
+            
             # Theme toggle button
             button_text = "🌙 Switch to Dark" if not is_dark else "☀️ Switch to Light"
             button_type = "primary" if not is_dark else "secondary"
@@ -359,6 +415,53 @@ def render_sidebar():
         
         st.markdown("---")
         
+        # Mental Wellness Games Section
+        st.markdown("""
+        <div class="sidebar-section-header" style="margin-bottom: 10px;">
+            <h3>🎮 Mental Wellness Games</h3>
+            <p>Interactive games for mental health & relaxation</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Main Games Page Button
+        if st.button("🚀 Play Wellness Games", key="main_games_page", use_container_width=True, type="primary"):
+            st.session_state.active_page = "Games"
+            st.rerun()
+        
+        with st.expander("🎯 Game Preview", expanded=False):
+            st.markdown("*Available therapeutic games:*")
+            
+            # Quick Game Previews
+            st.markdown("""
+            🧠 **Memory Challenge** - Simon Says style game for cognitive improvement
+            
+            🎨 **Mood Color Match** - Express emotions through color psychology
+            
+            😌 **Stress Relief Clicker** - Simple clicking for anxiety management
+            
+            💭 **Positive Words** - Build positive thinking patterns
+            
+            🫁 **Breathing Patterns** - Interactive breathing exercises with visual feedback
+            """)
+            
+            st.markdown("---")
+            st.markdown("*Benefits of mindful gaming:*")
+            st.markdown("• Improves focus and concentration")
+            st.markdown("• Reduces stress and anxiety")
+            st.markdown("• Enhances cognitive function")
+            st.markdown("• Promotes mindful awareness")
+
+        # Community Forum Section
+        st.markdown("""
+        <div class="sidebar-section-header" style="margin-bottom: 10px;">
+            <h3>🌐 Community Forum</h3>
+            <p>Connect, share, and support each other</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Visit Forum", key="visit_forum", use_container_width=True, type="secondary"):
+            st.session_state.active_page = "CommunityForum"
+            st.rerun()
+
         # Chat Management Section
         st.markdown("""
         <div class="sidebar-section-header">
@@ -402,19 +505,12 @@ def render_sidebar():
             if "delete_candidate" not in st.session_state:
                 for i, convo in enumerate(st.session_state.conversations):
                     is_active = i == st.session_state.active_conversation
-
                     button_style_icon = "🟢" if is_active else "📝"
-                    
-                    # MERGED: Using the cleaner title display logic
-                    title = convo.get("title", "Untitled")
-                    short_title = title if len(title) <= 22 else f"{title[:22]}..."
-                    label = f"{button_style_icon} {short_title}"
-
 
                     col1, col2 = st.columns([5, 1])
                     with col1:
                         if st.button(
-                            label,
+                            f"{button_style_icon} {convo['title'][:20]}...",
                             key=f"convo_{i}",
                             help=f"Started: {convo['date']}",
                             use_container_width=True

@@ -1,5 +1,26 @@
-import googletrans
-from googletrans import Translator
+def get_personality_list():
+    """
+    Return a list of available chatbot personalities.
+    Used to let users select the tone of the AI companion.
+    """
+    return [
+        "Compassionate Listener",
+        "Motivating Coach",
+        "Wise Friend",
+        "Neutral Therapist",
+        "Mindfulness Guide"
+    ]
+
+def generate_response(user_input, personality):
+    """
+    Stub for generating a response. In production, this would call the AI model.
+    Args:
+        user_input (str): The user's message.
+        personality (str): The selected chatbot personality.
+    Returns:
+        str: The AI's response.
+    """
+    return f"[{personality}] Response to: {user_input}"
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
@@ -226,8 +247,8 @@ def inject_feedback_css():
         .stButton > button[data-testid^="baseButton-feedback_small_"] {
             background: transparent !important;
             border: none !important;
-            color: #6b7280 !important;        /* muted grey */
-            font-size: 18px !important;      /* emoji size */
+            color: #6b7280 !important;       /* muted grey */
+            font-size: 18px !important;     /* emoji size */
             padding: 4px 6px !important;
             min-width: 38px !important;
             height: 36px !important;
@@ -252,37 +273,7 @@ def inject_feedback_css():
     )
 
 
-def toggle_pin_message(msg, convo_id):
-    """
-    Pin or unpin a chat message for quick reference.
-    Args:
-        msg (dict): The message to pin/unpin.
-        convo_id (int): The conversation ID.
-    """
-    if "pinned_messages" not in st.session_state:
-        st.session_state.pinned_messages = []
-
-    # Unique check based on message text + convo_id
-    exists = next(
-        (m for m in st.session_state.pinned_messages
-         if m.get("message") == msg.get("message")
-         and m.get("convo_id") == convo_id),
-        None
-    )
-
-    if exists:
-        # Unpin by removing
-        st.session_state.pinned_messages = [
-            m for m in st.session_state.pinned_messages if m != exists
-        ]
-    else:
-        # Save only what you need
-        st.session_state.pinned_messages.append({
-            "message": msg.get("message", ""),
-            "sender": msg.get("sender", ""),
-            "convo_id": convo_id
-        })
-
+# Note: Removed unused set_user_time_in_session (dead code)
 
 def show_session_feedback():
     """
@@ -493,8 +484,8 @@ def show_session_summary(active_convo):
             sender_icon = "👤" if msg["sender"] == "user" else "🤖"
             st.markdown(f"{sender_icon} **{msg['sender'].title()}:** {msg['message'][:100]}{'...' if len(msg['message']) > 100 else ''}")
 
-
 # Functions to handle pinning/unpinning messages and rendering the chat interface with pin buttons
+#Adds/removes a message from pinned messages in session state
 def toggle_pin_message(msg, convo_id):
     """
     Pin or unpin a chat message for quick reference.
@@ -523,7 +514,7 @@ def toggle_pin_message(msg, convo_id):
         # Save only what you need
         st.session_state.pinned_messages.append({
             "message": msg.get("message", ""),
-            "sender": msg.get("sender", ""),    # keep if you want filtering
+            "sender": msg.get("sender", ""),   # keep if you want filtering
             "convo_id": convo_id
         })
         
@@ -556,35 +547,32 @@ def render_chat_interface():
                 for m in st.session_state.pinned_messages
             )
             pin_label = "📍" if pinned else "📌"
-            
-            message_time = msg.get('time', get_current_time())
-
 
             if msg["sender"] == "user":
                 # User message aligned right
                 col1, col2, col3 = st.columns([2, 7, 1])
                 with col2:
                     st.markdown(f"""
-    <div class="user-message" style="
-        background: linear-gradient(130deg, #6366f1 70%, #818cf8 100%);
-        color: white;
-        padding: 12px 16px;
-        border-radius: 16px;
-        margin: 8px 0;
-        border: 1.5px solid rgba(129,140,248,0.21);
-        border-bottom-right-radius: 4px;
-        word-wrap: break-word;
-        font-size: 15px;
-        line-height: 1.5;
-        position: relative;
-        margin-left: auto;
-        max-width: 85%;
-    ">
-        {msg['message']}
-        <div class="message-time" style="font-size:12px; color: #c4d0e0; opacity: 0.76; margin-top: 4px; text-align: right;">
-            {message_time}
+        <div class="user-message" style="
+            background: linear-gradient(130deg, #6366f1 70%, #818cf8 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin: 8px 0;
+            border: 1.5px solid rgba(129,140,248,0.21);
+            border-bottom-right-radius: 4px;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.5;
+            position: relative;
+            margin-left: auto;
+            max-width: 85%;
+        ">
+            {msg['message']}
+            <div class="message-time" style="font-size:12px; color: #c4d0e0; opacity: 0.76; margin-top: 4px; text-align: right;">
+                {msg['time']}
+            </div>
         </div>
-    </div>
                     """, unsafe_allow_html=True)
                 with col3:
                     st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
@@ -601,26 +589,26 @@ def render_chat_interface():
                         st.rerun()
                 with col2:
                     st.markdown(f"""
-    <div class="bot-message" style="
-        background: rgba(255,255,255,0.9);
-        color: #333;
-        padding: 12px 16px;
-        border-radius: 16px;
-        margin: 8px 0;
-        border: 1px solid rgba(0,0,0,0.1);
-        border-bottom-left-radius: 4px;
-        word-wrap: break-word;
-        font-size: 15px;
-        line-height: 1.5;
-        position: relative;
-        margin-right: auto;
-        max-width: 85%;
-    ">
-        {msg['message']}
-        <div class="message-time" style="font-size:12px; color: #666; opacity: 0.76; margin-top: 4px; text-align: right;">
-            {message_time}
+        <div class="bot-message" style="
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin: 8px 0;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-bottom-left-radius: 4px;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.5;
+            position: relative;
+            margin-right: auto;
+            max-width: 85%;
+        ">
+            {msg['message']}
+            <div class="message-time" style="font-size:12px; color: #666; opacity: 0.76; margin-top: 4px; text-align: right;">
+                {msg['time']}
+            </div>
         </div>
-    </div>
                     """, unsafe_allow_html=True)
 
                     # --- Feedback system (embedded under bot messages) ---
@@ -671,9 +659,10 @@ def render_chat_interface():
                     elif state == "submitted":
                         st.caption("🙏 Thank you — your feedback was recorded.")
 
-        # Close chat container
-        st.markdown('</div>', unsafe_allow_html=True)
+# Close chat container
+st.markdown('</div>', unsafe_allow_html=True)
 
+        
 # Quickly lists all pinned messages for reference
 def render_pinned_messages():
     """
@@ -749,3 +738,157 @@ def render_session_controls():
             
             # Show comprehensive session feedback
             show_session_feedback()
+
+
+# Handle chat input and generate AI response
+def handle_chat_input(model, system_prompt):
+    """
+    Handle user chat input, generate AI response, and update conversation state.
+    Args:
+        model (str): The AI model to use.
+        system_prompt (str): The system prompt for the AI.
+    """
+    if "pre_filled_chat_input" not in st.session_state:
+        st.session_state.pre_filled_chat_input = ""
+    initial_value = st.session_state.pre_filled_chat_input
+    st.session_state.pre_filled_chat_input = ""
+
+    with st.form(key="chat_form", clear_on_submit=True):
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            user_input = st.text_input(
+                "Share your thoughts...",
+                key="message_input",
+                label_visibility="collapsed",
+                placeholder="Type your message here...",
+                value=initial_value
+            )
+        with col2:
+            send_pressed = st.form_submit_button("Send", use_container_width=True)
+
+    if (send_pressed or st.session_state.get("send_chat_message", False)) and user_input.strip():
+        if 'send_chat_message' in st.session_state:
+            st.session_state.send_chat_message = False
+
+        if st.session_state.active_conversation >= 0 and st.session_state.active_conversation < len(st.session_state.conversations):
+            current_time = get_current_time()
+            active_convo = st.session_state.conversations[st.session_state.active_conversation]
+
+            # Save user message
+            active_convo["messages"].append({
+                "sender": "user",
+                "message": user_input.strip(),
+                "time": current_time
+            })
+
+            # Set title if it's the first message
+            if len(active_convo["messages"]) == 1:
+                title = user_input[:30] + "..." if len(user_input) > 30 else user_input
+                active_convo["title"] = title
+
+            save_conversations(st.session_state.conversations)
+
+            # Format memory
+            def format_memory(convo_history, max_turns=10):
+                context = ""
+                for msg in convo_history[-max_turns*2:]:  # user + bot per turn
+                    sender = "User" if msg["sender"] == "user" else "Bot"
+                    context += f"{sender}: {msg['message']}\n"
+                return context
+
+            try:
+                with st.spinner("TalkHeal is thinking..."):
+                    memory = format_memory(active_convo["messages"])
+                    # Create a comprehensive prompt combining system prompt and conversation context
+                    full_prompt = f"{system_prompt}\n\nConversation Context:\n{memory}\n\nUser: {user_input.strip()}"
+                    ai_response = get_ai_response(full_prompt, model)
+
+                    active_convo["messages"].append({
+                        "sender": "bot",
+                        "message": ai_response,
+                        "time": get_current_time()
+                    })
+
+            except ValueError as e:
+                st.error("I'm having trouble understanding your message. Could you please rephrase it?")
+                active_convo["messages"].append({
+                    "sender": "bot",
+                    "message": "I'm having trouble understanding your message. Could you please rephrase it?",
+                    "time": get_current_time()
+                })
+            except requests.RequestException as e:
+                st.error("Network connection issue. Please check your internet connection.")
+                active_convo["messages"].append({
+                    "sender": "bot",
+                    "message": "I'm having trouble connecting to my services. Please check your internet connection and try again.",
+                    "time": get_current_time()
+                })
+            except Exception as e:
+                st.error(f"An unexpected error occurred. Please try again.")
+                active_convo["messages"].append({
+                    "sender": "bot",
+                    "message": "I'm having trouble responding right now. Please try again in a moment.",
+                    "time": get_current_time()
+                })
+
+            save_conversations(st.session_state.conversations)
+            st.rerun()
+
+def render_bot_message(message: str, key: str, convo_id: int):
+    """
+    Render a single bot message in the chat interface.
+    Args:
+        message (str): The bot's message.
+        key (str): Unique key for the message.
+        convo_id (int): The conversation ID.
+    """
+    
+    """Render a bot-style message with thumbs + feedback workflow"""
+
+    # --- Render the bot message bubble ---
+    st.markdown(f"""
+    <div style="background:#f9fafb; padding:10px 14px; border-radius:10px; 
+                margin:6px 0; border:1px solid #e5e7eb;">
+        {message}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- Track feedback state ---
+    if f"{key}_feedback" not in st.session_state:
+        st.session_state[f"{key}_feedback"] = None  # None / "up" / "down"
+    if f"{key}_comment" not in st.session_state:
+        st.session_state[f"{key}_comment"] = ""      # user text if 👎
+
+    feedback_state = st.session_state[f"{key}_feedback"]
+
+    # --- Feedback buttons ---
+    if feedback_state is None:
+        col1, col2 = st.columns([0.1, 0.9])
+        with col1:
+            if st.button("👍", key=f"{key}_up"):
+                st.session_state[f"{key}_feedback"] = "up"
+                save_feedback(convo_id, message, "up", None)
+                st.success("✅ Thanks for the feedback!")
+        with col2:
+            if st.button("👎", key=f"{key}_down"):
+                st.session_state[f"{key}_feedback"] = "down"
+
+    # --- If thumbs down, ask for comment ---
+    elif feedback_state == "down":
+        st.warning("👎 Sorry this wasn’t helpful. Could you tell us why?")
+        user_comment = st.text_area(
+            "Your feedback:",
+            key=f"{key}_textarea",
+            placeholder="Type your thoughts here and press Enter..."
+        )
+        if st.button("Submit Feedback", key=f"{key}_submit"):
+            save_feedback(convo_id, message, "down", user_comment)
+            st.session_state[f"{key}_comment"] = user_comment
+            st.success("🙏 Thank you for your detailed feedback!")
+
+    # --- If thumbs up already given ---
+    elif feedback_state == "up":
+        st.caption("✅ You marked this reply as helpful.")
+           
+# This file contains component functions that are imported and used by the main TalkHeal.py
+# The main() function and standalone execution code has been removed since this is a component module
