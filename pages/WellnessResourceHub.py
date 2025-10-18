@@ -17,6 +17,7 @@ page = st.sidebar.radio(
         "🎯 Wellness Goals",
         "📊 Mood Tracker",
         "🍴 Food & Mood Journal",
+        "🏆 Wellness Challenges",
         "📓 Journaling Prompts",
         "📚 Wellness Resources",
         "🤝 Community Tips",
@@ -729,6 +730,85 @@ elif page == "🍴 Food & Mood Journal":
                     st.write(f"**Notes:** {entry['note']}")
     else:
         st.info("No entries yet. Add one above to get started.")
+
+# --- Page for Wellness Challenges ---
+elif page == "🏆 Wellness Challenges":
+    st.title("🏆 Wellness Challenges")
+    st.write("Join a challenge to build healthy habits and boost your well-being in a fun, structured way!")
+
+    challenges = {
+        "7-Day Mindfulness Challenge": {
+            "description": "A one-week challenge to cultivate mindfulness and reduce stress through short, daily practices.",
+            "duration": 7,
+            "tasks": [
+                "Day 1: Pay full attention to one meal without distractions.",
+                "Day 2: Take a 5-minute mindful walk, noticing your surroundings.",
+                "Day 3: Practice 3 minutes of mindful breathing.",
+                "Day 4: Notice five things you can see, four you can feel, three you can hear.",
+                "Day 5: Listen to a song and give it your complete attention.",
+                "Day 6: Do one daily chore (like washing dishes) mindfully.",
+                "Day 7: Reflect on one positive thing that happened today."
+            ]
+        },
+        "5-Day Gratitude Challenge": {
+            "description": "Boost your mood by focusing on the good things in life for five consecutive days.",
+            "duration": 5,
+            "tasks": [
+                "Day 1: Write down three things you are grateful for today.",
+                "Day 2: Send a 'thank you' message to someone.",
+                "Day 3: Appreciate a simple pleasure (like a cup of tea or a sunny spot).",
+                "Day 4: Acknowledge a personal strength you are grateful for.",
+                "Day 5: Reflect on a challenge that taught you something valuable."
+            ]
+        },
+        "7-Day Digital Detox": {
+            "description": "Reduce screen time and reconnect with the world around you.",
+            "duration": 7,
+            "tasks": [
+                "Day 1: No phone for the first hour after waking up.",
+                "Day 2: Unfollow 10 social media accounts that don't bring you joy.",
+                "Day 3: Set a 30-minute time limit for social media today.",
+                "Day 4: Have a screen-free meal.",
+                "Day 5: Read a physical book or magazine for 15 minutes.",
+                "Day 6: Go for a walk without your phone.",
+                "Day 7: No screens for one hour before bed."
+            ]
+        }
+    }
+
+    if 'challenge_progress' not in st.session_state:
+        st.session_state.challenge_progress = {}
+
+    st.markdown("---")
+    selected_challenge = st.selectbox("Choose a challenge to start:", list(challenges.keys()))
+
+    if selected_challenge:
+        challenge_data = challenges[selected_challenge]
+        
+        # Initialize progress for the selected challenge if not already started
+        if selected_challenge not in st.session_state.challenge_progress:
+            st.session_state.challenge_progress[selected_challenge] = [False] * challenge_data["duration"]
+
+        st.subheader(selected_challenge)
+        st.markdown(f"*{challenge_data['description']}*")
+
+        progress = st.session_state.challenge_progress[selected_challenge]
+        completed_tasks = sum(progress)
+        total_tasks = len(progress)
+        
+        st.progress(completed_tasks / total_tasks, text=f"{completed_tasks}/{total_tasks} Days Completed")
+
+        if completed_tasks == total_tasks:
+            st.balloons()
+            st.success("🎉 Congratulations! You've completed the challenge! 🎉")
+
+        st.markdown("---")
+
+        for i, task in enumerate(challenge_data["tasks"]):
+            is_done = st.checkbox(task, value=progress[i], key=f"{selected_challenge}_{i}")
+            if is_done != progress[i]:
+                st.session_state.challenge_progress[selected_challenge][i] = is_done
+                st.rerun()
 
 # --- Page 6: Journaling Prompts ---
 elif page == "📓 Journaling Prompts":
