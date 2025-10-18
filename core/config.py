@@ -1,10 +1,11 @@
 import streamlit as st
 import google.generativeai as genai
+from google.generativeai import types as genai_types
 from pathlib import Path
 import requests
 
 # ---------- Logo and Page Config ----------
-logo_path = str(Path(__file__).resolve().parent.parent / "TalkHealLogo.png")
+logo_path = str(Path(__file__).resolve().parent.parent / "static_files" / "TalkHealLogo.png")
 
 PAGE_CONFIG = {
     "page_title": "TalkHeal - Mental Health Support",
@@ -81,10 +82,10 @@ def generate_response(user_input, model):
     except ValueError as e:
         st.error("❌ Invalid input or model configuration issue. Please check your input.")
         return None
-    except google.generativeai.types.BlockedPromptException as e:
+    except genai_types.BlockedPromptException as e:
         st.error("❌ Content policy violation. Please rephrase your message.")
         return None
-    except google.generativeai.types.GenerationException as e:
+    except genai_types.GenerationException as e:
         st.error("❌ Failed to generate response. Please try again.")
         return None
     except requests.RequestException as e:

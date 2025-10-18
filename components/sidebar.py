@@ -1,10 +1,14 @@
 import streamlit as st
-import webbrowser
+# ADDED: Import for language map
+import googletrans 
 from datetime import datetime
-from core.utils import create_new_conversation, get_current_time
+from core.utils import create_new_conversation
 from core.theme import get_current_theme, toggle_theme, set_palette, PALETTES
-from components.profile import initialize_profile_state, render_profile_section
-
+from components.mood_dashboard import render_mood_dashboard_button, MoodTracker
+from components.profile import render_profile_section
+from streamlit_js_eval import streamlit_js_eval
+import requests
+import random
 
 # --- Structured Emergency Resources ---
 GLOBAL_RESOURCES = [
@@ -19,6 +23,68 @@ GLOBAL_RESOURCES = [
     {"name": "Child Helpline International", "desc": "A global network of child helplines for young people in need of help.",
      "url": "https://www.childhelplineinternational.org/"}
 ]
+
+def get_country_from_coords(lat, lon):
+    try:
+        url = f"https://geocode.maps.co/reverse?lat={lat}&lon={lon}"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            return data.get("address", {}).get("country_code", "").upper()
+    except:
+        pass
+    return None
+
+def get_user_country():
+    # 1. Try to get user's actual browser location (via JS)
+    coords = streamlit_js_eval(
+        js_expressions="""
+            new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                    position => resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    }),
+                    error => resolve(null)
+                );
+            });
+        """,
+        key="get_coords"
+    )
+
+    if coords and "latitude" in coords and "longitude" in coords:
+        country = get_country_from_coords(coords["latitude"], coords["longitude"])
+        if country:
+            return country
+
+    # 2. Fallback to IP-based location using ipapi.co (no key required)
+    try:
+        resp = requests.get("https://ipapi.co/json/", timeout=3)
+        if resp.status_code == 200:
+            return resp.json().get("country_code", "").upper()
+    except:
+        pass
+
+    return None  # final fallback if everything fails
+
+country_helplines = {
+    "US": [
+        "National Suicide Prevention Lifeline: 988",
+        "Crisis Text Line: Text HOME to 741741",
+        "SAMHSA National Helpline: 1-800-662-4357"
+    ],
+    "IN": [
+        "AASRA: 9152987821",
+        "Sneha Foundation: 044-24640050"
+    ],
+    "GB": [
+        "Samaritans: 116 123"
+    ],
+    "AU": [
+        "Lifeline: 13 11 14"
+    ]
+}
+IASP_LINK = "https://findahelpline.com/"
 
 mental_health_resources_full = {
     "Depression & Mood Disorders": {
@@ -73,19 +139,233 @@ mental_health_resources_full = {
     }
 }
 
+WELLNESS_TIPS = [
+    "Take 3 deep breaths right now. Feel your shoulders relax 🌬️",
+    "Drink a glass of water. Your brain needs hydration 💧", 
+    "Write down 3 things you're grateful for today 🙏",
+    "Stand up and stretch for 30 seconds 🤸",
+    "Send a kind message to someone you care about 💝",
+    "Look out a window and notice something beautiful in nature 🌿",
+    "Put your phone away for 10 minutes and just be present 📱",
+    "Smile at yourself in the mirror. You deserve kindness 😊"
+]
+
+def render_daily_tip():
+    """Show a random wellness tip"""
+    
+    # Get a random tip
+    if "current_tip" not in st.session_state:
+        st.session_state.current_tip = random.choice(WELLNESS_TIPS)
+    
+    # Show the tip in a nice box
+    st.info(st.session_state.current_tip)
+    
+    # Buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("💚 Helpful", key="tip_helpful"):
+            st.success("Glad it helped! 😊")
+    with col2:
+        if st.button("🔄 New Tip", key="new_tip"):
+            st.session_state.current_tip = random.choice(WELLNESS_TIPS)
+            st.rerun()
+
+def render_ambient_sounds():
+    """Render calming music player in sidebar with soothing melodies"""
+    st.markdown("""
+    <div class="sidebar-music-section">
+        <div class="music-header">🎵 Calming Sounds</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    with st.expander("🎵 Choose Background Music", expanded=False):
+        st.markdown("**Create a peaceful atmosphere:**")
+        
+        # YouTube calming music videos - peaceful instrumental and meditation music
+        calming_music = {
+            "🎹 Peaceful Piano": {
+                "description": "Soft piano melodies for relaxation",
+                "embed_id": "1ZYbU82GVz4",  # Beautiful relaxing piano music
+                "duration": "3 hours"
+            },
+            "🧘 Meditation Music": {
+                "description": "Gentle meditation and mindfulness music",
+                "embed_id": "lFcSrYw-ARY",  # Relaxing meditation music
+                "duration": "1 hour"
+            },
+            "🎻 Calm Instrumental": {
+                "description": "Soothing instrumental music mix",
+                "embed_id": "M4QVYDTmjEg",  # Beautiful instrumental music
+                "duration": "2 hours"
+            },
+            "🌸 Zen Garden": {
+                "description": "Peaceful zen music for inner calm",
+                "embed_id": "5qap5aO4i9A",  # Zen music for relaxation
+                "duration": "3 hours"
+            },
+            "💤 Sleep Music": {
+                "description": "Ultra calming music for deep relaxation",
+                "embed_id": "YQaW2gkV1iM",  # Sleep music, calming music
+                "duration": "8 hours"
+            },
+            "🎶 Ambient Chillout": {
+                "description": "Soft ambient music for stress relief",
+                "embed_id": "rUxyKA_-grg",  # Chillout ambient music
+                "duration": "1 hour"
+            }
+        }
+        
+        selected_music = st.selectbox(
+            "Select calming music:",
+            ["🔇 Silence"] + list(calming_music.keys()),
+            key="ambient_sound_selector"
+        )
+        
+        if selected_music != "🔇 Silence":
+            music_data = calming_music[selected_music]
+            
+            st.markdown(f"**Now Playing: {selected_music}**")
+            st.markdown(f"*{music_data['description']} ({music_data['duration']})*")
+            
+            # Embed YouTube video as audio player
+            youtube_embed = f"""
+            <div style="text-align: center; margin: 10px 0;">
+                <iframe width="100%" height="80" 
+                        src="https://www.youtube.com/embed/{music_data['embed_id']}?autoplay=0&loop=1&playlist={music_data['embed_id']}&controls=1&modestbranding=1&rel=0&showinfo=0" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+            """
+            
+            st.markdown(youtube_embed, unsafe_allow_html=True)
+            
+            st.info("💡 **Tip**: Keep volume gentle (15-25%) for a peaceful atmosphere.")
+            
+            # Alternative: Direct links for manual opening
+            st.markdown("---")
+            st.markdown("**Alternative**: Open in new tab:")
+            youtube_url = f"https://www.youtube.com/watch?v={music_data['embed_id']}"
+            st.markdown(f"[🔗 Open {selected_music} on YouTube]({youtube_url})")
+        
+        else:
+            st.info("🔇 Select music above to create a calming atmosphere.")
+            st.markdown("---")
+            st.markdown("**Benefits of calming music:**")
+            st.markdown("• Reduces stress and anxiety naturally")
+            st.markdown("• Promotes emotional well-being")  
+            st.markdown("• Enhances mindfulness and focus")
+            st.markdown("• Creates a therapeutic environment")
 
 def render_sidebar():
-    """Renders the left and right sidebars."""
+    """Renders the left sidebar with organized sections."""
     
     with st.sidebar:
-        render_profile_section()
+        # --- Multilingual Feature Integration ---
+        st.markdown("### 🌐 Language Settings")
+        
+        language_map = googletrans.LANGUAGES
+        # Map language name to code
+        lang_name_to_code = {v.title(): k for k, v in language_map.items()}
 
-        st.markdown("### 📂 Explore")
-        st.page_link("pages/Journaling.py", label="📝 Journaling", use_container_width=True)
-        st.page_link("pages/Yoga.py", label="🧘 Yoga", use_container_width=True)
+        # Ensure the current selection is available
+        default_lang_code = st.session_state.get("selected_lang_code", "en")
+        default_lang_name = language_map.get(default_lang_code, "English").title()
+
+        # Find the index of the default language for the selectbox
+        try:
+            default_index = sorted(lang_name_to_code.keys()).index(default_lang_name)
+        except ValueError:
+            default_index = 0
+
+        selected_lang_name = st.selectbox(
+            "Select your language",
+            sorted(lang_name_to_code.keys()),
+            index=default_index,
+            key="lang_selector"
+        )
+        
+        selected_lang_code = lang_name_to_code[selected_lang_name]
+
+        # Update session state if selection changes
+        if selected_lang_code != st.session_state.get("selected_lang_code", "en"):
+            st.session_state['selected_lang_code'] = selected_lang_code
+            st.rerun()
+
+        st.markdown("---")
+        
+        # --- Pinned Messages Section ---
+        if "pinned_messages" in st.session_state and st.session_state.pinned_messages:
+            pin_count = len(st.session_state.pinned_messages)
+            st.markdown(f"""
+            <div style="background-color: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                📌 <strong>{pin_count}</strong> pinned message{'s' if pin_count != 1 else ''}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Pinned Messages navigation button
+            if st.button("📌 View Pinned Messages", key="view_pinned_btn", use_container_width=True):
+                st.session_state.active_page = "PinnedMessages"
+                st.rerun()
+        
         st.markdown("---")
 
-        st.markdown("### 💬 Conversations")
+        # Theme Settings Section
+        with st.expander("🎨 Appearance Settings", expanded=False):
+            current_theme = get_current_theme()
+            is_dark = current_theme["name"] == "Dark"
+
+            # Palette selector (only for light mode)
+            if not is_dark:
+                palette_names = [p["name"] for p in PALETTES]
+                selected_palette = st.selectbox(
+                    "Choose a soothing color palette:",
+                    palette_names,
+                    index=palette_names.index(
+                        st.session_state.get("palette_name", "Light")),
+                    key="palette_selector",
+                )
+                if selected_palette != st.session_state.get("palette_name", "Light"):
+                    set_palette(selected_palette)
+
+            # Current theme display
+            st.markdown(f"""
+            <div class="theme-info-display">
+                <strong>Current Theme:</strong><br>
+                <span class="theme-name">{current_theme['name']} Mode</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Theme toggle button
+            button_text = "🌙 Switch to Dark" if not is_dark else "☀️ Switch to Light"
+            button_type = "primary" if not is_dark else "secondary"
+
+            if st.button(
+                button_text,
+                key="sidebar_theme_toggle",
+                use_container_width=True,
+                type=button_type
+            ):
+                toggle_theme()
+
+        render_profile_section()
+
+        # Daily Wellness Tip
+        render_daily_tip()
+        
+        # Ambient Sounds
+        render_ambient_sounds()
+        
+        st.markdown("---")
+        
+        # Chat Management Section
+        st.markdown("""
+        <div class="sidebar-section-header">
+            <h3>💬 Chat Sessions</h3>
+            <p>Manage your AI conversations</p>
+        </div>
+        """, unsafe_allow_html=True)
 
         if "show_quick_start_prompts" not in st.session_state:
             st.session_state.show_quick_start_prompts = False
@@ -100,11 +380,10 @@ def render_sidebar():
             st.rerun()
 
         if st.session_state.show_quick_start_prompts:
-            st.markdown("---")
-            st.markdown("**Start with a common topic:**")
+            st.markdown("**💭 Quick Start Topics:**")
             quick_prompts = [
                 "Feeling overwhelmed",
-                "Need to vent about my day",
+                "Need to vent about my day", 
                 "How to manage stress?",
                 "Tell me about anxiety"
             ]
@@ -117,48 +396,51 @@ def render_sidebar():
                         st.session_state.show_quick_start_prompts = False
                         st.rerun()
 
-            st.markdown("---")
-
-
-            if st.session_state.conversations:
-                if "delete_candidate" not in st.session_state:
-                    for i, convo in enumerate(st.session_state.conversations):
-                        is_active = i == st.session_state.active_conversation
-
-
+        # Conversation History
         if st.session_state.conversations:
+            st.markdown("**📚 Recent Conversations:**")
             if "delete_candidate" not in st.session_state:
                 for i, convo in enumerate(st.session_state.conversations):
                     is_active = i == st.session_state.active_conversation
 
                     button_style_icon = "🟢" if is_active else "📝"
-
+                    
+                    # MERGED: Using the cleaner title display logic
                     title = convo.get("title", "Untitled")
                     short_title = title if len(title) <= 22 else f"{title[:22]}..."
                     label = f"{button_style_icon} {short_title}"
 
-                    col1, col2 = st.columns([5, 1])
 
+                    col1, col2 = st.columns([5, 1])
                     with col1:
-                        if st.button(label, key=f"convo_{i}", help=f"Started: {convo['date']}", use_container_width=True):
+                        if st.button(
+                            label,
+                            key=f"convo_{i}",
+                            help=f"Started: {convo['date']}",
+                            use_container_width=True
+                        ):
                             st.session_state.active_conversation = i
                             st.rerun()
-
                     with col2:
-                        delete_key = f"delete_{i}"
-                        if convo.get("messages"):
-                            if st.button("🗑️", key=delete_key, type="primary", use_container_width=True):
+                        if convo["messages"]:
+                            if st.button("🗑️", key=f"delete_{i}", type="primary", use_container_width=True):
                                 st.session_state.delete_candidate = i
                                 st.rerun()
                         else:
-                            st.button("🗑️", key=delete_key, type="primary", use_container_width=True, disabled=True)
-
+                            st.button(
+                                "🗑️",
+                                key=f"delete_{i}",
+                                type="primary",
+                                use_container_width=True,
+                                disabled=not convo["messages"]
+                            )
             else:
                 st.warning("⚠️ Are you sure you want to delete this conversation?")
                 col_confirm, col_cancel = st.columns(2)
 
                 if col_confirm.button("Yes, delete", key="confirm_delete"):
                     del st.session_state.conversations[st.session_state.delete_candidate]
+
                     from core.utils import save_conversations
                     save_conversations(st.session_state.conversations)
 
@@ -178,262 +460,3 @@ def render_sidebar():
                     st.session_state.cancel_clicked = False
         else:
             st.info("No conversations yet. Start a new chat!")
-
-        st.markdown("---")
-
-        # --- DEDICATED EMERGENCY PAGE BUTTON ---
-        if st.button("🚨 Emergency Help", use_container_width=True, type="secondary"):
-            st.session_state.show_emergency_page = True
-            st.rerun()
-
-        # --- 3. Dynamic Mood Tracker & Micro-Journal (Fixed Tip & New Button) ---
-        with st.expander("🧠 Mental Health Check"):
-            st.markdown("**How are you feeling today?**")
-
-            mood_options_map = {
-                "😔 Very Low": "very_low",
-                "😐 Low": "low",
-                "😊 Okay": "okay",
-                "😄 Good": "good",
-                "🌟 Great": "great"
-            }
-            mood_labels = list(mood_options_map.keys())
-
-            selected_mood_label = st.radio(
-                "Mood Scale",
-                options=mood_labels,
-                index=mood_labels.index(
-                    "😊 Okay") if "😊 Okay" in mood_labels else 2,
-                key="mood_selector_radio",
-                horizontal=True,
-                label_visibility="collapsed"
-            )
-
-            st.session_state.current_mood_val = mood_options_map[selected_mood_label]
-            if st.session_state.current_mood_val:
-                st.markdown("")
-                journal_prompt_text = {
-                    "very_low": "What's weighing on your mind today?",
-                    "low": "What are your thoughts right now?",
-                    "okay": "Anything specific on your mind today?",
-                    "good": "What made you feel good today?",
-                    "great": "What's making you shine today?"
-                }.get(st.session_state.current_mood_val, "Reflect on your mood:")
-
-                # Initialize journal entry for the current session
-                if "mood_journal_entry" not in st.session_state:
-                    st.session_state.mood_journal_entry = ""
-                # Initialize state for displaying tips and status
-                if "mood_tip_display" not in st.session_state:
-                    st.session_state.mood_tip_display = ""
-                if "mood_entry_status" not in st.session_state:
-                    st.session_state.mood_entry_status = ""
-
-                st.text_area(
-                    f"✏️ {journal_prompt_text}",
-                    key="mood_journal_area",
-                    value=st.session_state.mood_journal_entry,
-                    height=70
-                )
-
-                tips_for_mood = {
-                    "very_low": "Remember, it's okay not to be okay. Consider connecting with a professional.",
-                    "low": "Even small steps help. Try a brief mindful moment or gentle activity.",
-                    "okay": "Keep nurturing your well-being. What's one thing you can do to maintain this?",
-                    "good": "That's wonderful! Savor this feeling and perhaps share your positivity.",
-                    "great": "Fantastic! How can you carry this energy forward into your day?"
-                }.get(st.session_state.current_mood_val, "A general tip for your mood.")
-
-                st.markdown("")
-                col_tip_save, col_ask_TalkHeal = st.columns(2)
-
-                with col_tip_save:
-                    if st.button("Get Tip & Save Entry", key="save_mood_entry", use_container_width=True):
-                        st.session_state.mood_tip_display = tips_for_mood
-                        st.session_state.mood_entry_status = f"Your mood entry for '{selected_mood_label}' has been noted for this session."
-                        st.session_state.mood_journal_entry = ""
-
-                with col_ask_TalkHeal:
-                    if st.button("Ask TalkHeal", key="ask_peace_pulse_from_mood", use_container_width=True):
-                        if st.session_state.mood_journal_area.strip():
-                            st.session_state.pre_filled_chat_input = st.session_state.mood_journal_area
-                            st.session_state.send_chat_message = True
-                            st.session_state.mood_journal_entry = ""
-                            st.session_state.mood_tip_display = ""
-                            st.session_state.mood_entry_status = ""
-                            st.rerun()
-                        else:
-                            st.warning(
-                                "Please enter your thoughts before asking TalkHeal.")
-
-                if st.session_state.mood_tip_display:
-                    st.success(st.session_state.mood_tip_display)
-                    st.session_state.mood_tip_display = ""
-                if st.session_state.mood_entry_status:
-                    st.info(st.session_state.mood_entry_status)
-                    st.session_state.mood_entry_status = ""
-
-        # --- 4. Resource Hub with Categories & Search ---
-        with st.expander("📚 Resources & Knowledge Base"):
-            st.markdown("**Explore topics or search for help:**")
-
-            resource_search_query = st.text_input(
-                "Search resources...", key="resource_search", placeholder="e.g., 'anxiety tips', 'therapy'", label_visibility="collapsed")
-
-            if resource_search_query:
-                filtered_topics = [
-                    topic for topic in mental_health_resources_full
-                    if resource_search_query.lower() in topic.lower() or
-                    any(resource_search_query.lower() in link['label'].lower() for link in mental_health_resources_full[topic]['links']) or
-                    resource_search_query.lower(
-                    ) in mental_health_resources_full[topic]['description'].lower()
-                ]
-
-                if not filtered_topics:
-                    st.info("No resources found matching your search.")
-                else:
-                    st.markdown("---")
-                    st.markdown("**Matching Resources:**")
-                    for topic in filtered_topics:
-                        st.markdown(f"**{topic}**")
-                        st.info(
-                            mental_health_resources_full[topic]['description'])
-                        for link in mental_health_resources_full[topic]['links']:
-                            st.markdown(f"• [{link['label']}]({link['url']})")
-                        st.markdown("---")
-            else:
-                resource_tabs = st.tabs(
-                    list(mental_health_resources_full.keys()))
-
-                for i, tab_title in enumerate(mental_health_resources_full.keys()):
-                    with resource_tabs[i]:
-                        topic_data = mental_health_resources_full[tab_title]
-                        st.markdown(f"**{tab_title}**")
-                        st.info(topic_data['description'])
-                        for link in topic_data['links']:
-                            st.markdown(f"• [{link['label']}]({link['url']})")
-                        st.markdown("---")
-
-        with st.expander("☎️ Crisis Support"):
-            st.markdown("**24/7 Crisis Hotlines:**")
-            for resource in GLOBAL_RESOURCES:
-                st.markdown(
-                    f"**{resource['name']}**: {resource['desc']} [Visit Website]({resource['url']})")
-
-        # Theme toggle in sidebar
-        with st.expander("🎨 Theme Settings"):
-            current_theme = get_current_theme()
-            is_dark = current_theme["name"] == "Dark"
-
-            # Palette selector (only for light mode)
-            if not is_dark:
-                palette_names = [p["name"] for p in PALETTES]
-                selected_palette = st.selectbox(
-                    "Choose a soothing color palette:",
-                    palette_names,
-                    index=palette_names.index(
-                        st.session_state.get("palette_name", "Light")),
-                    key="palette_selector",
-                )
-                if selected_palette != st.session_state.get("palette_name", "Light"):
-                    set_palette(selected_palette)
-
-            # Current theme display with better styling
-            st.markdown("""
-            <div class="theme-info-box">
-                <strong>Current Theme:</strong><br>
-                <span>{} Mode</span>
-            </div>
-            """.format(current_theme['name']), unsafe_allow_html=True)
-
-            # Theme toggle button with better styling
-            button_text = "🌙 Dark Mode" if not is_dark else "☀️ Light Mode"
-            button_color = "primary" if not is_dark else "secondary"
-
-            if st.button(
-                button_text,
-                key="sidebar_theme_toggle",
-                use_container_width=True,
-                type=button_color
-            ):
-                toggle_theme()
-
-        # Quizzes expander (no longer contains nested expander)
-        with st.expander("🧪 Take PsyToolkit Verified Quizzes"):
-            st.markdown("""
-            Explore scientifically backed quizzes to better understand your mental well-being. These tools are for **self-awareness** and not clinical diagnosis.
-            """)
-
-            quizzes = [
-                {
-                    "name": "GAD-7 (Anxiety Assessment)",
-                    "desc": "Measures severity of generalized anxiety symptoms.",
-                    "url": "https://www.psytoolkit.org/cgi-bin/3.6.0/survey?s=u8bAf",
-                    "score_info": """
-                    Score Interpretation:
-                    GAD-7 score runs from 0 to 21
-                    - 0–4: Minimal anxiety  
-                    - 5–9: Mild anxiety  
-                    - 10–14: Moderate anxiety  
-                    - 15–21: Severe anxiety
-                    """
-                },
-                {
-                    "name": "PHQ-9 (Depression Assessment)",
-                    "desc": "Screens for presence and severity of depression.",
-                    "url": "https://www.psytoolkit.org/cgi-bin/3.6.0/survey?s=Hj32b",
-                    "score_info": """
-                    Score Interpretation:
-                    - 0–4: Mild depression  
-                    - 5–9: Moderate depression  
-                    - 10–14: Moderately severe depression  
-                    - 15–19: Severe depression 
-                    """
-                },
-                {
-                    "name": "The WHO-5 Well-Being Index",
-                    "desc": "Five simple non-intrusive questions to assess well-being. Score ranges from 0 (poor) to 100 (excellent).",
-                    "url": "https://www.psytoolkit.org/cgi-bin/3.6.0/survey?s=POqLJ",
-                    "score_info": """
-                    Score Interpretation:
-                    -if your score is 50 or lower you should consider 
-                    -further checks on whether you suffer 
-                    -from clinical depression
-                    """
-                },
-               {
-    "name": "Depression Anxiety Stress Scales (DASS)",
-    "desc": "Measures depression, anxiety, and stress using one combined questionnaire.",
-    "url": "https://www.psytoolkit.org/cgi-bin/3.6.0/survey?s=HvfDY",
-    "score_info": "**Score Interpretation (per subscale):**\n\n- **Normal, Mild, Moderate, Severe, Extremely Severe**\n\n|          | Depression | Anxiety | Stress  |\n|----------|------------|---------|---------|\n| Normal   | 0-9        | 0-7     | 0-14    |\n| Mild     | 10-13      | 8-9     | 15-18   |\n| Moderate | 14-20      | 10-14   | 19-25   |\n| Severe   | 21-27      | 15-19   | 26-33   |\n| Extremely Severe | 28+ | 20+ | 34+ |"
-}
-            ]
-
-            for quiz in quizzes:
-                st.markdown(f"""
-                **{quiz['name']}**  
-                *{quiz['desc']}*  
-                [🔗 Take Quiz]({quiz['url']})  
-                {quiz['score_info']}
-                """)
-
-        # About section moved outside of any expander
-        st.markdown("---")
-        st.markdown("""
-        **ℹ️ About TalkHeal**  
-        Your compassionate mental health companion, designed to provide:
-        
-        • 24/7 emotional support  
-        • Resource guidance  
-        • Crisis intervention  
-        • Professional referrals  
-        
-        **Remember:** This is not a substitute for professional mental health care.
-        
-        ---
-        
-        **Created with ❤️ by [Eccentric Explorer](https://eccentriccoder01.github.io/Me)**  
-        *"It's absolutely okay not to be okay :)"*  
-        
-        📅 Enhanced Version - May 2025
-        """)

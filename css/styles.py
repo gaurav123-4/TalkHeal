@@ -16,7 +16,7 @@ def apply_custom_css():
         'secondary': '#ec4899',
         'success': '#10b981',
         'warning': '#f59e0b',
-        'danger': '#ef4444',
+    'danger': '#ff9fb6',
         'surface': 'rgba(255,255,255,0.14)',
         'surface_alt': 'rgba(25,25,46,0.23)',
         'text_primary': '#fff',
@@ -29,8 +29,8 @@ def apply_custom_css():
         'background_overlay': 'linear-gradient(120deg, rgba(34,37,74,0.53) 0%, rgba(34,41,79,0.68) 100%)'
     }
     theme_config.update(theme_overrides)
-    
-    background_image_path = theme_config.get('background_image', 'Background.jpg')
+
+    background_image_path = theme_config.get('background_image', 'static_files/Background.jpg')
     base64_image = get_base64_of_bin_file(background_image_path) if background_image_path else None
     st.markdown(f"""
     <style>
@@ -59,7 +59,8 @@ def apply_custom_css():
             --radius: 12px;
             --radius-lg: 22px;
             --radius-xl: 36px;
-            --glass-effect: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
+            --glass-effect: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15));
+            --message-glass: linear-gradient(135deg, rgba(255, 88, 216, 0.873), rgba(255, 88, 216, 0.484));
             --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }}
 
@@ -96,7 +97,7 @@ def apply_custom_css():
         .main .block-container {{
             padding-top: 1rem;
             padding-bottom: 2.5rem;
-            max-width: 1080px;
+            max-width: 1200px;
             margin: 0 auto;
         }}
 
@@ -109,9 +110,413 @@ def apply_custom_css():
 
         p {{
             font-weight: 400;
-            color: var(--text-secondary);
+            /* Explicitly use the requested color instead of the CSS variable */
+            color: #C2185B;
             line-height: 1.68;
             margin-bottom: 1.1em;
+        }}
+
+        /* ===== NEW FEATURE CARDS STYLING ===== */
+        
+        /* Hero Welcome Section */
+        .hero-welcome-section {{
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-xl);
+            padding: 40px 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            --gradient: linear-gradient(100deg, var(--primary-color), var(--secondary-color)); /* ← Define gradient here */
+        }}
+
+        .hero-welcome-section::before {{
+            content: '';
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            height: 4px; /* ← Made thicker for better visibility */
+            background: var(--gradient);
+            animation: gradientFlow 7s linear infinite;
+            background-size: 200% 200%;
+            z-index: 2; /* ← Ensure it's above other content */
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0; /* ← Match container's top radius */
+        }}
+
+        @keyframes gradientFlow {{
+            0% {{ background-position: 0% 50%; }}
+            50% {{ background-position: 100% 50%; }}
+            100% {{ background-position: 0% 50%; }}
+        }} 
+        
+        .hero-title {{
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }}
+        
+        .hero-subtitle {{
+            font-size: 1.2em;
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+            font-weight: 400;
+        }}
+        
+        /* Current Tone Display */
+        .current-tone-display {{
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.15);
+        }}
+        
+        .tone-label {{
+            font-size: 1.1em;
+            color: rgba(255,255,255,0.8);
+            margin-right: 10px;
+        }}
+        
+        .tone-value {{
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--primary-light);
+        }}
+        
+        /* Features Grid Container */
+        .features-grid-container {{
+            margin: 30px 0;
+        }}
+        
+        /* Base Feature Card Styles */
+        .feature-card {{
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: var(--radius-xl);
+            padding: 25px 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }}
+        
+        .feature-card:hover {{
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.3);
+        }}
+        
+        .feature-card::before {{
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }}
+        
+        .feature-card:hover::before {{
+            opacity: 1;
+        }}
+        
+        /* Primary Feature Cards */
+        .primary-card {{
+            min-height: 200px;
+        }}
+        
+        .yoga-card {{
+            border-left: 4px solid #10b981;
+        }}
+        
+        .breathing-card {{
+            border-left: 4px solid #3b82f6;
+        }}
+        
+        .journal-card {{
+            border-left: 4px solid #f59e0b;
+        }}
+        
+        /* Secondary Feature Cards */
+        .secondary-card {{
+            min-height: 180px;
+        }}
+        
+        .doctor-card {{
+            border-left: 4px solid #ef4444;
+        }}
+        
+        .tools-card {{
+            border-left: 4px solid #8b5cf6;
+        }}
+        
+        /* Dashboard Cards */
+        .dashboard-card {{
+            min-height: 160px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.15) 100%);
+        }}
+        
+        .mood-card {{
+            border-left: 4px solid #ec4899;
+        }}
+        
+        .focus-card {{
+            border-left: 4px solid #06b6d4;
+        }}
+        
+        .habits-card {{
+            border-left: 4px solid #22c55e; /* Another green shade */
+        }}
+
+        .wellness-card {{
+            border-left: 4px solid #f97316; /* A bright orange */
+        }}
+
+        /* Water and Wearables card accents */
+        .water-card {{
+            border-left: 4px solid #06b6d4; /* cyan/teal for water */
+        }}
+
+        .wearables-card {{
+            border-left: 4px solid #7c3aed; /* indigo/purple for wearables */
+        }}
+
+        .community-card {{
+            border-left: 4px solid #ec4899; /* Secondary pink */
+        }}
+
+        .qna-card {{
+            border-left: 4px solid #eab308; /* A shade of yellow */
+        }}
+        
+        /* Card Content Styling */
+        .feature-card .card-icon {{
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+            text-align: center;
+        }}
+        
+        .feature-card .card-icon-large {{
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            display: block;
+            text-align: center;
+        }}
+        
+        .feature-card h3 {{
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: white;
+            text-align: center;
+        }}
+        
+        .feature-card p {{
+            font-size: 1em;
+            color: rgba(255,255,255,0.85);
+            text-align: center;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }}
+        
+        .card-features {{
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 10px;
+        }}
+        
+        .card-features span {{
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }}
+        
+        .card-stats {{
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }}
+        
+        .stat {{
+            text-align: center;
+        }}
+        
+        .stat-number {{
+            display: block;
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary-light);
+        }}
+        
+        .stat-label {{
+            font-size: 0.8em;
+            color: rgba(255,255,255,0.7);
+        }}
+        
+        /* Emergency Support Section */
+        .emergency-support-section {{
+            background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.15) 100%);
+            border-radius: var(--radius-xl);
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(239,68,68,0.3);
+        }}
+        
+        .emergency-content h3 {{
+            color: #fecaca;
+            margin-bottom: 10px;
+        }}
+        
+        .emergency-content p {{
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+        }}
+        
+        /* Mood Tracking Section */
+        .mood-tracking-section {{
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+        }}
+        
+        .mood-tracking-section h3 {{
+            color: white;
+            margin-bottom: 10px;
+        }}
+        
+        .mood-tracking-section p {{
+            color: rgba(255,255,255,0.8);
+            margin: 0;
+        }}
+
+        /* ===== SIDEBAR ENHANCEMENTS ===== */
+        
+        /* Sidebar Section Headers */
+        .sidebar-section-header {{
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-lg);
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+        }}
+        
+        .sidebar-section-header h3 {{
+            margin: 0 0 8px 0;
+            font-size: 1.1em;
+            color: white;
+        }}
+        
+        .sidebar-section-header p {{
+            margin: 0;
+            font-size: 0.85em;
+            color: rgba(255,255,255,0.7);
+        }}
+        
+        /* Sidebar Tip Card */
+        .sidebar-tip-card {{
+            background: linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(34,197,94,0.15) 100%);
+            border-radius: var(--radius-lg);
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(16,185,129,0.3);
+        }}
+        
+        .tip-header {{
+            font-weight: 600;
+            color: #a7f3d0;
+            margin-bottom: 10px;
+        }}
+        
+        /* Sidebar Music Section */
+        .sidebar-music-section {{
+            background: linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(168,85,247,0.15) 100%);
+            border-radius: var(--radius-lg);
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(139,92,246,0.3);
+        }}
+        
+        .music-header {{
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-bottom: 10px;
+        }}
+        
+        /* Feature Icon Sidebar */
+        .feature-icon-sidebar {{
+            font-size: 1.8em;
+            text-align: center;
+            line-height: 1;
+            margin-top: 8px;
+        }}
+        
+        /* Emergency Sidebar Section */
+        .emergency-sidebar-section {{
+            background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.15) 100%);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(239,68,68,0.3);
+        }}
+        
+        .emergency-sidebar-section .emergency-icon {{
+            font-size: 2em;
+            margin-bottom: 10px;
+            display: block;
+        }}
+        
+        .emergency-sidebar-section h4 {{
+            margin: 0 0 8px 0;
+            color: #fecaca;
+        }}
+        
+        .emergency-sidebar-section p {{
+            margin: 0;
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.8);
+        }}
+        
+        /* Theme Info Display */
+        .theme-info-display {{
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius);
+            padding: 12px;
+            text-align: center;
+            margin: 10px 0;
+        }}
+        
+        .theme-name {{
+            color: var(--primary-light);
+            font-weight: 600;
         }}
 
         /* Message bubble styling */
@@ -143,8 +548,8 @@ def apply_custom_css():
         
         /* Bot message styling */
         .bot-message {{
-            background: var(--glass-effect);
-            background-color: var(--surface-alt);
+            background: var(--message-glass);
+            background-color: var(--message-glass);
             color: #efeef9;
             border: 1.25px solid var(--border);
             margin-left: 0;
@@ -302,7 +707,7 @@ def apply_custom_css():
         /* Sidebar styling */
         [data-testid="stSidebar"] {{
             background: linear-gradient(120deg, rgba(236,72,153,0.45), rgba(219,39,119,0.25), rgba(236,72,153,0.15)) !important;
-            backdrop-filter: blur(15px) !important;
+            backdrop-filter: blur(6px) !important;
             border-right: 2px solid rgba(236,72,153,0.35) !important;
             box-shadow: 8px 0 48px rgba(236,72,153,0.25) !important;
             color: #e2e8f0 !important;
@@ -310,6 +715,54 @@ def apply_custom_css():
         }}
         [data-testid="stSidebar"] * {{
             color: #f5f7fb !important;
+        }}
+
+        /* New responsive container for feature cards */
+        .responsive-cards-container {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem; /* Space between cards */
+            justify-content: center;
+        }}
+        
+        /* Styles for the individual card containers */
+        .st-emotion-cache-1g6x8q4 {{
+            display: inline-flex;
+            flex: 1 1 calc(20% - 1.5rem); /* Allows cards to grow and shrink */
+            max-width: calc(20% - 1.5rem); /* Limits the max width to ensure wrapping */
+        }}
+
+        /* Base feature card styling with a minimum width */
+        .feature-card {{
+            /* ... existing styles ... */
+            min-width: 180px; /* Set a minimum width to prevent shrinking */
+            flex: 1 1 auto; /* Allows the card to take up remaining space */
+            box-sizing: border-box; /* Ensures padding and border are included in the width */
+            width: 100%; /* Makes the card fill its container */
+        }}
+
+        /* Media query for tablets and smaller desktops */
+        @media (max-width: 1200px) {{
+            .st-emotion-cache-1g6x8q4 {{
+                flex: 1 1 calc(25% - 1.5rem); /* Show 4 cards per row */
+                max-width: calc(25% - 1.5rem);
+            }}
+        }}
+
+        /* Media query for mobile phones */
+        @media (max-width: 768px) {{
+            .st-emotion-cache-1g6x8q4 {{
+                flex: 1 1 calc(50% - 1.5rem); /* Show 2 cards per row */
+                max-width: calc(50% - 1.5rem);
+            }}
+        }}
+
+        /* Media query for very small mobile screens */
+        @media (max-width: 480px) {{
+            .st-emotion-cache-1g6x8q4 {{
+                flex: 1 1 100%; /* Stack cards vertically, one per row */
+                max-width: 100%;
+            }}
         }}
 
         /* Sidebar toggle button styling */
@@ -414,7 +867,7 @@ def apply_custom_css():
             font-weight: 600 !important;
             font-family: 'Poppins',sans-serif !important;
             box-shadow: 0 3px 12px rgba(0,0,0,0.08) !important;
-            transition: var(--transition,.21s cubic-bezier(.5,.08,.37,1.11)) !important;
+            transition: var(--transition,.21s cubic-bezier(.35,.72,.44,1.18)) !important;
         }}
         
         /* General button hover effects */
@@ -449,22 +902,23 @@ def apply_custom_css():
             font-weight: 700 !important;
             transform: translateX(8px) scale(1.02) !important;
         }}
-        /* Dedicated style for the red emergency button */
+        
+        /* Dedicated style for the emergency/secondary button: use a light, subtle pink (no harsh red) */
         .stButton > button[kind="secondary"] {{
-            background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
-            color: white !important;
-            border: 1px solid #ef4444 !important;
+            background: linear-gradient(135deg, #fff0f6, #ffd6e8) !important; /* subtle pink */
+            color: #4b1133 !important; /* dark pink/purple text for readability */
+            border: 1px solid rgba(75,17,51,0.12) !important;
             font-weight: 600 !important;
             transform: none !important; /* Reset transform from other rules */
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(75,17,51,0.06) !important;
         }}
 
         .stButton > button[kind="secondary"]:hover {{
-            background: linear-gradient(135deg, #dc2626, #991b1b) !important;
-            border-color: #dc2626 !important;
-            color: white !important;
+            background: linear-gradient(135deg, #ffe6f2, #ffcbe6) !important; /* slightly warmer hover */
+            border-color: rgba(75,17,51,0.16) !important;
+            color: #4b1133 !important;
             transform: translateY(-2px) !important; /* Add a nice hover effect */
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+            box-shadow: 0 8px 20px rgba(75,17,51,0.09) !important;
         }}
         
         /* Sidebar toggle button */
@@ -550,14 +1004,134 @@ def apply_custom_css():
             font-size: 1.07em !important;
         }}
 
-        /* Responsive design for mobile */
+        /* Responsive utilities for mobile-friendly layouts */
+        .mobile-stack {{
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }}
+        
+        .mobile-row {{
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+        }}
+        
+        .mobile-button {{
+            min-width: 120px !important;
+            flex: 1 1 auto !important;
+            margin: 0.25rem 0 !important;
+        }}
+        
+        .mobile-nav-button {{
+            min-width: 80px !important;
+            font-size: 0.9rem !important;
+            padding: 0.4rem 0.6rem !important;
+        }}
+
+        /* Enhanced responsive design for mobile */
         @media (max-width: 768px) {{
-            .main .block-container {{ padding: 1rem; }}
-            .user-message, .bot-message {{ max-width: 98%; font-size: 1em; padding: 12px 13px; }}
-            .main-header h1 {{ font-size: 1.52em; }}
-            .main-header, .welcome-message {{ padding: 16px 4vw; }}
-            .floating-action-button {{ bottom: 18px; right: 18px; width: 46px; height: 46px; font-size: 15px; }}
-            [data-testid="stSidebar"] {{ width: 280px !important; }}
+            .main .block-container {{ 
+                padding: 1rem; 
+                max-width: 95%;
+            }}
+            
+            .user-message, .bot-message {{ 
+                max-width: 98%; 
+                font-size: 1em; 
+                padding: 12px 13px; 
+            }}
+            
+            .main-header h1 {{ 
+                font-size: 1.52em; 
+            }}
+            
+            .main-header, .welcome-message {{ 
+                padding: 16px 4vw; 
+            }}
+            
+            .floating-action-button {{ 
+                bottom: 18px; 
+                right: 18px; 
+                width: 46px; 
+                height: 46px; 
+                font-size: 15px; 
+            }}
+            
+            [data-testid="stSidebar"] {{ 
+                width: 280px !important; 
+            }}
+            
+            .hero-title {{
+                font-size: 1.8em;
+            }}
+            
+            .hero-subtitle {{
+                font-size: 1em;
+            }}
+            
+            .feature-card {{
+                padding: 20px 15px;
+                margin-bottom: 15px;
+            }}
+            
+            .feature-card .card-icon,
+            .feature-card .card-icon-large {{
+                font-size: 2.5em;
+            }}
+            
+            .feature-card h3 {{
+                font-size: 1.2em;
+            }}
+            
+            .features-grid-container {{
+                margin: 20px 0;
+            }}
+            
+            /* Mobile button improvements */
+            .stButton > button {{
+                min-width: 100px !important;
+                font-size: 0.9rem !important;
+                padding: 0.5rem 0.8rem !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }}
+            
+            /* Mobile column stack for narrow screens */
+            [data-testid="column"] {{
+                min-width: 120px !important;
+            }}
+            
+            /* Force vertical stacking on very narrow screens */
+            @media (max-width: 480px) {{
+                .stColumns {{
+                    flex-direction: column !important;
+                }}
+                
+                .stColumns > div {{
+                    width: 100% !important;
+                    margin-bottom: 0.5rem !important;
+                }}
+                
+                .stButton > button {{
+                    width: 100% !important;
+                    min-width: unset !important;
+                }}
+            }}
+        }}
+        
+        /* Tablet responsive design */
+        @media (min-width: 769px) and (max-width: 1024px) {{
+            .main .block-container {{
+                max-width: 90%;
+            }}
+            
+            .stButton > button {{
+                min-width: 110px !important;
+                font-size: 0.95rem !important;
+            }}
         }}
 
         /* Sidebar section styling */
@@ -568,8 +1142,39 @@ def apply_custom_css():
             padding: 20px 14px !important;
             margin-bottom: 18px;
             border: 1px solid var(--light-transparent-border, rgba(255,255,255,.23)) !important;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(4px);
             box-shadow: 0 3px 14px rgba(0,0,0,0.07);
+        }}
+
+        /* Animation for feature cards loading */
+        .feature-card {{
+            animation: fadeInUp 0.6s ease-out forwards;
+            animation-delay: calc(var(--animation-order, 0) * 0.1s);
+        }}
+
+        @keyframes fadeInUp {{
+            from {{
+                opacity: 0;
+                transform: translateY(30px);
+            }}
+            to {{
+                opacity: 1;
+                transform: translateY(0);
+            }}
+        }}
+
+        /* Smooth transitions for all interactive elements */
+        * {{
+            transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }}
+
+        /* Enhanced focus styles for accessibility */
+        button:focus,
+        .stButton > button:focus,
+        input:focus,
+        textarea:focus {{
+            outline: 2px solid var(--primary-color) !important;
+            outline-offset: 2px !important;
         }}
     </style>
     """, unsafe_allow_html=True)
