@@ -1,6 +1,5 @@
-
-# Streamlit secrets and configuration
-/.streamlit/
+.streamlit/
+streamlit.toml
 
 # pycache
 __pycache__/
@@ -248,4 +247,11 @@ venv/
 env/
 
 # JSON files
-*.json
+data
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+users.db
+journals.db
