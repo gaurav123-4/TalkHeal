@@ -131,6 +131,7 @@ if user_data.get("consent"):
     else:
         df_view = pd.DataFrame(sorted(records, key=lambda r: r.get("timestamp", ""), reverse=True))
         df_view["ts"] = pd.to_datetime(df_view["timestamp"], errors="coerce")
+        df_view = df_view.dropna(subset=["ts"]) # Ensure no NaT timestamps
 
         # --- Summaries (Last 7 Days) ---
         st.markdown("##### Last 7 Days at a Glance")
@@ -150,14 +151,82 @@ if user_data.get("consent"):
             
             for i, (label, (col, agg)) in enumerate(metrics.items()):
                 with summary_cols[i]:
-                    series = last7[col].dropna().astype(float)
-                    if not series.empty:
-                        value = series.agg(agg)
-                        if "sleep" in label: # Convert minutes to hours
-                            value /= 60
-                        st.metric(label, f"{value:.1f}")
+                    # Ensure column exists before processing
+                    if col in last7.columns:
+                        series = last7[col].dropna().astype(float)
+                        if not series.empty:
+                            value = series.agg(agg)
+                            if "sleep" in label: # Convert minutes to hours
+                                value /= 60
+                            st.metric(label, f"{value:.1f}")
+                        else:
+                            st.metric(label, "N/A")
                     else:
                         st.metric(label, "N/A")
+        
+        st.divider()
+
+        # --- Interactive Visualization ---
+        st.subheader("📈 Visualize Your Data")
+
+        min_date = df_view["ts"].min().date()
+        max_date = df_view["ts"].max().date()
+        default_start = max(min_date, max_date - pd.Timedelta(days=29))
+
+        date_range = st.date_input(
+            "Select a date range to visualize:",
+            value=(default_start, max_date),
+            min_value=min_date,
+            max_value=max_date,
+            key="wearable_date_range"
+        )
+
+        if len(date_range) == 2:
+            start_date, end_date = date_range
+            start_ts = pd.to_datetime(start_date)
+            end_ts = pd.to_datetime(end_date) + pd.Timedelta(days=1)
+
+            df_filtered = df_view[(df_view["ts"] >= start_ts) & (df_view["ts"] < end_ts)]
+
+            if df_filtered.empty:
+                st.info("No data available for the selected date range.")
+            else:
+                df_chart = df_filtered.set_index("ts")
+
+                st.markdown("##### ❤️ Heart Rate & HRV")
+                hr_cols = ["resting_hr", "hrv_ms"]
+                if all(c in df_chart.columns for c in hr_cols):
+                    hr_data = df_chart[hr_cols].dropna(how='all')
+                    if not hr_data.empty:
+                        st.line_chart(hr_data)
+                    else:
+                        st.caption("No Heart Rate or HRV data in this period.")
+                else:
+                    st.caption("Heart Rate or HRV data not available.")
+
+                st.markdown("##### 😴 Sleep")
+                sleep_cols = ["sleep_minutes", "sleep_efficiency"]
+                if all(c in df_chart.columns for c in sleep_cols):
+                    sleep_data = df_chart[sleep_cols].dropna(how='all')
+                    if not sleep_data.empty:
+                        st.line_chart(sleep_data)
+                    else:
+                        st.caption("No Sleep data in this period.")
+                else:
+                    st.caption("Sleep data not available.")
+
+                st.markdown("##### 🏃 Activity")
+                activity_cols = ["steps", "active_minutes"]
+                if all(c in df_chart.columns for c in activity_cols):
+                    activity_data = df_chart[activity_cols].dropna(how='all')
+                    if not activity_data.empty:
+                        st.line_chart(activity_data)
+                    else:
+                        st.caption("No Activity data in this period.")
+                else:
+                    st.caption("Activity data not available.")
+        
+        st.divider()
 
         # --- Detailed Records ---
         st.markdown("##### All Recorded Data")
