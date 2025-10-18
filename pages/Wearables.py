@@ -197,6 +197,64 @@ if user_data.get("consent"):
                             st.metric(label, "N/A")
                     else:
                         st.metric(label, "N/A")
+
+        # --- Weekly Insights ---
+        st.markdown("##### 💡 Weekly Insights")
+        
+        cutoff_14_days = pd.Timestamp.utcnow().tz_localize(None) - pd.Timedelta(days=14)
+        last_14_days_df = df_view[df_view["ts"] >= cutoff_14_days]
+
+        insights = []
+
+        def generate_weekly_insight(df, metric, name, higher_is_better=True):
+            w1_start = pd.Timestamp.utcnow().tz_localize(None) - pd.Timedelta(days=7)
+            w2_start = pd.Timestamp.utcnow().tz_localize(None) - pd.Timedelta(days=14)
+            
+            week1_df = df[df["ts"] >= w1_start]
+            week2_df = df[(df["ts"] >= w2_start) & (df["ts"] < w1_start)]
+
+            if week1_df.empty or week2_df.empty or metric not in df.columns:
+                return None
+
+            avg_w1 = week1_df[metric].mean()
+            avg_w2 = week2_df[metric].mean()
+
+            if pd.isna(avg_w1) or pd.isna(avg_w2) or avg_w2 == 0:
+                return None
+
+            percent_change = ((avg_w1 - avg_w2) / avg_w2) * 100
+
+            if abs(percent_change) < 5:
+                return None
+
+            if percent_change > 0:
+                direction = "higher"
+                emoji = "📈" if higher_is_better else "📉"
+                remark = "Keep it up!" if higher_is_better else "You might want to look into this."
+            else:
+                direction = "lower"
+                emoji = "📉" if higher_is_better else "📈"
+                remark = "You might want to look into this." if higher_is_better else "Great improvement!"
+
+            return f"Your average **{name}** this week was **{abs(percent_change):.0f}% {direction}** than last week. {remark} {emoji}"
+
+        insight_metrics = {
+            "steps": {"name": "Daily Steps", "higher_is_better": True},
+            "sleep_minutes": {"name": "Sleep Duration", "higher_is_better": True},
+            "resting_hr": {"name": "Resting Heart Rate", "higher_is_better": False},
+            "hrv_ms": {"name": "Heart Rate Variability (HRV)", "higher_is_better": True},
+        }
+
+        for key, props in insight_metrics.items():
+            insight = generate_weekly_insight(last_14_days_df, key, props["name"], props["higher_is_better"])
+            if insight:
+                insights.append(insight)
+
+        if not insights:
+            st.caption("Not enough data to generate weekly insights. Keep tracking for at least two weeks!")
+        else:
+            for insight in insights:
+                st.info(insight)
         
         st.divider()
 
