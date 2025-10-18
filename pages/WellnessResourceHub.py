@@ -52,6 +52,11 @@ categories = {
         "Try deep breathing (inhale 4s, hold 4s, exhale 4s)",
         "Listen to calming music",
         "Take short breaks while working"
+    ],
+    "🏃 Exercise": [
+        "Start with 10–15 minutes of light cardio like walking",
+        "Stretch your body after sitting too long",
+        "Try fun activities like dancing or cycling"
     ]
 }
 
@@ -170,6 +175,12 @@ if page == "🏠 Wellness Hub":
         with st.container(border=True):
             st.subheader("😴 Sleep")
             for tip in categories["😴 Sleep"]:
+                st.write(f"- {tip}")
+            st.write(" ")
+
+        with st.container(border=True):
+            st.subheader("🏃 Exercise")
+            for tip in categories["🏃 Exercise"]:
                 st.write(f"- {tip}")
             st.write(" ")
 
