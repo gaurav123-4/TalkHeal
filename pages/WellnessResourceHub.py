@@ -16,6 +16,7 @@ page = st.sidebar.radio(
         "📅 Daily Planner",
         "🎯 Wellness Goals",
         "📊 Mood Tracker",
+        "🍴 Food & Mood Journal",
         "📓 Journaling Prompts",
         "📚 Wellness Resources",
         "🤝 Community Tips",
@@ -580,7 +581,7 @@ elif page == "📊 Mood Tracker":
 
             with st.expander(f"{mood_icon} {date_str} - Intensity: {intensity}"):
                 if entry.get('note'):
-                    st.write(f"**Note:** *{entry['note']}*")
+                    st.write(f"**Note:** *{entry['note']}*" )
                 
                 if entry.get('tags'):
                     st.write("**Tags:**")
@@ -669,6 +670,65 @@ elif page == "📊 Mood Tracker":
 
     else:
         st.info("No moods logged yet.")
+
+# --- Page for Food & Mood Journal ---
+elif page == "🍴 Food & Mood Journal":
+    st.title("🍴 Food & Mood Journal")
+    st.write("Track your meals and mood to discover connections between what you eat and how you feel.")
+
+    # Initialize session state
+    if "food_journal" not in st.session_state:
+        st.session_state.food_journal = []
+
+    with st.container(border=True):
+        st.subheader("Log a New Entry")
+        
+        entry_date = st.date_input("Date", datetime.now())
+        
+        mood_options = {"😊 Positive": "😊", "😐 Neutral": "😐", "😟 Negative": "😟"}
+        selected_mood = st.radio("Overall Mood", options=list(mood_options.keys()), horizontal=True)
+
+        breakfast = st.text_input("🍳 Breakfast", placeholder="e.g., Oatmeal with berries")
+        lunch = st.text_input("🥗 Lunch", placeholder="e.g., Chicken salad")
+        dinner = st.text_input("🍝 Dinner", placeholder="e.g., Salmon and vegetables")
+        snacks = st.text_input("🥨 Snacks", placeholder="e.g., Apple, nuts")
+        
+        note = st.text_area("Notes", placeholder="Any specific feelings, cravings, or context?")
+
+        if st.button("Save Entry"):
+            st.session_state.food_journal.append({
+                "date": entry_date,
+                "mood": selected_mood,
+                "meals": {
+                    "breakfast": breakfast,
+                    "lunch": lunch,
+                    "dinner": dinner,
+                    "snacks": snacks
+                },
+                "note": note
+            })
+            st.success("Entry saved!")
+            st.rerun()
+
+    st.markdown("---")
+
+    if st.session_state.food_journal:
+        st.subheader("📖 Your Journal History")
+        
+        # Sort entries by date
+        sorted_entries = sorted(st.session_state.food_journal, key=lambda x: x['date'], reverse=True)
+
+        for entry in sorted_entries:
+            mood_icon = mood_options.get(entry['mood'], "❔")
+            with st.expander(f"{mood_icon} {entry['date'].strftime('%B %d, %Y')} - Mood: {entry['mood']}"):
+                st.write(f"**Breakfast:** {entry['meals']['breakfast'] or 'Not logged'}")
+                st.write(f"**Lunch:** {entry['meals']['lunch'] or 'Not logged'}")
+                st.write(f"**Dinner:** {entry['meals']['dinner'] or 'Not logged'}")
+                st.write(f"**Snacks:** {entry['meals']['snacks'] or 'Not logged'}")
+                if entry['note']:
+                    st.write(f"**Notes:** {entry['note']}")
+    else:
+        st.info("No entries yet. Add one above to get started.")
 
 # --- Page 6: Journaling Prompts ---
 elif page == "📓 Journaling Prompts":
