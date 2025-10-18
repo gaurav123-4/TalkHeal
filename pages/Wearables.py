@@ -10,6 +10,7 @@ from core.wearable_store import (
     append_records,
     set_provider_connection,
     clear_user_wearables,
+    set_goals,
 )
 
 # --- Page Configuration ---
@@ -133,6 +134,40 @@ if user_data.get("consent"):
         df_view["ts"] = pd.to_datetime(df_view["timestamp"], errors="coerce")
         df_view = df_view.dropna(subset=["ts"]) # Ensure no NaT timestamps
 
+        # --- Today's Goal Progress ---
+        st.markdown("##### 🏆 Today's Goal Progress")
+        goals = user_data.get("goals", {})
+        if not goals:
+            st.caption("You haven't set any goals yet. Set them in the 'Set Your Daily Goals' section below.")
+        else:
+            today_df = df_view[df_view["ts"].dt.date == datetime.utcnow().date()]
+            if today_df.empty:
+                st.info("No data recorded for today yet to track goal progress.")
+            else:
+                today_latest = today_df.iloc[0]
+                goal_metrics_defined = [m for m in goals.keys() if m in today_latest]
+                
+                if not goal_metrics_defined:
+                    st.caption("Set goals for available metrics (e.g., steps, sleep) to see progress.")
+                else:
+                    goal_cols = st.columns(len(goal_metrics_defined))
+                    i = 0
+                    for metric in goal_metrics_defined:
+                        with goal_cols[i]:
+                            goal_data = goals[metric]
+                            target = goal_data.get("target", 0)
+                            current_value = today_latest.get(metric, 0)
+                            
+                            st.markdown(f"**{metric.replace('_', ' ').title()}**")
+                            progress = min(current_value / target, 1.0) if target > 0 else 0
+                            
+                            st.progress(progress, text=f"{int(current_value)} / {int(target)}")
+                            if progress >= 1.0:
+                                st.write("🎉 Goal Met!")
+                        i += 1
+        
+        st.divider()
+
         # --- Summaries (Last 7 Days) ---
         st.markdown("##### Last 7 Days at a Glance")
         cutoff = pd.Timestamp.utcnow().tz_localize(None) - pd.Timedelta(days=7)
@@ -151,12 +186,11 @@ if user_data.get("consent"):
             
             for i, (label, (col, agg)) in enumerate(metrics.items()):
                 with summary_cols[i]:
-                    # Ensure column exists before processing
                     if col in last7.columns:
                         series = last7[col].dropna().astype(float)
                         if not series.empty:
                             value = series.agg(agg)
-                            if "sleep" in label: # Convert minutes to hours
+                            if "sleep" in label:
                                 value /= 60
                             st.metric(label, f"{value:.1f}")
                         else:
@@ -231,6 +265,31 @@ if user_data.get("consent"):
         # --- Detailed Records ---
         st.markdown("##### All Recorded Data")
         st.dataframe(df_view.drop(columns=["ts"]), use_container_width=True, hide_index=True)
+
+    # --- Goal Setting ---
+    with st.expander("🎯 Set Your Daily Goals"):
+        current_goals = user_data.get("goals", {})
+        goal_metrics = {
+            "steps": "Daily Steps",
+            "sleep_minutes": "Daily Sleep (minutes)",
+            "active_minutes": "Daily Active Minutes"
+        }
+        new_goals = {}
+        for key, label in goal_metrics.items():
+            target = st.number_input(
+                label, 
+                min_value=0, 
+                value=int(current_goals.get(key, {}).get("target", 0)),
+                step=100 if key == "steps" else 15,
+                key=f"goal_{key}"
+            )
+            if target > 0:
+                new_goals[key] = {"target": target, "frequency": "daily"}
+
+        if st.button("Save Goals"):
+            user_data = set_goals(email, new_goals)
+            st.success("Your goals have been saved!")
+            st.rerun()
 
     # --- Data Controls ---
     st.divider()
