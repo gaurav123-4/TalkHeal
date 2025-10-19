@@ -221,33 +221,33 @@ def render_ambient_sounds():
         calming_music = {
             "🎹 Peaceful Piano": {
                 "description": "Soft piano melodies for relaxation",
-                "embed_id": "1ZYbU82GVz4",  # Beautiful relaxing piano music
+                "embed_id": "CqeVIivHqAs",  # Beautiful relaxing piano music
                 "duration": "3 hours"
             },
             "🧘 Meditation Music": {
                 "description": "Gentle meditation and mindfulness music",
                 "embed_id": "lFcSrYw-ARY",  # Relaxing meditation music
-                "duration": "1 hour"
+                "duration": "3 hours"
             },
             "🎻 Calm Instrumental": {
                 "description": "Soothing instrumental music mix",
-                "embed_id": "M4QVYDTmjEg",  # Beautiful instrumental music
-                "duration": "2 hours"
+                "embed_id": "4wZmRQcIDME",  # Beautiful instrumental music
+                "duration": "1 hour"
             },
             "🌸 Zen Garden": {
                 "description": "Peaceful zen music for inner calm",
-                "embed_id": "5qap5aO4i9A",  # Zen music for relaxation
+                "embed_id": "6GxNJlmzqz4",  # Zen music for relaxation
                 "duration": "3 hours"
             },
             "💤 Sleep Music": {
                 "description": "Ultra calming music for deep relaxation",
-                "embed_id": "YQaW2gkV1iM",  # Sleep music, calming music
-                "duration": "8 hours"
+                "embed_id": "xQ6xgDI7Whc",  # Sleep music, calming music
+                "duration": "45 mins"
             },
             "🎶 Ambient Chillout": {
                 "description": "Soft ambient music for stress relief",
-                "embed_id": "rUxyKA_-grg",  # Chillout ambient music
-                "duration": "1 hour"
+                "embed_id": "cq2Ef6rvL6g",  # Chillout ambient music
+                "duration": "3 hours"
             }
         }
         
