@@ -126,3 +126,4 @@ For issues related to OAuth setup, please check:
 1. OAuth provider documentation
 2. Streamlit OAuth documentation
 3. Application logs for detailed error messages
+

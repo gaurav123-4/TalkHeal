@@ -20,8 +20,18 @@ if "db_initialized" not in st.session_state:
     st.session_state["db_initialized"] = True
     
 # --- OAUTH CALLBACK HANDLING ---
-query_params = st.query_params
-if query_params.get("code") and query_params.get("state") and query_params.get("provider"):
+def _get_query_params():
+    """Return query params compatible with older/newer Streamlit versions."""
+    try:
+        return st.query_params  # Streamlit >= 1.30
+    except Exception:
+        try:
+            return st.experimental_get_query_params()  # Older versions
+        except Exception:
+            return {}
+
+_qp = _get_query_params()
+if _qp.get("code") and _qp.get("state") and _qp.get("provider"):
     # Handle OAuth callback
     from pages.oauth_callback import main as handle_oauth_callback
     handle_oauth_callback()

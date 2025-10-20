@@ -7,14 +7,20 @@ import streamlit as st
 from urllib.parse import parse_qs, urlparse
 from auth.oauth_utils import handle_oauth_callback
 
-st.set_page_config(page_title="OAuth Callback", page_icon="🔐", layout="centered")
+# Do NOT call set_page_config here to avoid duplicate page config errors in some deployments
 
 def main():
     """Handle OAuth callback"""
     st.title("Authenticating...")
     
-    # Get query parameters
-    query_params = st.query_params
+    # Get query parameters (support older/newer Streamlit)
+    try:
+        query_params = st.query_params  # Streamlit >= 1.30
+    except Exception:
+        try:
+            query_params = st.experimental_get_query_params()
+        except Exception:
+            query_params = {}
     
     # Check for required parameters
     code = query_params.get("code")
@@ -55,3 +61,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

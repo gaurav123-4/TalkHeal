@@ -120,3 +120,4 @@ GITHUB_CLIENT_SECRET=your_github_client_secret
 
 if __name__ == "__main__":
     main()
+

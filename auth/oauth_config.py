@@ -103,3 +103,4 @@ class OAuthConfig:
 
 # Global OAuth configuration instance
 oauth_config = OAuthConfig()
+
