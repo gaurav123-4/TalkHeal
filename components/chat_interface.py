@@ -1,3 +1,26 @@
+def get_personality_list():
+    """
+    Return a list of available chatbot personalities.
+    Used to let users select the tone of the AI companion.
+    """
+    return [
+        "Compassionate Listener",
+        "Motivating Coach",
+        "Wise Friend",
+        "Neutral Therapist",
+        "Mindfulness Guide"
+    ]
+
+def generate_response(user_input, personality):
+    """
+    Stub for generating a response. In production, this would call the AI model.
+    Args:
+        user_input (str): The user's message.
+        personality (str): The selected chatbot personality.
+    Returns:
+        str: The AI's response.
+    """
+    return f"[{personality}] Response to: {user_input}"
 import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
@@ -17,6 +40,9 @@ if "conversations" not in st.session_state:
 
 # Custom CSS for enhanced button styling
 def inject_custom_css():
+    """
+    Inject custom CSS styles for enhanced button and chat UI appearance.
+    """
     st.markdown("""
     <style>
     /* Enhanced button styling for session controls */
@@ -211,7 +237,9 @@ def inject_custom_css():
     """, unsafe_allow_html=True)
 
 def inject_feedback_css():
-    """Small, local CSS to keep reaction buttons tiny and inline."""
+    """
+    Inject CSS for feedback buttons to keep them small and inline.
+    """
     st.markdown(
         """
         <style>
@@ -248,6 +276,10 @@ def inject_feedback_css():
 # Note: Removed unused set_user_time_in_session (dead code)
 
 def show_session_feedback():
+    """
+    Render the session feedback and emotional closure message UI.
+    Allows users to reflect on their session and provide feedback.
+    """
     st.markdown("---")
     st.subheader("💬 Session Feedback & Emotional Closure Message")
 
@@ -372,6 +404,10 @@ def show_session_feedback():
 
 
 def show_session_feedback_during_session():
+    """
+    Render feedback UI during an active chat session.
+    Lets users rate and comment on the session in real time.
+    """
     """Show session feedback during an active session"""
     st.markdown("### 🌟 How is your session going so far?")
     
@@ -401,6 +437,11 @@ def show_session_feedback_during_session():
 
 
 def show_session_summary(active_convo):
+    """
+    Display a summary of the current chat session, including pinned messages and feedback.
+    Args:
+        active_convo (dict): The active conversation data.
+    """
     """Show a summary of the current session"""
     if not active_convo["messages"]:
         st.info("No messages in this session yet.")
@@ -446,6 +487,12 @@ def show_session_summary(active_convo):
 # Functions to handle pinning/unpinning messages and rendering the chat interface with pin buttons
 #Adds/removes a message from pinned messages in session state
 def toggle_pin_message(msg, convo_id):
+    """
+    Pin or unpin a chat message for quick reference.
+    Args:
+        msg (dict): The message to pin/unpin.
+        convo_id (int): The conversation ID.
+    """
     """Add or remove a message from pinned messages"""
     if "pinned_messages" not in st.session_state:
         st.session_state.pinned_messages = []
@@ -473,10 +520,12 @@ def toggle_pin_message(msg, convo_id):
         
 # Displays chat messages with styled bubbles and pin/unpin functionality
 def render_chat_interface():
+    """
+    Render the main chat interface, displaying all messages, pin controls, and chat bubbles.
+    Handles both user and bot messages, and manages pinning.
+    """
     inject_custom_css()
-    inject_feedback_css()
-
-    if st.session_state.active_conversation >= 0:
+    if st.session_state.active_conversation >= 0 and st.session_state.active_conversation < len(st.session_state.conversations):
         active_convo = st.session_state.conversations[st.session_state.active_conversation]
 
         if not active_convo["messages"]:
@@ -616,6 +665,9 @@ st.markdown('</div>', unsafe_allow_html=True)
         
 # Quickly lists all pinned messages for reference
 def render_pinned_messages():
+    """
+    Display all pinned messages for the current conversation.
+    """
     if st.session_state.pinned_messages:
         st.markdown("### 📌 Pinned Messages")
         for msg in st.session_state.pinned_messages:
@@ -623,8 +675,11 @@ def render_pinned_messages():
 
 
 def render_session_controls():
+    """
+    Render session control buttons (e.g., end chat, session summary).
+    """
     """Render session controls and feedback - to be called after chat input"""
-    if st.session_state.active_conversation >= 0:
+    if st.session_state.active_conversation >= 0 and st.session_state.active_conversation < len(st.session_state.conversations):
         active_convo = st.session_state.conversations[st.session_state.active_conversation]
         
         # Show session controls below chat input
@@ -687,6 +742,12 @@ def render_session_controls():
 
 # Handle chat input and generate AI response
 def handle_chat_input(model, system_prompt):
+    """
+    Handle user chat input, generate AI response, and update conversation state.
+    Args:
+        model (str): The AI model to use.
+        system_prompt (str): The system prompt for the AI.
+    """
     if "pre_filled_chat_input" not in st.session_state:
         st.session_state.pre_filled_chat_input = ""
     initial_value = st.session_state.pre_filled_chat_input
@@ -709,7 +770,7 @@ def handle_chat_input(model, system_prompt):
         if 'send_chat_message' in st.session_state:
             st.session_state.send_chat_message = False
 
-        if st.session_state.active_conversation >= 0:
+        if st.session_state.active_conversation >= 0 and st.session_state.active_conversation < len(st.session_state.conversations):
             current_time = get_current_time()
             active_convo = st.session_state.conversations[st.session_state.active_conversation]
 
@@ -774,6 +835,13 @@ def handle_chat_input(model, system_prompt):
             st.rerun()
 
 def render_bot_message(message: str, key: str, convo_id: int):
+    """
+    Render a single bot message in the chat interface.
+    Args:
+        message (str): The bot's message.
+        key (str): Unique key for the message.
+        convo_id (int): The conversation ID.
+    """
     
     """Render a bot-style message with thumbs + feedback workflow"""
 

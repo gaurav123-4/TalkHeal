@@ -1,3 +1,4 @@
+from gzip import READ
 import streamlit as st
 from auth.auth_utils import init_db
 from components.login_page import show_login_page
@@ -6,6 +7,12 @@ from components.mood_dashboard import MoodTracker, render_mood_dashboard
 import plotly.express as px
 
 st.set_page_config(page_title="TalkHeal", page_icon="💬", layout="wide")
+no_sidebar_style = """
+    <style>
+        div[data-testid="stSidebarNav"] {display: none;}
+    </style>
+"""
+st.markdown(no_sidebar_style, unsafe_allow_html=True)
 
 # --- DB Initialization ---
 if "db_initialized" not in st.session_state:
@@ -212,7 +219,7 @@ def render_feature_cards():
             "title": "Breathing Exercises",
             "action": lambda: st.switch_page("pages/Breathing_Exercise.py"),
             "key": "breathing_btn",
-            "button_text": "🌬 Start Breathing",
+            "button_text": "🌬 Excercises",
             "css_class": "breathing-card"
         },
         {
@@ -264,7 +271,23 @@ def render_feature_cards():
             "css_class": "wellness-card"
         },
         {
-            "icon": "💬",
+            "icon": "💧",
+            "title": "Water Tracking",
+            "action": lambda: st.switch_page("pages/WaterIntakeTracker.py"),
+            "key": "water_btn",
+            "button_text": "💧 Track Water",
+            "css_class": "water-card"
+        },
+        {
+            "icon": "⌚",
+            "title": "Wearables",
+            "action": lambda: st.switch_page("pages/Wearables.py"),
+            "key": "wearables_btn",
+            "button_text": "⌚ View Wearables",
+            "css_class": "wearables-card"
+        },
+        {
+            "icon": "�💬",
             "title": "Community Forum",
             "action": lambda: st.switch_page("pages/CommunityForum.py"),
             "key": "forum_btn",
@@ -282,7 +305,7 @@ def render_feature_cards():
     ]
 
     # Use Streamlit's native columns to create the grid layout
-    num_columns = 5 # You can change this to 6 for a more compact layout
+    num_columns = 6 # switched to 6 columns to accommodate new cards
     
     # Check if the number of cards is a multiple of the number of columns
     # and adjust the number of columns if necessary
@@ -293,10 +316,17 @@ def render_feature_cards():
     
     for i, card in enumerate(cards_data):
         with cols[i % num_columns]:
-            # Use the new CSS class from the cards_data dictionary
+            # Render all feature cards with the same CSS and markup (icon + title only)
+            # Add an explicit inline left-border style for water and wearables to ensure visibility
+            inline_border = ''
+            if card.get('css_class') == 'water-card':
+                inline_border = 'border-left: 4px solid #06b6d4;'
+            elif card.get('css_class') == 'wearables-card':
+                inline_border = 'border-left: 4px solid #7c3aed;'
+
             st.markdown(f"""
-            <div class="feature-card primary-card {card['css_class']}">
-                <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">{card['icon']}</div>
+            <div class="feature-card primary-card {card['css_class']}" style="{inline_border}">
+                <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">{card.get('icon','')}</div>
                 <h3 style="margin-bottom: 1rem; color: white; font-size: 1.1rem;">{card['title']}</h3>
             </div>
             """, unsafe_allow_html=True)
@@ -388,175 +418,180 @@ else:
         
         tracker = st.session_state.mood_tracker
         
-        # Mood Entry Form
-        with st.form("mood_entry_form"):
-            st.markdown("###   Record Your Mood")
-            
-            # Mood Level Selection
-            mood_options = {
-                "very_low": "  Very Low",
-                "low": "😔 Low", 
-                "okay": "  Okay",
-                "good": "😊 Good",
-                "great": " 😄 Great"
-            }
-            
-            selected_mood = st.selectbox(
-                "How are you feeling right now?",
-                options=list(mood_options.keys()),
-                format_func=lambda x: mood_options[x],
-                help="Select your current emotional state"
-            )
-            
-            # Context/Reason
-            context_options = [
-                "Work/School related",
-                "Family matters",
-                "Health concerns",
-                "Social interactions",
-                "Financial stress",
-                "Weather/environment",
-                "Sleep quality",
-                "Physical activity",
-                "Food/Nutrition",
-                "Personal achievement",
-                "Relationship issues",
-                "Future worries",
-                "Other"
-            ]
-            
-            context_reason = st.selectbox(
-                "What's influencing your mood today?",
-                options=context_options,
-                help="Understanding context helps provide better support"
-            )
-            
-            # Activities
-            activity_options = [
-                "Exercise/Physical activity",
-                "Meditation/Mindfulness",
-                "Reading",
-                "Writing/Journaling",
-                "Socializing",
-                "Hobbies/Creative work",
-                "Watching TV/Movies",
-                "Gaming",
-                "Cooking/Eating",
-                "Shopping",
-                "Housework/Chores",
-                "Learning/Education",
-                "Music/Audio",
-                "Nature/Outdoors",
-                "Resting/Sleeping",
-                "Other"
-            ]
-            
-            selected_activities = st.multiselect(
-                "What activities have you done today?",
-                options=activity_options,
-                help="Select all that apply"
-            )
-            
-            # Notes
-            mood_notes = st.text_area(
-                "Additional notes (optional)",
-                height=100,
-                placeholder="Share any thoughts, feelings, or details about your day...",
-                help="This helps your AI companion understand you better"
-            )
-            
-            # Submit button
-            submitted = st.form_submit_button("💾 Save Mood Entry")
-            
-            if submitted:
-                try:
-                    # Save the mood entry
-                    tracker.add_mood_entry(
-                        mood_level=selected_mood,
-                        notes=mood_notes,
-                        context_reason=context_reason,
-                        activities=selected_activities
-                    )
-                    
-                    st.success("✅ Your mood has been recorded successfully!")
-                    
-                    # Show personalized response based on mood
-                    mood_responses = {
-                        "very_low": "🤗 I'm here for you. Consider reaching out to a trusted friend or professional if you need support.",
-                        "low": "📝 Journaling your thoughts might help process your feelings. Would you like to talk about what's bothering you?",
-                        "okay": "🚶‍♀ A short walk or some light stretching might help you feel more balanced.",
-                        "good": "✨ Great to hear you're feeling good! What positive things happened today?",
-                        "great": "🌟 You're shining today! Keep spreading that positivity with a kind act."
-                    }
-                    
-                    st.info(mood_responses.get(selected_mood, "Thanks for sharing how you're feeling!"))
-                    
-                except Exception as e:
-                    st.error(f"❌ Error saving mood entry: {str(e)}")
-        
-        # Quick Mood Stats
-        st.markdown("---")
-        st.markdown("### 📊 Your Recent Mood Summary")
-        
-        try:
-            # Get recent mood data
-            recent_df = tracker.get_mood_dataframe(days=7)
-            
-            if not recent_df.empty:
-                # Add responsive CSS for mood metrics
-                st.markdown("""
-                <style>
-                @media (max-width: 768px) {
-                    .mood-metrics-container {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 0.5rem;
-                    }
-                    .mood-metrics-row {
-                        display: flex;
-                        gap: 0.5rem;
-                    }
-                    .mood-metrics-row > div {
-                        flex: 1;
-                    }
+        # Split the full mood form and full summary into two half-width columns
+        left_col, right_col = st.columns([1, 1], gap="large")
+
+        # Left: full form (as before)
+        with left_col:
+            with st.form("mood_entry_form"):
+                st.markdown("###   Record Your Mood")
+
+                # Mood Level Selection
+                mood_options = {
+                    "very_low": "  Very Low",
+                    "low": "😔 Low", 
+                    "okay": "  Okay",
+                    "good": "😊 Good",
+                    "great": " 😄 Great"
                 }
-                </style>
-                """, unsafe_allow_html=True)
-                
-                # Responsive layout - 2 rows of 2 columns on mobile, 3 columns on desktop
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    avg_mood = recent_df['mood_level'].apply(tracker.get_mood_numeric).mean()
-                    st.metric("Average Mood (7 days)", f"{avg_mood:.1f}/5")
-                
-                with col2:
-                    total_entries = len(recent_df)
-                    st.metric("Entries This Week", total_entries)
-                
-                # Third metric in a centered column
-                col3_container = st.columns([1, 2, 1])
-                with col3_container[1]:
-                    most_common = recent_df['mood_level'].mode().iloc[0] if not recent_df.empty else "N/A"
-                    st.metric("Most Common Mood", tracker.get_mood_label(most_common))
-                
-                # Quick chart
-                st.markdown("#### Mood Trend (Last 7 Days)")
-                fig = px.line(recent_df, x='date', y=recent_df['mood_level'].apply(tracker.get_mood_numeric), 
-                             markers=True, line_shape='linear')
-                fig.update_layout(
-                    xaxis_title="Date",
-                    yaxis_title="Mood Level",
-                    yaxis=dict(tickmode='array', tickvals=[1,2,3,4,5], 
-                              ticktext=['Very Low', 'Low', 'Okay', 'Good', 'Great']),
-                    height=200
+
+                selected_mood = st.selectbox(
+                    "How are you feeling right now?",
+                    options=list(mood_options.keys()),
+                    format_func=lambda x: mood_options[x],
+                    help="Select your current emotional state"
                 )
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("📝 Start tracking your mood to see insights here!")
-                
-        except Exception as e:
-            st.warning("Unable to load mood statistics. This is normal if you haven't tracked your mood yet.")
+
+                # Context/Reason
+                context_options = [
+                    "Work/School related",
+                    "Family matters",
+                    "Health concerns",
+                    "Social interactions",
+                    "Financial stress",
+                    "Weather/environment",
+                    "Sleep quality",
+                    "Physical activity",
+                    "Food/Nutrition",
+                    "Personal achievement",
+                    "Relationship issues",
+                    "Future worries",
+                    "Other"
+                ]
+
+                context_reason = st.selectbox(
+                    "What's influencing your mood today?",
+                    options=context_options,
+                    help="Understanding context helps provide better support"
+                )
+
+                # Activities
+                activity_options = [
+                    "Exercise/Physical activity",
+                    "Meditation/Mindfulness",
+                    "Reading",
+                    "Writing/Journaling",
+                    "Socializing",
+                    "Hobbies/Creative work",
+                    "Watching TV/Movies",
+                    "Gaming",
+                    "Cooking/Eating",
+                    "Shopping",
+                    "Housework/Chores",
+                    "Learning/Education",
+                    "Music/Audio",
+                    "Nature/Outdoors",
+                    "Resting/Sleeping",
+                    "Other"
+                ]
+
+                selected_activities = st.multiselect(
+                    "What activities have you done today?",
+                    options=activity_options,
+                    help="Select all that apply"
+                )
+
+                # Notes
+                mood_notes = st.text_area(
+                    "Additional notes (optional)",
+                    height=140,
+                    placeholder="Share any thoughts, feelings, or details about your day...",
+                    help="This helps your AI companion understand you better"
+                )
+
+                # Submit button
+                submitted = st.form_submit_button("💾 Save Mood Entry")
+
+                if submitted:
+                    try:
+                        # Save the mood entry
+                        tracker.add_mood_entry(
+                            mood_level=selected_mood,
+                            notes=mood_notes,
+                            context_reason=context_reason,
+                            activities=selected_activities
+                        )
+
+                        st.success("✅ Your mood has been recorded successfully!")
+
+                        # Show personalized response based on mood
+                        mood_responses = {
+                            "very_low": "🤗 I'm here for you. Consider reaching out to a trusted friend or professional if you need support.",
+                            "low": "📝 Journaling your thoughts might help process your feelings. Would you like to talk about what's bothering you?",
+                            "okay": "🚶‍♀ A short walk or some light stretching might help you feel more balanced.",
+                            "good": "✨ Great to hear you're feeling good! What positive things happened today?",
+                            "great": "🌟 You're shining today! Keep spreading that positivity with a kind act."
+                        }
+
+                        st.info(mood_responses.get(selected_mood, "Thanks for sharing how you're feeling!"))
+
+                    except Exception as e:
+                        st.error(f"❌ Error saving mood entry: {str(e)}")
+
+        # Right: full summary (as before)
+        with right_col:
+            st.markdown("---")
+            st.markdown("### 📊 Your Recent Mood Summary")
+
+            try:
+                # Get recent mood data
+                recent_df = tracker.get_mood_dataframe(days=7)
+
+                if not recent_df.empty:
+                    # Add responsive CSS for mood metrics
+                    st.markdown("""
+                    <style>
+                    @media (max-width: 768px) {
+                        .mood-metrics-container {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.5rem;
+                        }
+                        .mood-metrics-row {
+                            display: flex;
+                            gap: 0.5rem;
+                        }
+                        .mood-metrics-row > div {
+                            flex: 1;
+                        }
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+
+                    # Responsive layout - 2 rows of 2 columns on mobile, 3 columns on desktop
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        avg_mood = recent_df['mood_level'].apply(tracker.get_mood_numeric).mean()
+                        st.metric("Average Mood (7 days)", f"{avg_mood:.1f}/5")
+
+                    with col2:
+                        total_entries = len(recent_df)
+                        st.metric("Entries This Week", total_entries)
+
+                    # Third metric in a centered column
+                    col3_container = st.columns([1, 2, 1])
+                    with col3_container[1]:
+                        most_common = recent_df['mood_level'].mode().iloc[0] if not recent_df.empty else "N/A"
+                        st.metric("Most Common Mood", tracker.get_mood_label(most_common))
+
+                    # Quick chart
+                    st.markdown("#### Mood Trend (Last 7 Days)")
+                    fig = px.line(recent_df, x='date', y=recent_df['mood_level'].apply(tracker.get_mood_numeric), 
+                                 markers=True, line_shape='linear')
+                    fig.update_layout(
+                        xaxis_title="Date",
+                        yaxis_title="Mood Level",
+                        yaxis=dict(tickmode='array', tickvals=[1,2,3,4,5], 
+                                  ticktext=['Very Low', 'Low', 'Okay', 'Good', 'Great']),
+                        height=200
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("📝 Start tracking your mood to see insights here!")
+
+            except Exception as e:
+                st.warning("Unable to load mood statistics. This is normal if you haven't tracked your mood yet.")
         
         st.markdown("---")
         

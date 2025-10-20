@@ -1,3 +1,5 @@
+
+# analytics.py: Provides analytics and insights for mood/activity data.
 import pandas as pd
 import plotly.graph_objs as go
 from typing import Tuple, List, Dict, Any
@@ -8,26 +10,33 @@ from typing import Tuple, List, Dict, Any
 def analyze_mood_trends(mood_log: pd.DataFrame) -> Dict[str, Any]:
     """
     Analyze mood trends using rolling averages and day/time patterns.
-    Returns insights and recommendations.
+    Returns a dictionary with insights, recommendations, and charts.
+
+    Args:
+        mood_log (pd.DataFrame): DataFrame with columns ['timestamp', 'mood_score']
+
+    Returns:
+        dict: {"insights": list, "recommendations": list, "charts": [plotly.Figure]}
     """
     if mood_log.empty:
         return {"insights": [], "recommendations": [], "charts": []}
 
+    # Copy to avoid mutating input
     mood_log = mood_log.copy()
     mood_log['timestamp'] = pd.to_datetime(mood_log['timestamp'])
     mood_log['day_of_week'] = mood_log['timestamp'].dt.day_name()
     mood_log['hour'] = mood_log['timestamp'].dt.hour
 
-    # Rolling average (7-day window)
+    # Calculate rolling average (7-day window)
     mood_log = mood_log.sort_values('timestamp')
     mood_log['rolling_avg'] = mood_log['mood_score'].rolling(window=7, min_periods=1).mean()
 
-    # Day-of-week analysis
+    # Analyze mood by day of week
     dow_avg = mood_log.groupby('day_of_week')['mood_score'].mean().sort_values()
     lowest_day = dow_avg.idxmin()
     highest_day = dow_avg.idxmax()
 
-    # Time-of-day analysis
+    # Analyze mood by hour of day
     hod_avg = mood_log.groupby('hour')['mood_score'].mean().sort_values()
     lowest_hour = hod_avg.idxmin()
     highest_hour = hod_avg.idxmax()
@@ -39,14 +48,14 @@ def analyze_mood_trends(mood_log: pd.DataFrame) -> Dict[str, Any]:
         f"Mood peaks at {highest_hour}:00 (score: {hod_avg[highest_hour]:.2f})."
     ]
 
-    # Simple recommendations
+    # Generate simple recommendations based on analysis
     recommendations = []
     if dow_avg[lowest_day] < dow_avg.mean() - 0.5:
         recommendations.append(f"Consider scheduling a Focus Session or Yoga on {lowest_day}.")
     if hod_avg[lowest_hour] < hod_avg.mean() - 0.5:
         recommendations.append(f"Try a Breathing Exercise around {lowest_hour}:00 when mood dips.")
 
-    # Plotly line chart for rolling average
+    # Create Plotly line chart for mood and rolling average
     chart = go.Figure()
     chart.add_trace(go.Scatter(x=mood_log['timestamp'], y=mood_log['mood_score'], mode='lines+markers', name='Mood Score'))
     chart.add_trace(go.Scatter(x=mood_log['timestamp'], y=mood_log['rolling_avg'], mode='lines', name='7-Day Rolling Avg'))
@@ -61,7 +70,13 @@ def analyze_mood_trends(mood_log: pd.DataFrame) -> Dict[str, Any]:
 def analyze_activity_mood_correlation(mood_data: pd.DataFrame) -> Dict[str, Any]:
     """
     Analyze the correlation between activities and mood levels.
-    Returns insights about which activities improve mood and recommendations.
+    Returns a dictionary with top activities, insights, recommendations, and a chart.
+
+    Args:
+        mood_data (pd.DataFrame): DataFrame with columns ['mood_level', 'activities']
+
+    Returns:
+        dict: {"top_activities": list, "activity_insights": list, "activity_recommendations": list, "activity_chart": plotly.Figure}
     """
     if mood_data.empty or 'activities' not in mood_data.columns:
         return {
@@ -71,7 +86,7 @@ def analyze_activity_mood_correlation(mood_data: pd.DataFrame) -> Dict[str, Any]
             "activity_chart": None
         }
 
-    # Convert mood levels to numeric values
+    # Convert mood levels to numeric values for analysis
     mood_mapping = {
         "very_low": 1,
         "low": 2,
@@ -83,10 +98,10 @@ def analyze_activity_mood_correlation(mood_data: pd.DataFrame) -> Dict[str, Any]
     mood_data = mood_data.copy()
     mood_data['mood_numeric'] = mood_data['mood_level'].map(mood_mapping)
 
-    # Explode activities to separate rows
+    # Expand activities so each row is a single activity
     activity_mood = mood_data.explode('activities')
 
-    # Remove rows with empty activities
+    # Remove rows with empty or missing activities
     activity_mood = activity_mood[activity_mood['activities'].notna()]
     activity_mood = activity_mood[activity_mood['activities'] != '']
 
@@ -103,17 +118,17 @@ def analyze_activity_mood_correlation(mood_data: pd.DataFrame) -> Dict[str, Any]
         'mood_numeric': ['mean', 'count', 'std']
     }).round(2)
 
-    # Flatten column names
+    # Flatten column names for easier access
     activity_stats.columns = ['avg_mood', 'count', 'std_dev']
     activity_stats = activity_stats.reset_index()
 
     # Sort by average mood (descending) and filter activities with at least 2 occurrences
     activity_stats = activity_stats[activity_stats['count'] >= 2].sort_values('avg_mood', ascending=False)
 
-    # Get top 3 activities
+    # Get top 3 activities by mood
     top_activities = activity_stats.head(3).to_dict('records')
 
-    # Generate insights
+    # Generate insights and recommendations
     insights = []
     recommendations = []
 
@@ -147,7 +162,7 @@ def analyze_activity_mood_correlation(mood_data: pd.DataFrame) -> Dict[str, Any]
         insights.append("📊 Need more activity data to analyze mood correlations.")
         recommendations.append("🎯 Track your activities with mood entries to discover patterns.")
 
-    # Create activity-mood correlation chart
+    # Create a bar chart for activity-mood correlation
     if not activity_stats.empty:
         import plotly.express as px
 

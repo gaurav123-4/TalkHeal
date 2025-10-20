@@ -1,6 +1,12 @@
 import streamlit as st
+import os
+from datetime import datetime
 
 def show():
+    # Initialize session state for registered sessions
+    if 'registered_sessions' not in st.session_state:
+        st.session_state.registered_sessions = []
+
     # Page Header
     st.markdown("""
         <div style='background: var(--secondary-background-color); border-radius: 18px; box-shadow: 0 2px 18px 0 rgba(0,0,0,0.1); padding: 2.5rem; margin: 2rem auto; max-width: 900px;'>
@@ -29,10 +35,11 @@ def show():
     st.markdown("---")
 
     # Upcoming Sessions Section
+    upcoming_session = "Navigating Stress in the Digital Age"
     st.markdown("""
         <div style='background-color: var(--secondary-background-color); border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem;'>
             <h3>Upcoming Sessions</h3>
-            <h4>Navigating Stress in the Digital Age</h4>
+            <h4>{upcoming_session}</h4>
             <p>
                 Join Dr. Rahul Kumar for a live Q&A on managing stress and digital fatigue.
             </p>
@@ -40,8 +47,14 @@ def show():
             <p><b>Time:</b> 6:00 PM GMT</p>
         </div>
     """, unsafe_allow_html=True)
-    if st.button("Register Now"):
-        st.success("Registration is not yet open. Please check back later!")
+    
+    if upcoming_session in st.session_state.registered_sessions:
+        st.success("You are already registered for this session!")
+    else:
+        if st.button("Register Now"):
+            st.session_state.registered_sessions.append(upcoming_session)
+            st.success("You have successfully registered for this session!")
+            st.rerun()
 
 
     st.markdown("---")
@@ -65,6 +78,13 @@ def show():
     question = st.text_area("Have a question for our experts? Submit it here and we might answer it in our next session.", height=150)
     if st.button("Submit Question"):
         if question:
+            # Create a directory for questions if it doesn't exist
+            if not os.path.exists("data/questions"):
+                os.makedirs("data/questions")
+            
+            now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            with open(f"data/questions/question_{now}.txt", "w") as f:
+                f.write(question)
             st.success("Thank you for your submission!")
         else:
             st.warning("Please enter a question before submitting.")

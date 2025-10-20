@@ -7,6 +7,7 @@ pydantic
 python-dotenv
 google-generativeai
 geopy
+googletrans
 requests
 Pillow
 plotly
@@ -16,6 +17,7 @@ pygame
 streamlit-modal
 streamlit_js_eval
 scikit-learn
+joblib
 pandas
 numpy
 python-dotenv
@@ -28,8 +30,13 @@ textblob
 transformers
 torch
 streamlit-drawable-canvas
+ main
 streamlit-oauth
 authlib
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
+
+fpdf
+nltk
+main

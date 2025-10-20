@@ -1,4 +1,91 @@
 import streamlit as st
+import base64
+from core.audio import speech_to_text, text_to_speech
+import streamlit as st
+
+
+def get_base64_of_bin_file(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+def set_background_for_theme(selected_palette="pink"):
+    from core.theme import get_current_theme
+
+    # --- Get current theme info ---
+    current_theme = st.session_state.get("current_theme", None)
+    if not current_theme:
+        current_theme = get_current_theme()
+    
+    is_dark = current_theme["name"] == "Dark"
+
+    # --- Map light themes to background images ---
+    palette_color = {
+        "light": "static_files/pink.png",
+        "calm blue": "static_files/blue.png",
+        "mint": "static_files/mint.png",
+        "lavender": "static_files/lavender.png",
+        "pink": "static_files/pink.png"
+    }
+
+    # --- Select background based on theme ---
+    if is_dark:
+        background_image_path = "static_files/dark.png"
+    else:
+        background_image_path = palette_color.get(selected_palette.lower(), "static_files/pink.png")
+
+    encoded_string = get_base64_of_bin_file(background_image_path)
+    st.markdown(
+        f"""
+        <style>
+        /* Entire app background */
+        html, body, [data-testid="stApp"] {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+
+        /* Main content transparency */
+        .block-container {{
+            background-color: rgba(255, 255, 255, 0);
+        }}
+
+        /* Sidebar: brighter translucent background */
+        [data-testid="stSidebar"] {{
+            background-color: rgba(255, 255, 255, 0.6);  /* Brighter and translucent */
+            color: {'black' if is_dark else 'rgba(49, 51, 63, 0.8)'} ;  /* Adjusted for light background */
+        }}
+
+        /* Header bar: fully transparent */
+        [data-testid="stHeader"] {{
+            background-color: rgba(0, 0, 0, 0);
+        }}
+
+        h1 {{
+            color: rgb(214, 51, 108) !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }}
+
+        h2, h3, h4, h5, h6,
+        p, span, strong, div, label {{
+            color: {'#f0f0f0' if is_dark else 'rgba(49, 51, 63, 0.8)'} !important;
+            transition: color 0.3s ease;
+        }}
+
+        /* Hide left/right arrow at sidebar bottom */
+        button[title="Close sidebar"],
+        button[title="Open sidebar"] {{
+            display: none !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ✅ Set your background image
+selected_palette = st.session_state.get("palette_name", "Pink")
+set_background_for_theme(selected_palette)
 
 
 # --- Custom CSS for Toggle Button ---
@@ -50,6 +137,31 @@ Welcome to the anonymous support group and community forum! Here, you can connec
 - Help others by sharing your experience
 - AI moderation ensures a safe and supportive space
 """)
+
+
+st.markdown("## 🎤 Talk with TalkHeal AI")
+
+audio = st.file_uploader("Upload / record your voice (wav/mp3/ogg)", type=["wav", "mp3", "ogg"])
+
+if audio is not None:
+    st.audio(audio, format="audio/wav")
+    with st.spinner("Transcribing your voice..."):
+        user_text = speech_to_text(audio.read())
+    if user_text:
+        st.write(f"**You said:** {user_text}")
+
+        # Call AI model (replace with your actual AI logic)
+        ai_reply = f"I heard you say: '{user_text}'. Remember, you are strong and valued 💖"
+
+        st.write("**AI says:**", ai_reply)
+
+        # Convert AI reply to speech
+        with st.spinner("Converting reply to voice..."):
+            audio_response = text_to_speech(ai_reply)
+        if audio_response:
+            st.audio(audio_response, format="audio/wav")
+    else:
+        st.error("Couldn't transcribe your voice. Try again.")
 
 
 

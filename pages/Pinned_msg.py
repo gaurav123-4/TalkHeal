@@ -5,10 +5,36 @@ import base64
 from components.chat_interface import toggle_pin_message, inject_custom_css
 
 
-def set_background(image_path):
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
+def get_base64_of_bin_file(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
+def set_background_for_theme(selected_palette="pink"):
+    from core.theme import get_current_theme
+
+    # --- Get current theme info ---
+    current_theme = st.session_state.get("current_theme", None)
+    if not current_theme:
+        current_theme = get_current_theme()
+    
+    is_dark = current_theme["name"] == "Dark"
+
+    # --- Map light themes to background images ---
+    palette_color = {
+        "light": "static_files/pink.png",
+        "calm blue": "static_files/blue.png",
+        "mint": "static_files/mint.png",
+        "lavender": "static_files/lavender.png",
+        "pink": "static_files/pink.png"
+    }
+
+    # --- Select background based on theme ---
+    if is_dark:
+        background_image_path = "static_files/dark.png"
+    else:
+        background_image_path = palette_color.get(selected_palette.lower(), "static_files/pink.png")
+
+    encoded_string = get_base64_of_bin_file(background_image_path)
     st.markdown(
         f"""
         <style>
@@ -24,7 +50,7 @@ def set_background(image_path):
         /* Sidebar: brighter translucent background */
         [data-testid="stSidebar"] {{
             background-color: rgba(255, 255, 255, 0.6);
-            color: black;
+            color: {'black' if is_dark else 'rgba(49, 51, 63, 0.8)'} ;  /* Adjusted for light background */
         }}
 
         .block-container {{
@@ -32,6 +58,11 @@ def set_background(image_path):
             max-width: 100% !important;
             padding-left: 1rem;
             padding-right: 1rem;
+        }}
+
+        span {{
+            color: {'#f0f0f0' if is_dark else 'rgba(49, 51, 63, 0.8)'} !important;
+            transition: color 0.3s ease;
         }}
         
         /* Header bar: fully transparent */
@@ -50,14 +81,67 @@ def set_background(image_path):
     )
 
 # Set your background image
-set_background("static_files/lavender.png")
+selected_palette = st.session_state.get("palette_name", "Pink")
+set_background_for_theme(selected_palette)
 
+def show():
+    """Renders a more visually appealing Community page using tabs and icons."""
+
+    st.markdown("""
+    <style>
+    /* General container style */
+    .main-container {
+        padding: 1rem;
+    }
+    
+    .pinned-msg {
+        text-align: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #ffe4f0 0%, #fff 100%);
+        border-radius: 18px;
+        margin-bottom: 2rem;
+    }
+    .pinned-msg h1 {
+        color: rgb(214, 51, 108);
+        font-family: 'Baloo 2', cursive;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    /* Custom list style with icons */
+    .icon-list-item {
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        color: #31333F; /* Set text color for dark mode visibility */
+    }
+    .icon-list-item span {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+          
+    </style>
+    """, unsafe_allow_html=True)
+
+    
+
+    with st.container():
+    
+        st.markdown("""
+        <div class="pinned-msg">
+            <h1>📌 Pinned Messages</h1>
+        </div>
+        """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    show()
 
 def render_pinned_messages_page():
-    """Render the pinned messages page"""
-    st.title("📌 Pinned Messages")
-    inject_custom_css()  # load same chat bubble styles
-
+    
     # Initialize pinned messages if not exists
     if "pinned_messages" not in st.session_state:
         st.session_state.pinned_messages = []
