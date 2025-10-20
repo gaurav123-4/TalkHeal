@@ -12,6 +12,14 @@ if "db_initialized" not in st.session_state:
     init_db()
     st.session_state["db_initialized"] = True
     
+# --- OAUTH CALLBACK HANDLING ---
+query_params = st.query_params
+if query_params.get("code") and query_params.get("state") and query_params.get("provider"):
+    # Handle OAuth callback
+    from pages.oauth_callback import main as handle_oauth_callback
+    handle_oauth_callback()
+    st.stop()
+
 # --- LOGIN PAGE ---
 if not st.session_state.get("authenticated", False):
     show_login_page()

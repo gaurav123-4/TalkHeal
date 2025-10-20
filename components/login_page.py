@@ -5,6 +5,8 @@ from auth.auth_utils import register_user, authenticate_user , check_user
 from auth.mail_utils import send_reset_email
 from auth.jwt_utils import create_reset_token
 from core.utils import set_authenticated_user
+from auth.oauth_utils import get_oauth_login_url
+from auth.oauth_config import oauth_config
 def validate_email(email):
     """Validate email format"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -320,9 +322,47 @@ def show_login_page():
                         st.error("**An error occurred during login. Please try again.**")
             st.markdown('</div>', unsafe_allow_html=True)
 
-            # --- YOUR NEW CODE STARTS HERE ---
+            # --- OAuth Login Section ---
             st.write("--- or ---")
-
+            
+            # OAuth Provider Buttons
+            oauth_providers = oauth_config.get_available_providers()
+            
+            if oauth_providers:
+                st.markdown("###  Quick Login with OAuth")
+                st.markdown("Sign in with your social account for faster access")
+                
+                # Create OAuth buttons in a responsive grid
+                oauth_cols = st.columns(min(len(oauth_providers), 3))
+                
+                for i, provider in enumerate(oauth_providers):
+                    with oauth_cols[i % 3]:
+                        provider_config = {
+                            "google": {"icon": "🔍", "color": "#4285F4", "name": "Google"},
+                            "github": {"icon": "🐙", "color": "#333333", "name": "GitHub"},
+                            "microsoft": {"icon": "🪟", "color": "#0078D4", "name": "Microsoft"}
+                        }
+                        
+                        config = provider_config.get(provider, {"icon": "🔐", "color": "#6B7280", "name": provider.title()})
+                        
+                        if st.button(
+                            f"{config['icon']} {config['name']}",
+                            key=f"oauth_{provider}",
+                            use_container_width=True,
+                            help=f"Sign in with {config['name']}"
+                        ):
+                            try:
+                                oauth_url = get_oauth_login_url(provider)
+                                st.markdown(f"""
+                                <script>
+                                    window.open('{oauth_url}', '_self');
+                                </script>
+                                """, unsafe_allow_html=True)
+                            except Exception as e:
+                                st.error(f"Error initiating {config['name']} login: {str(e)}")
+                
+                st.write("--- or ---")
+            
             # Guest Login Button with Full Logic
             st.markdown('<div class="auth-button">', unsafe_allow_html=True)
             if st.button("Login as Guest"):

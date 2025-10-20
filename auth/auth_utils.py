@@ -10,10 +10,36 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            updated_at TEXT NOT NULL
+            password TEXT,
+            updated_at TEXT NOT NULL,
+            provider TEXT DEFAULT 'email',
+            provider_id TEXT,
+            profile_picture TEXT,
+            verified BOOLEAN DEFAULT 0
         )
     """)
+    
+    # Add new columns if they don't exist (for existing databases)
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN provider TEXT DEFAULT 'email'")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN provider_id TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN profile_picture TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN verified BOOLEAN DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
     conn.commit()
     conn.close()
 
@@ -23,17 +49,19 @@ def hash_password(password):
 def check_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-def register_user(name, email, password):
+def register_user(name, email, password, provider='email', provider_id=None, profile_picture=None, verified=False):
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    hashed_pw = hash_password(password)
+    
+    # Hash password only if provided (OAuth users don't need passwords)
+    hashed_pw = hash_password(password) if password else None
     current_time = datetime.now().isoformat()
     
     try:
         cursor.execute("""
-            INSERT INTO users (name, email, password, updated_at) 
-            VALUES (?, ?, ?, ?)
-        """, (name, email, hashed_pw, current_time))
+            INSERT INTO users (name, email, password, updated_at, provider, provider_id, profile_picture, verified) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (name, email, hashed_pw, current_time, provider, provider_id, profile_picture, verified))
         conn.commit()
         return True, "User registered successfully"
     except sqlite3.IntegrityError:
@@ -61,6 +89,30 @@ def check_user(email):
     if result:
         return True , result[4]
     return False , None
+
+def get_user_by_email(email):
+    """Get user data by email for OAuth authentication"""
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, name, email, provider, provider_id, profile_picture, verified, updated_at 
+        FROM users WHERE email = ?
+    """, (email,))
+    result = cursor.fetchone()
+    conn.close()
+    
+    if result:
+        return {
+            "id": result[0],
+            "name": result[1],
+            "email": result[2],
+            "provider": result[3],
+            "provider_id": result[4],
+            "profile_picture": result[5],
+            "verified": result[6],
+            "updated_at": result[7]
+        }
+    return None
 
 def reset_password(email, new_password):
     hashed_pw = hash_password(new_password)

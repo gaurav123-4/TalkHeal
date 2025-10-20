@@ -144,6 +144,13 @@ Experience TalkHeal live here:
   <br>
 </div>
 
+### 🔐 Authentication & Security
+
+* **Multiple Login Options**: Choose from traditional email/password authentication, OAuth with popular providers (Google, GitHub, Microsoft), or guest access.
+* **OAuth Integration**: Secure social login with Google, GitHub, and Microsoft OAuth providers for quick and safe authentication.
+* **Guest Mode**: Access core features without creating an account for immediate support.
+* **Secure Session Management**: Robust session handling with CSRF protection and secure token management.
+
 ### 🎨 Themes & UI
 
 * **Dynamic Theme System**: Choose from multiple soothing color palettes and switch between **Light** and **Dark** modes with a single click.
@@ -312,10 +319,39 @@ TalkHeal/
    GEMINI_API_KEY = "YOUR_GOOGLE_GEMINI_API_KEY"
    ```
 
-4. **Run the app:**
+4. **Set up OAuth (Optional but Recommended):**
+   
+   Create a `.env` file in the TalkHeal directory:
+   
+   ```env
+   # OAuth Configuration
+   OAUTH_REDIRECT_URI=http://localhost:8501/oauth_callback
+   
+   # Google OAuth (Get from Google Cloud Console)
+   GOOGLE_CLIENT_ID=your_google_client_id_here
+   GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+   
+   # GitHub OAuth (Get from GitHub Developer Settings)
+   GITHUB_CLIENT_ID=your_github_client_id_here
+   GITHUB_CLIENT_SECRET=your_github_client_secret_here
+   
+   # Microsoft OAuth (Get from Azure App Registration)
+   MICROSOFT_CLIENT_ID=your_microsoft_client_id_here
+   MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret_here
+   ```
+   
+   For detailed OAuth setup instructions, see [OAUTH_SETUP.md](OAUTH_SETUP.md)
+
+5. **Run the app:**
 
    ```bash
    streamlit run TalkHeal.py
+   ```
+
+6. **Test OAuth setup (Optional):**
+
+   ```bash
+   python test_oauth.py
    ```
 
 ---

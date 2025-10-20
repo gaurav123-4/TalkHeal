@@ -28,3 +28,8 @@ textblob
 transformers
 torch
 streamlit-drawable-canvas
+streamlit-oauth
+authlib
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
