@@ -4,10 +4,11 @@ Handles OAuth authentication callbacks from providers
 """
 
 import streamlit as st
-from urllib.parse import parse_qs, urlparse
-from auth.oauth_utils import handle_oauth_callback
+import sys
+import os
 
-# Do NOT call set_page_config here to avoid duplicate page config errors in some deployments
+# Add the parent directory to the path to import auth modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def main():
     """Handle OAuth callback"""
@@ -42,18 +43,27 @@ def main():
             st.switch_page("TalkHeal.py")
         return
     
-    # Show loading spinner
-    with st.spinner("Authenticating with OAuth provider..."):
-        success, message = handle_oauth_callback(provider, code, state)
-    
-    if success:
-        st.success("Authentication successful!")
-        st.balloons()
+    # Try to handle OAuth callback
+    try:
+        from auth.oauth_utils import handle_oauth_callback
         
-        st.info("Redirecting to TalkHeal...")
-        st.rerun()
-    else:
-        st.error(f"Authentication failed: {message}")
+        with st.spinner("Authenticating with OAuth provider..."):
+            success, message = handle_oauth_callback(provider, code, state)
+        
+        if success:
+            st.success("Authentication successful!")
+            st.balloons()
+            st.info("Redirecting to TalkHeal...")
+            st.rerun()
+        else:
+            st.error(f"Authentication failed: {message}")
+            st.info("Please try logging in again.")
+            
+            if st.button("Back to Login"):
+                st.switch_page("TalkHeal.py")
+    
+    except Exception as e:
+        st.error(f"OAuth error: {str(e)}")
         st.info("Please try logging in again.")
         
         if st.button("Back to Login"):
